@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
@@ -68,8 +67,11 @@ export const Auth: React.FC = () => {
                   inputBorder: isDarkMode ? '#27272a' : '#e4e4e7',
                   inputPlaceholder: '#71717a',
                 },
+                // Fix: moved buttonPadding and inputPadding from radii to space to match ThemeSupa types
                 radii: {
                   borderRadiusButton: '12px',
+                },
+                space: {
                   buttonPadding: '10px 15px',
                   inputPadding: '10px 15px',
                 },
