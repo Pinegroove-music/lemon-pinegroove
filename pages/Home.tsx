@@ -259,7 +259,7 @@ export const Home: React.FC = () => {
   };
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText('LATL4Z9');
+    navigator.clipboard.writeText('MYOTY3MA');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -375,11 +375,11 @@ export const Home: React.FC = () => {
             </div>
          </div>
 
-         <div className="w-full bg-gradient-to-r from-red-600 to-rose-700 text-white py-3 px-4 shadow-md z-20 border-t border-white/20 relative">
+         <div className="w-full bg-gradient-to-r from-emerald-600 to-teal-700 text-white py-3 px-4 shadow-md z-20 border-t border-white/20 relative">
             <div className="max-w-[1920px] mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-4 text-sm md:text-base text-center sm:text-left">
                 <div className="flex items-center gap-2 font-medium">
                     <TicketPercent size={18} className="animate-bounce" />
-                    <span>Christmas Sale: Get <span className="font-bold text-red-50 bg-white/10 px-1 rounded">50% OFF</span> all licenses until Jan 4, 2026.</span>
+                    <span>Lemon Squeezy Sale: Get <span className="font-bold text-emerald-50 bg-white/10 px-1 rounded">50% OFF</span> all licenses for a limited time.</span>
                 </div>
                 
                 <button 
@@ -388,8 +388,8 @@ export const Home: React.FC = () => {
                     title="Click to copy code"
                 >
                     <span className="opacity-80 text-xs uppercase tracking-wide">Use code:</span>
-                    <span className="font-mono font-bold tracking-wider text-yellow-300 group-hover:text-white transition-colors">LATL4Z9</span>
-                    <div className={`p-1 rounded-full ${copied ? 'bg-white text-red-600' : 'bg-white/10 text-white group-hover:bg-white/20'}`}>
+                    <span className="font-mono font-bold tracking-wider text-yellow-300 group-hover:text-white transition-colors">MYOTY3MA</span>
+                    <div className={`p-1 rounded-full ${copied ? 'bg-white text-emerald-600' : 'bg-white/10 text-white group-hover:bg-white/20'}`}>
                         {copied ? <Check size={12} /> : <Copy size={12} />}
                     </div>
                 </button>
