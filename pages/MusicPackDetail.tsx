@@ -20,6 +20,8 @@ export const MusicPackDetail: React.FC = () => {
   const [downloadingTrackId, setDownloadingTrackId] = useState<number | null>(null);
   const navigate = useNavigate();
 
+  const LEMON_SQUEEZY_ICON = "https://cdn.simpleicons.org/lemonsqueezy";
+
   useEffect(() => {
     const id = getIdFromSlug(slug);
 
@@ -218,7 +220,7 @@ export const MusicPackDetail: React.FC = () => {
                     <div className="flex flex-col sm:flex-row gap-4 w-full">
                         <button 
                             onClick={() => navigate('/my-purchases')}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-lg font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-3 transform hover:-translate-y-1"
+                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-lg font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-3 transform hover:-translate-y-1"
                         >
                             {isSubscriber && !isPurchased ? <Zap /> : <CheckCircle2 />}
                             {isSubscriber && !isPurchased ? 'Download with PRO' : 'Purchased - In Your Library'}
@@ -227,9 +229,19 @@ export const MusicPackDetail: React.FC = () => {
                 ) : (
                     <button 
                         onClick={handleBuy}
-                        className="bg-sky-600 hover:bg-sky-500 text-white text-lg font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-sky-500/30 transition-all flex items-center gap-3 transform hover:-translate-y-1"
+                        className="bg-sky-600 hover:bg-sky-500 text-white text-lg font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-sky-500/30 transition-all flex items-center gap-3 transform hover:-translate-y-1 group"
                     >
-                        <ShoppingCart /> Buy Music Pack
+                        <div 
+                          className="w-6 h-6 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
+                          style={{
+                            maskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                            WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                            maskRepeat: 'no-repeat',
+                            WebkitMaskRepeat: 'no-repeat',
+                            maskSize: 'contain',
+                            WebkitMaskSize: 'contain'
+                          }}
+                        /> Buy Music Pack
                     </button>
                 )}
             </div>

@@ -21,6 +21,7 @@ export const TrackDetail: React.FC = () => {
   const navigate = useNavigate();
 
   const PINEGROOVE_LOGO = "https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/logo-pinegroove.svg";
+  const LEMON_SQUEEZY_ICON = "https://cdn.simpleicons.org/lemonsqueezy";
 
   useEffect(() => {
     if (window.createLemonSqueezy) {
@@ -206,17 +207,37 @@ export const TrackDetail: React.FC = () => {
                             {!session ? (
                                 <button 
                                     onClick={() => navigate('/auth')}
-                                    className="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2"
+                                    className="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
                                 >
-                                    <img src={PINEGROOVE_LOGO} alt="" className="w-5 h-5 brightness-0 invert" /> Log in to Buy License
+                                    <div 
+                                      className="w-5 h-5 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
+                                      style={{
+                                        maskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                        WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                        maskRepeat: 'no-repeat',
+                                        WebkitMaskRepeat: 'no-repeat',
+                                        maskSize: 'contain',
+                                        WebkitMaskSize: 'contain'
+                                      }}
+                                    /> Log in to Buy License
                                 </button>
                             ) : (
                                 <>
                                   <button 
                                       onClick={() => handlePurchase(track.checkout_uuid, session.user.id)}
-                                      className="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2"
+                                      className="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
                                   >
-                                      <img src={PINEGROOVE_LOGO} alt="" className="w-5 h-5 brightness-0 invert" /> Buy Single License
+                                      <div 
+                                        className="w-5 h-5 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
+                                        style={{
+                                          maskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                          WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                          maskRepeat: 'no-repeat',
+                                          WebkitMaskRepeat: 'no-repeat',
+                                          maskSize: 'contain',
+                                          WebkitMaskSize: 'contain'
+                                        }}
+                                      /> Buy Single License
                                   </button>
                                   <button 
                                       onClick={openSubscriptionCheckout}
@@ -269,17 +290,37 @@ export const TrackDetail: React.FC = () => {
                                     {!session ? (
                                         <button 
                                             onClick={() => navigate('/auth')}
-                                            className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all transform hover:-translate-y-0.5"
+                                            className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all transform hover:-translate-y-0.5 group"
                                         >
-                                            <img src={PINEGROOVE_LOGO} alt="" className="w-5 h-5 brightness-0 invert" /> Log in to Buy <ArrowRight size={18} />
+                                            <div 
+                                              className="w-5 h-5 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
+                                              style={{
+                                                maskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                                WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                                maskRepeat: 'no-repeat',
+                                                WebkitMaskRepeat: 'no-repeat',
+                                                maskSize: 'contain',
+                                                WebkitMaskSize: 'contain'
+                                              }}
+                                            /> Log in to Buy <ArrowRight size={18} />
                                         </button>
                                     ) : (
                                         <>
                                           <button 
                                               onClick={() => handlePurchase(track.checkout_uuid, session.user.id)}
-                                              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all transform hover:-translate-y-0.5"
+                                              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all transform hover:-translate-y-0.5 group"
                                           >
-                                              <img src={PINEGROOVE_LOGO} alt="" className="w-5 h-5 brightness-0 invert" /> Buy License <ArrowRight size={18} />
+                                              <div 
+                                                className="w-5 h-5 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
+                                                style={{
+                                                  maskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                                  WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                                  maskRepeat: 'no-repeat',
+                                                  WebkitMaskRepeat: 'no-repeat',
+                                                  maskSize: 'contain',
+                                                  WebkitMaskSize: 'contain'
+                                                }}
+                                              /> Buy License <ArrowRight size={18} />
                                           </button>
                                           <button 
                                               onClick={openSubscriptionCheckout}
