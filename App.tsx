@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-// Changed react-router to react-router-dom to fix hook issues and missing export errors
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Player } from './components/Player';
 import { Footer } from './components/Footer';
@@ -23,6 +21,7 @@ import { SeasonalPage } from './pages/SeasonalPage';
 import { InstrumentsPage } from './pages/InstrumentsPage';
 import { Pricing } from './pages/Pricing';
 import { UserLicenseAgreement } from './pages/UserLicenseAgreement';
+import { Privacy } from './pages/Privacy';
 import { useStore } from './store/useStore';
 import { Menu, Search, Music, User, X } from 'lucide-react';
 import { supabase } from './services/supabase';
@@ -47,7 +46,6 @@ const Layout: React.FC = () => {
 
   const isAuthPage = location.pathname === '/auth';
 
-  // Configurazione Lemon Squeezy Event Handler
   useEffect(() => {
     const initLemonSqueezy = () => {
       if (window.LemonSqueezy && typeof window.LemonSqueezy.Setup === 'function') {
@@ -56,7 +54,6 @@ const Layout: React.FC = () => {
             eventHandler: (event: any) => {
               if (event.event === 'Checkout.Success') {
                 console.log('Payment successful! Refreshing data...');
-                // Aggiorna lo stato locale senza forzare il redirect con timer
                 fetchPurchases();
                 fetchProfile();
               }
@@ -310,6 +307,7 @@ const Layout: React.FC = () => {
             <Route path="/my-playlist" element={<MyPlaylist />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/user-license-agreement" element={<UserLicenseAgreement />} />
+            <Route path="/privacy" element={<Privacy />} />
           </Routes>
           
           {showFooter && <Footer />}

@@ -24,6 +24,7 @@ export const Footer: React.FC = () => {
   const legalLinks = [
     { label: 'Pricing & Refund Policy', path: '/pricing' },
     { label: 'User License Agreement', path: '/user-license-agreement' },
+    { label: 'Cookies and Privacy Policy', path: '/privacy' },
     { label: 'Content ID Clearance', path: '/content-id' },
     { label: 'FAQ', path: '/faq' },
   ];
