@@ -8,7 +8,7 @@ export const useSubscription = () => {
   const userId = session?.user?.id;
   
   // URL dell'abbonamento con ID utente dinamico
-  const subscriptionVariantId = '1e09fa35-b369-4e18-83ea-3863e60313a7';
+  const subscriptionVariantId = '8deed6fa-4743-4612-bfc3-d819a742331f';
   const checkoutUrl = userId 
     ? `https://pinegroove.lemonsqueezy.com/checkout/buy/${subscriptionVariantId}?checkout[custom][user_id]=${userId}`
     : `https://pinegroove.lemonsqueezy.com/checkout/buy/${subscriptionVariantId}`;
