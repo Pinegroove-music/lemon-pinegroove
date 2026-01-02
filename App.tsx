@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 // Changed react-router to react-router-dom to fix hook issues and missing export errors
-import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Player } from './components/Player';
 import { Footer } from './components/Footer';

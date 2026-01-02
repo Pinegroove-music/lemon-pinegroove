@@ -59,9 +59,9 @@ export const Pricing: React.FC = () => {
   const prohibitedUses = [
     "Sell, resell, trade in, or give away the music to any other party or otherwise distribute the music \"as is.\"",
     "Create/produce new musical works based on the music (musical compositions, songs) or using AI tools to alter the music or for AI dataset learning.",
-    "No Stand-alone use: You cannot use/include the music in music compilations (CDs, DVDs, or digital albums) or as stand-alone elements. This applies strictly to Podcasts: the music must be used as a background element synchronized with voice-over or other primary content. You are prohibited from distributing the music as a stand-alone track, a \"music-only\" episode, or in any way where the music is the primary focus of the listener's attention.",
+    "No Stand-alone use: You cannot use/include the music in music compilations (CDs, DVDs, or digital albums) or as stand-alone elements. This applies strictly to Podcasts: the music must be used as a background element synchronized with voice-over or other primary content.",
     "Record the music under any Content ID fingerprinting system such as AdRev, Identifyy, TuneCore, etc.",
-    "Redistribute the music as a part of different multimedia templates (e.g., website templates, video templates, e-card templates, slideshow templates) that are subsequently offered to multiple end-users.",
+    "Redistribute the music as a part of different multimedia templates (e.g., website templates, video templates, slideshow templates) subsequently offered to multiple end-users.",
     "Use or redistribute the music as a part of telephone or mobile phone ringtones."
   ];
 
@@ -239,10 +239,10 @@ export const Pricing: React.FC = () => {
         )}
       </div>
 
-      {/* Legal & Restrictions Contained Section */}
+      {/* Legal & Restrictions Section */}
       <div className="relative z-20 max-w-6xl mx-auto space-y-12">
-        {/* Prohibited Uses Section */}
-        <div className={`rounded-[2.5rem] p-8 md:p-14 border transition-all ${isDarkMode ? 'bg-zinc-900/50 border-zinc-800 shadow-2xl' : 'bg-gray-50 border-zinc-200 shadow-xl'}`}>
+        {/* Strictly Prohibited Uses - Updated to match UserLicenseAgreement style */}
+        <div className={`rounded-[2.5rem] p-8 md:p-14 border transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-800 shadow-2xl' : 'bg-white border-zinc-200 shadow-xl'}`}>
           <div className="flex items-center gap-4 mb-10">
             <div className="p-4 bg-red-500/10 rounded-2xl">
               <ShieldAlert className="text-red-500" size={32} />
@@ -252,19 +252,21 @@ export const Pricing: React.FC = () => {
           
           <p className="text-lg opacity-70 mb-10 font-medium max-w-3xl">Under any license type (Pay-per-track or Subscription), it is strictly forbidden to:</p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
             {prohibitedUses.map((text, idx) => (
-              <div key={idx} className={`p-6 rounded-3xl flex flex-col gap-5 transition-all hover:scale-[1.01] ${isDarkMode ? 'bg-zinc-950/40' : 'bg-white shadow-sm border border-zinc-100'}`}>
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black shrink-0 text-sm ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-600'}`}>
-                  {String.fromCharCode(65 + idx)}
-                </div>
-                <p className="text-sm leading-relaxed font-medium opacity-80">{text}</p>
+              <div key={idx} className="flex gap-4 items-start group">
+                <span className="font-black text-red-500 bg-red-500/10 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
+                    {String.fromCharCode(65 + idx)}
+                </span>
+                <p className={`text-base leading-relaxed font-medium opacity-80 pt-1.5 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                    {text}
+                </p>
               </div>
             ))}
           </div>
 
           <div className="mt-12 pt-8 border-t border-dashed border-zinc-300 dark:border-zinc-700 text-center">
-            <p className="text-sm opacity-70">Need a custom license or have specific questions about bulk licensing? <a href="mailto:info@pinegroove.net" className="text-sky-500 hover:underline font-black px-1">Contact our legal team</a>.</p>
+            <p className="text-sm opacity-70 font-medium">Need a custom license or have specific questions about bulk licensing? <a href="mailto:info@pinegroove.net" className="text-sky-500 hover:underline font-black px-1">Contact our legal team</a>.</p>
           </div>
         </div>
 
