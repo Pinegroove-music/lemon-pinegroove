@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../services/supabase';
 import { MusicTrack, Album } from '../types';
@@ -30,6 +29,8 @@ export const MyPurchases: React.FC = () => {
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [downloadingLicenseId, setDownloadingLicenseId] = useState<number | null>(null);
   const navigate = useNavigate();
+
+  const LEMON_SQUEEZY_ICON = "https://cdn.simpleicons.org/lemonsqueezy";
 
   useEffect(() => {
     const userId = session?.user?.id;
@@ -186,6 +187,34 @@ export const MyPurchases: React.FC = () => {
                 >
                     <LayoutList size={20} />
                 </button>
+            </div>
+
+            {/* Invoices Button */}
+            <div className="relative group">
+                <a 
+                    href="https://app.lemonsqueezy.com/my-orders" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border-zinc-200 text-zinc-600 hover:text-black shadow-sm'}`}
+                >
+                    <div 
+                        className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'bg-white group-hover:bg-[#FFC233]' : 'bg-zinc-600 group-hover:bg-[#FFC233]'}`}
+                        style={{
+                            maskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                            WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                            maskRepeat: 'no-repeat',
+                            WebkitMaskRepeat: 'no-repeat',
+                            maskSize: 'contain',
+                            WebkitMaskSize: 'contain'
+                        }}
+                    />
+                    <span>Invoices</span>
+                </a>
+                {/* Information Message (Tooltip) */}
+                <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-xl text-[10px] font-bold leading-tight opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 shadow-2xl z-50 text-center border transform translate-y-1 group-hover:translate-y-0 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-200' : 'bg-white border-zinc-100 text-zinc-600 shadow-sky-100'}`}>
+                    Download the official invoices for your orders directly from Lemon Squeezy's customer portal.
+                    <div className={`absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent ${isDarkMode ? 'border-t-zinc-800' : 'border-t-white'}`}></div>
+                </div>
             </div>
             
             <div className={`px-4 py-2.5 rounded-xl text-sm font-bold border ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 shadow-sm text-zinc-500'}`}>
@@ -353,7 +382,7 @@ export const MyPurchases: React.FC = () => {
                         return (
                             <div 
                                 key={purchase.id}
-                                className={`flex items-center gap-4 p-3 rounded-xl border transition-all hover:shadow-md ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200'}`}
+                                className={`flex items-center gap-4 p-3 rounded-xl border transition-all hover:shadow-md ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800/80' : 'bg-white border-zinc-200'}`}
                             >
                                 <div 
                                     className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden group cursor-pointer"

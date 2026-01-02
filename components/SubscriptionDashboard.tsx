@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
@@ -64,7 +63,7 @@ export const SubscriptionDashboard: React.FC = () => {
       <div className={`relative overflow-hidden rounded-3xl border p-8 md:p-10 transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-100 border-zinc-200'}`}>
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="text-center md:text-left flex-1">
-            <h2 className="text-2xl md:text-3xl font-black mb-3 tracking-tight">Upgrade to Pinegroove PRO</h2>
+            <h2 className="text-2xl md:text-3xl font-black mb-3 tracking-tight">Upgrade to PRO Subscription</h2>
             <p className={`text-lg opacity-70 max-w-xl leading-relaxed ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
               Unlock the entire catalog with a single subscription. Unlimited high-quality WAV downloads and commercial licenses included.
             </p>
