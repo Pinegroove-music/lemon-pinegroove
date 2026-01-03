@@ -5,7 +5,6 @@ import { MusicTrack } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
 import { Play, Pause, ShoppingCart, Filter, ChevronDown, ChevronRight, ArrowRight, X, Mic2, ChevronLeft, Sparkles, Check, Trash2, LayoutList, LayoutGrid, Download, Zap } from 'lucide-react';
-// Changed react-router to react-router-dom to fix hook issues and missing export errors
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
@@ -33,7 +32,6 @@ export const Library: React.FC = () => {
 
   const [availableInstruments, setAvailableInstruments] = useState<string[]>([]);
 
-  // Re-inizializza Lemon Squeezy Overlay ogni volta che i dati cambiano
   useEffect(() => {
     if (window.createLemonSqueezy) {
         window.createLemonSqueezy();
@@ -496,7 +494,6 @@ export const Library: React.FC = () => {
   );
 };
 
-// Fixed duplicate definitions
 const ActiveFilterBadge: React.FC<{ label: string, onRemove: () => void, isDark: boolean }> = ({ label, onRemove, isDark }) => (
     <span className={`
         inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors border shadow-sm
@@ -574,6 +571,7 @@ const CollapsibleFilterSection: React.FC<{
 const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = ({ track, onFindSimilar }) => {
     const { playTrack, currentTrack, isPlaying, isDarkMode, session, purchasedTracks } = useStore();
     const { isPro, openSubscriptionCheckout } = useSubscription();
+    const [licenseType, setLicenseType] = useState<'standard' | 'extended'>('standard');
     const navigate = useNavigate();
     const isCurrent = currentTrack?.id === track.id;
     const active = isCurrent && isPlaying;
@@ -613,9 +611,21 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
         }
     };
 
-    const handlePurchase = (checkoutUuid: string | null, userId: string) => {
-        if (!checkoutUuid) return;
-        const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${checkoutUuid}?embed=1&checkout[custom][user_id]=${userId}`;
+    const handlePurchase = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!session?.user?.id) {
+            navigate('/auth');
+            return;
+        }
+
+        const variantId = licenseType === 'standard' ? track.variant_id_standard : track.variant_id_extended;
+        if (!variantId) {
+            alert("This license variant is currently unavailable for this track.");
+            return;
+        }
+
+        const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${variantId}?checkout[custom][user_id]=${session.user.id}&checkout[custom][track_id]=${track.id}&checkout[custom][license_type]=${licenseType}&embed=1`;
+        console.log("DEBUG URL:", checkoutUrl);
 
         if (window.LemonSqueezy) {
             window.LemonSqueezy.Url.Open(checkoutUrl);
@@ -626,7 +636,7 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
 
     return (
         <div className={`
-            flex items-center gap-4 p-3 rounded-xl transition-all duration-200
+            flex flex-col md:flex-row items-center gap-4 p-3 rounded-xl transition-all duration-200
             ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 shadow-sm hover:shadow-md border'}
             ${active ? 'ring-1 ring-sky-500/50' : ''}
         `}>
@@ -685,7 +695,6 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
                     <Sparkles size={18} />
                 </button>
 
-                {/* Contenitore azioni con larghezza fissa per evitare rotture layout */}
                 <div className="w-auto flex items-center justify-center gap-2">
                     {hasAccess ? (
                         <button 
@@ -696,32 +705,24 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
                             <Download size={18} />
                         </button>
                     ) : (
-                        <>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); openSubscriptionCheckout(); }}
-                            className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-100 hover:bg-sky-200 text-sky-700 text-xs font-bold transition-all border border-sky-200"
-                            title="Subscribe to Pro"
-                          >
-                            <Zap size={14} /> Subscribe
-                          </button>
-                          {!session ? (
-                              <button 
-                                  onClick={() => navigate('/auth')}
-                                  className="p-2 rounded-full bg-sky-500 hover:bg-sky-600 text-white shadow-lg transition-all"
-                                  title="Log in to buy"
-                              >
-                                  <ShoppingCart size={18} />
-                              </button>
-                          ) : (
-                              <button 
-                                  onClick={() => handlePurchase(track.checkout_uuid, session.user.id)}
-                                  className="p-2 rounded-full bg-sky-500 hover:bg-sky-600 text-white shadow-lg transition-all"
-                                  title="Buy License"
-                              >
-                                  <ShoppingCart size={18} />
-                              </button>
-                          )}
-                        </>
+                        <div className="flex items-center gap-2">
+                            <select 
+                                value={licenseType}
+                                onChange={(e) => setLicenseType(e.target.value as 'standard' | 'extended')}
+                                className={`text-xs p-2 rounded-lg border outline-none ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-gray-50 border-gray-200 text-black'}`}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <option value="standard">Standard</option>
+                                <option value="extended">Extended</option>
+                            </select>
+                            <button 
+                                onClick={handlePurchase}
+                                className="p-2 rounded-full bg-sky-500 hover:bg-sky-600 text-white shadow-lg transition-all"
+                                title={`Buy ${licenseType} License`}
+                            >
+                                <ShoppingCart size={18} />
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -771,17 +772,6 @@ const TrackGridItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }>
         }
     };
 
-    const handlePurchase = (checkoutUuid: string | null, userId: string) => {
-        if (!checkoutUuid) return;
-        const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${checkoutUuid}?embed=1&checkout[custom][user_id]=${userId}`;
-
-        if (window.LemonSqueezy) {
-            window.LemonSqueezy.Url.Open(checkoutUrl);
-        } else {
-            window.location.href = checkoutUrl;
-        }
-    };
-
     return (
         <div className={`
             group flex flex-col rounded-xl overflow-hidden border transition-all hover:shadow-xl hover:-translate-y-1
@@ -825,23 +815,13 @@ const TrackGridItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }>
                                 <Download size={16} />
                             </button>
                         ) : (
-                            !session ? (
-                                <button 
-                                    onClick={() => navigate('/auth')}
-                                    className="p-2 rounded-full bg-black/50 text-white hover:bg-sky-500 backdrop-blur-md transition-colors"
-                                    title="Log in to buy"
-                                >
-                                    <ShoppingCart size={16} />
-                                </button>
-                            ) : (
-                                <button 
-                                    onClick={() => handlePurchase(track.checkout_uuid, session.user.id)}
-                                    className="p-2 rounded-full bg-black/50 text-white hover:bg-sky-500 backdrop-blur-md transition-colors"
-                                    title="Buy License"
-                                >
-                                    <ShoppingCart size={16} />
-                                </button>
-                            )
+                            <Link 
+                                to={`/track/${createSlug(track.id, track.title)}`}
+                                className="p-2 rounded-full bg-black/50 text-white hover:bg-sky-500 backdrop-blur-md transition-colors"
+                                title="View Purchase Options"
+                            >
+                                <ShoppingCart size={16} />
+                            </Link>
                         )}
                     </div>
                 </div>

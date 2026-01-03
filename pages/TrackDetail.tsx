@@ -5,7 +5,7 @@ import { supabase } from '../services/supabase';
 import { MusicTrack, Album } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, CreditCard, Download, FileBadge, Zap } from 'lucide-react';
+import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, CreditCard, Download, FileBadge, Zap, ShoppingCart } from 'lucide-react';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
 import { getIdFromSlug, createSlug } from '../utils/slugUtils';
@@ -107,9 +107,21 @@ export const TrackDetail: React.FC = () => {
     }
   };
 
-  const handlePurchase = (checkoutUuid: string | null, userId: string) => {
-    if (!checkoutUuid) return;
-    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${checkoutUuid}?embed=1&checkout[custom][user_id]=${userId}`;
+  const handlePurchase = (licenseType: 'standard' | 'extended') => {
+    if (!track) return;
+    if (!session?.user?.id) {
+        navigate('/auth');
+        return;
+    }
+
+    const variantId = licenseType === 'standard' ? track.variant_id_standard : track.variant_id_extended;
+    if (!variantId) {
+        alert("This license variant is currently unavailable for this track.");
+        return;
+    }
+
+    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${variantId}?checkout[custom][user_id]=${session.user.id}&checkout[custom][track_id]=${track.id}&checkout[custom][license_type]=${licenseType}&embed=1`;
+    console.log("DEBUG URL:", checkoutUrl);
 
     if (window.LemonSqueezy) {
       window.LemonSqueezy.Url.Open(checkoutUrl);
@@ -194,56 +206,64 @@ export const TrackDetail: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col gap-4">
                     {hasAccess ? (
                         <button 
                             onClick={handleDownload}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30 text-white text-lg font-bold py-4 px-8 rounded-full shadow-lg transition-all flex items-center justify-center gap-2"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30 text-white text-lg font-bold py-4 px-8 rounded-full shadow-lg transition-all flex items-center justify-center gap-2"
                         >
                             <Download /> Download WAV
                         </button>
                     ) : (
-                        <div className="flex-1 flex flex-col sm:flex-row gap-4">
+                        <div className="space-y-4">
                             {!session ? (
                                 <button 
                                     onClick={() => navigate('/auth')}
-                                    className="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
+                                    className="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
                                 >
-                                    <div 
-                                      className="w-5 h-5 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
-                                      style={{
-                                        maskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                                        WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                                        maskRepeat: 'no-repeat',
-                                        WebkitMaskRepeat: 'no-repeat',
-                                        maskSize: 'contain',
-                                        WebkitMaskSize: 'contain'
-                                      }}
-                                    /> Log in to Buy License
+                                    Log in to Buy License
                                 </button>
                             ) : (
                                 <>
-                                  <button 
-                                      onClick={() => handlePurchase(track.checkout_uuid, session.user.id)}
-                                      className="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
-                                  >
-                                      <div 
-                                        className="w-5 h-5 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
-                                        style={{
-                                          maskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                                          WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                                          maskRepeat: 'no-repeat',
-                                          WebkitMaskRepeat: 'no-repeat',
-                                          maskSize: 'contain',
-                                          WebkitMaskSize: 'contain'
-                                        }}
-                                      /> Buy Single License
-                                  </button>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                      <button 
+                                          onClick={() => handlePurchase('standard')}
+                                          className="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
+                                      >
+                                          <div 
+                                            className="w-5 h-5 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
+                                            style={{
+                                              maskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                              WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                              maskRepeat: 'no-repeat',
+                                              WebkitMaskRepeat: 'no-repeat',
+                                              maskSize: 'contain',
+                                              WebkitMaskSize: 'contain'
+                                            }}
+                                          /> Buy Standard License
+                                      </button>
+                                      <button 
+                                          onClick={() => handlePurchase('extended')}
+                                          className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
+                                      >
+                                          <div 
+                                            className="w-5 h-5 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
+                                            style={{
+                                              maskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                              WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
+                                              maskRepeat: 'no-repeat',
+                                              WebkitMaskRepeat: 'no-repeat',
+                                              maskSize: 'contain',
+                                              WebkitMaskSize: 'contain'
+                                            }}
+                                          /> Buy Extended License
+                                      </button>
+                                  </div>
                                   <button 
                                       onClick={openSubscriptionCheckout}
-                                      className="flex-1 bg-gradient-to-r from-sky-500 to-indigo-600 hover:brightness-110 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2"
+                                      className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:brightness-110 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2"
                                   >
-                                      <Zap size={20} /> Subscribe to Pro
+                                      <Zap size={20} /> Subscribe to Pro (Unlimited Access)
                                   </button>
                                 </>
                             )}
@@ -286,41 +306,27 @@ export const TrackDetail: React.FC = () => {
                             <>
                                 <h4 className="font-bold text-xl mb-3">Unlock this track</h4>
                                 <p className="opacity-80 mb-6 max-w-lg">Acquire a royalty-free license to use this music in your video projects, podcasts, or commercial works. Secure transaction via Lemon Squeezy.</p>
-                                <div className="flex flex-wrap gap-4">
+                                <div className="flex flex-col gap-4">
                                     {!session ? (
                                         <button 
                                             onClick={() => navigate('/auth')}
                                             className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all transform hover:-translate-y-0.5 group"
                                         >
-                                            <div 
-                                              className="w-5 h-5 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
-                                              style={{
-                                                maskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                                                WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                                                maskRepeat: 'no-repeat',
-                                                WebkitMaskRepeat: 'no-repeat',
-                                                maskSize: 'contain',
-                                                WebkitMaskSize: 'contain'
-                                              }}
-                                            /> Log in to Buy <ArrowRight size={18} />
+                                            Log in to Buy <ArrowRight size={18} />
                                         </button>
                                     ) : (
-                                        <>
+                                        <div className="flex flex-wrap gap-4">
                                           <button 
-                                              onClick={() => handlePurchase(track.checkout_uuid, session.user.id)}
+                                              onClick={() => handlePurchase('standard')}
                                               className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all transform hover:-translate-y-0.5 group"
                                           >
-                                              <div 
-                                                className="w-5 h-5 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
-                                                style={{
-                                                  maskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                                                  WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                                                  maskRepeat: 'no-repeat',
-                                                  WebkitMaskRepeat: 'no-repeat',
-                                                  maskSize: 'contain',
-                                                  WebkitMaskSize: 'contain'
-                                                }}
-                                              /> Buy License <ArrowRight size={18} />
+                                              Buy Standard <ArrowRight size={18} />
+                                          </button>
+                                          <button 
+                                              onClick={() => handlePurchase('extended')}
+                                              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all transform hover:-translate-y-0.5 group"
+                                          >
+                                              Buy Extended <ArrowRight size={18} />
                                           </button>
                                           <button 
                                               onClick={openSubscriptionCheckout}
@@ -328,7 +334,7 @@ export const TrackDetail: React.FC = () => {
                                           >
                                               Abbonati a Pro <Zap size={18} />
                                           </button>
-                                        </>
+                                        </div>
                                     )}
                                 </div>
                             </>

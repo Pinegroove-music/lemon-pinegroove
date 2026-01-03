@@ -148,15 +148,9 @@ export const Player: React.FC = () => {
     }
   };
 
-  const handlePurchase = (checkoutUuid: string | null, userId: string | undefined) => {
-    if (!checkoutUuid || !userId) return;
-    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${checkoutUuid}?embed=1&checkout[custom][user_id]=${userId}`;
-
-    if (window.LemonSqueezy) {
-      window.LemonSqueezy.Url.Open(checkoutUrl);
-    } else {
-      window.location.href = checkoutUrl;
-    }
+  const handlePurchaseRedirect = () => {
+    if (!currentTrack) return;
+    navigate(`/track/${createSlug(currentTrack.id, currentTrack.title)}`);
   };
 
   if (!currentTrack) return null;
@@ -325,7 +319,7 @@ export const Player: React.FC = () => {
                         </button>
                     ) : (
                         <button 
-                            onClick={() => handlePurchase(currentTrack.checkout_uuid, session?.user?.id)}
+                            onClick={handlePurchaseRedirect}
                             className="hidden md:flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 rounded-full text-xs font-bold transition shadow-sm hover:scale-105"
                         >
                             <ShoppingCart size={14} />
@@ -360,7 +354,7 @@ export const Player: React.FC = () => {
                             </button>
                         ) : (
                             <button 
-                                onClick={() => handlePurchase(currentTrack.checkout_uuid, session?.user?.id)}
+                                onClick={handlePurchaseRedirect}
                                 className="p-2 bg-sky-600 hover:bg-sky-500 text-white rounded-full shadow-lg transition-colors"
                                 title="Buy License"
                             >

@@ -50,12 +50,14 @@ export const MusicPacks: React.FC = () => {
       return;
     }
 
-    if (!album.checkout_uuid) {
+    const checkoutUuid = album.checkout_uuid;
+    if (!checkoutUuid) {
       alert("This pack is currently unavailable for purchase.");
       return;
     }
 
-    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${album.checkout_uuid}?embed=1&checkout[custom][user_id]=${userId}`;
+    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${checkoutUuid}?checkout[custom][user_id]=${userId}&checkout[custom][album_id]=${album.id}&embed=1`;
+    console.log("DEBUG URL:", checkoutUrl);
     
     if (window.LemonSqueezy) {
         window.LemonSqueezy.Url.Open(checkoutUrl);
@@ -145,13 +147,13 @@ export const MusicPacks: React.FC = () => {
 
                             <div className="mt-auto pt-4 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between">
                                 <div className="text-2xl font-bold text-sky-600 dark:text-sky-400">
-                                    ${(album.price / 100).toFixed(2)}
+                                    €{(album.price / 100).toFixed(2)}
                                 </div>
                                 
                                 <div className="flex gap-2">
                                     <Link 
                                         to={`/music-packs/${createSlug(album.id, album.title)}`}
-                                        className={`p-2 rounded-full transition ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'}`}
+                                        className={`p-2 rounded-full transition ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'}`}
                                         title="View Details"
                                     >
                                         <ArrowRight size={20} />

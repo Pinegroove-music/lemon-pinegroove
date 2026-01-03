@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { Album, MusicTrack } from '../types';
 import { useStore } from '../store/useStore';
+import { useSubscription } from '../hooks/useSubscription';
 import { ShoppingCart, Disc, Play, Pause, Check, ArrowLeft, AlertTriangle, Sparkles, ArrowRight, CheckCircle2, Zap, Library, Download, Loader2 } from 'lucide-react';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
@@ -21,6 +22,8 @@ export const MusicPackDetail: React.FC = () => {
   const navigate = useNavigate();
 
   const LEMON_SQUEEZY_ICON = "https://cdn.simpleicons.org/lemonsqueezy";
+
+  const { isPro, openSubscriptionCheckout } = useSubscription();
 
   useEffect(() => {
     const id = getIdFromSlug(slug);
@@ -90,21 +93,21 @@ export const MusicPackDetail: React.FC = () => {
     }
   }, [slug]);
 
-  const handleBuy = () => {
+  const handleBuy = (licenseType: 'standard' | 'extended') => {
     if (!album) return;
-    
-    const userId = session?.user?.id;
-    if (!userId) {
+    if (!session?.user?.id) {
       navigate('/auth');
       return;
     }
     
-    if (!album.checkout_uuid) {
-      alert("This pack is currently unavailable for purchase.");
+    const variantId = licenseType === 'standard' ? album.variant_id_standard : album.variant_id_extended;
+    if (!variantId) {
+      alert("This license variant is currently unavailable for this pack.");
       return;
     }
 
-    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${album.checkout_uuid}?embed=1&checkout[custom][user_id]=${userId}`;
+    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${variantId}?checkout[custom][user_id]=${session.user.id}&checkout[custom][license_type]=${licenseType}&checkout[custom][album_id]=${album.id}&embed=1`;
+    console.log("DEBUG URL:", checkoutUrl);
     
     if (window.LemonSqueezy) {
         window.LemonSqueezy.Url.Open(checkoutUrl);
@@ -187,7 +190,7 @@ export const MusicPackDetail: React.FC = () => {
             <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover" />
             
             <div className="absolute top-4 right-4 bg-sky-500 text-white font-bold px-4 py-2 rounded-full shadow-lg text-lg z-20">
-                ${(album.price / 100).toFixed(2)}
+                €{(album.price / 100).toFixed(2)}
             </div>
 
             {firstTrack && (
@@ -215,34 +218,38 @@ export const MusicPackDetail: React.FC = () => {
                 </div>
             )}
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col gap-4 max-w-md">
                 {hasAccess ? (
-                    <div className="flex flex-col sm:flex-row gap-4 w-full">
-                        <button 
-                            onClick={() => navigate('/my-purchases')}
-                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-lg font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-3 transform hover:-translate-y-1"
-                        >
-                            {isSubscriber && !isPurchased ? <Zap /> : <CheckCircle2 />}
-                            {isSubscriber && !isPurchased ? 'Download with PRO' : 'Purchased - In Your Library'}
-                        </button>
-                    </div>
-                ) : (
                     <button 
-                        onClick={handleBuy}
-                        className="bg-sky-600 hover:bg-sky-500 text-white text-lg font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-sky-500/30 transition-all flex items-center gap-3 transform hover:-translate-y-1 group"
+                        onClick={() => navigate('/my-purchases')}
+                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-lg font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-3 transform hover:-translate-y-1"
                     >
-                        <div 
-                          className="w-6 h-6 bg-white group-hover:bg-[#FFC233] transition-colors duration-300"
-                          style={{
-                            maskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                            WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                            maskRepeat: 'no-repeat',
-                            WebkitMaskRepeat: 'no-repeat',
-                            maskSize: 'contain',
-                            WebkitMaskSize: 'contain'
-                          }}
-                        /> Buy Music Pack
+                        {isSubscriber && !isPurchased ? <Zap /> : <CheckCircle2 />}
+                        {isSubscriber && !isPurchased ? 'Download with PRO' : 'Purchased - In Your Library'}
                     </button>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button 
+                                onClick={() => handleBuy('standard')}
+                                className="bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
+                            >
+                                Buy Standard
+                            </button>
+                            <button 
+                                onClick={() => handleBuy('extended')}
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
+                            >
+                                Buy Extended
+                            </button>
+                        </div>
+                        <button 
+                            onClick={openSubscriptionCheckout}
+                            className="bg-gradient-to-r from-sky-500 to-indigo-600 hover:brightness-110 text-white font-bold py-4 px-10 rounded-full shadow-lg transition-all flex items-center justify-center gap-3 transform hover:-translate-y-1"
+                        >
+                            <Zap size={20} /> Subscribe for Unlimited Access
+                        </button>
+                    </>
                 )}
             </div>
 
@@ -369,7 +376,7 @@ export const MusicPackDetail: React.FC = () => {
                             
                             <div className="mt-auto pt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between">
                                 <div className="font-bold text-sky-600 dark:text-sky-400">
-                                    ${(pack.price / 100).toFixed(2)}
+                                    €{(pack.price / 100).toFixed(2)}
                                 </div>
                                 
                                 <Link 

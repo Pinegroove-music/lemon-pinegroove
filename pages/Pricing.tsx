@@ -27,8 +27,8 @@ export const Pricing: React.FC = () => {
       title: "Standard Sync License",
       icon: <Globe className="text-sky-500" size={32} />,
       prices: [
-        { label: "Single Track", value: "$9.99" },
-        { label: "Music Pack", value: "$39.99" }
+        { label: "Single Track", value: "€ 9.99" },
+        { label: "Music Pack", value: "€ 49.99" }
       ],
       features: [
         "Web, Social Media & Podcast",
@@ -42,8 +42,8 @@ export const Pricing: React.FC = () => {
       title: "Extended Sync License",
       icon: <Tv className="text-amber-500" size={32} />,
       prices: [
-        { label: "Single Track", value: "$39.99" },
-        { label: "Music Pack", value: "$59.99" }
+        { label: "Single Track", value: "€ 39.99" },
+        { label: "Music Pack", value: "€ 69.99" }
       ],
       features: [
         "TV, Radio, Film & Apps",
@@ -179,7 +179,7 @@ export const Pricing: React.FC = () => {
                     <p className="text-xl opacity-80 font-medium max-w-xl">The ultimate toolkit for filmmakers, agencies and professional creators.</p>
                   </div>
                   <div className="text-6xl md:text-7xl font-black drop-shadow-xl text-right">
-                    $99 <span className="text-2xl opacity-70 font-bold">/ year</span>
+                    € 99 <span className="text-2xl opacity-70 font-bold">/ year</span>
                   </div>
                 </div>
 
