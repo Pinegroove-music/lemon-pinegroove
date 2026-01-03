@@ -5,10 +5,12 @@ import { supabase } from '../services/supabase';
 import { Album, MusicTrack } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { ShoppingCart, Disc, Play, Pause, Check, ArrowLeft, AlertTriangle, Sparkles, ArrowRight, CheckCircle2, Zap, Library, Download, Loader2 } from 'lucide-react';
+import { ShoppingCart, Disc, Play, Pause, Check, ArrowLeft, AlertTriangle, Sparkles, ArrowRight, CheckCircle2, Zap, Library, Download, Loader2, Info } from 'lucide-react';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
 import { getIdFromSlug, createSlug } from '../utils/slugUtils';
+
+type LicenseOption = 'standard' | 'extended' | 'pro';
 
 export const MusicPackDetail: React.FC = () => {
   const { slug } = useParams();
@@ -19,9 +21,8 @@ export const MusicPackDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [downloadingTrackId, setDownloadingTrackId] = useState<number | null>(null);
+  const [selectedLicense, setSelectedLicense] = useState<LicenseOption>('standard');
   const navigate = useNavigate();
-
-  const LEMON_SQUEEZY_ICON = "https://cdn.simpleicons.org/lemonsqueezy";
 
   const { isPro, openSubscriptionCheckout } = useSubscription();
 
@@ -93,21 +94,25 @@ export const MusicPackDetail: React.FC = () => {
     }
   }, [slug]);
 
-  const handleBuy = (licenseType: 'standard' | 'extended') => {
+  const handleAddToCart = () => {
     if (!album) return;
     if (!session?.user?.id) {
       navigate('/auth');
       return;
     }
+
+    if (selectedLicense === 'pro') {
+        openSubscriptionCheckout();
+        return;
+    }
     
-    const variantId = licenseType === 'standard' ? album.variant_id_standard : album.variant_id_extended;
+    const variantId = selectedLicense === 'standard' ? album.variant_id_standard : album.variant_id_extended;
     if (!variantId) {
       alert("This license variant is currently unavailable for this pack.");
       return;
     }
 
-    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${variantId}?checkout[custom][user_id]=${session.user.id}&checkout[custom][license_type]=${licenseType}&checkout[custom][album_id]=${album.id}&embed=1`;
-    console.log("DEBUG URL:", checkoutUrl);
+    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${variantId}?checkout[custom][user_id]=${session.user.id}&checkout[custom][license_type]=${selectedLicense}&checkout[custom][album_id]=${album.id}&embed=1`;
     
     if (window.LemonSqueezy) {
         window.LemonSqueezy.Url.Open(checkoutUrl);
@@ -136,8 +141,6 @@ export const MusicPackDetail: React.FC = () => {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        } else {
-            alert("Unable to retrieve download URL. Please check your internet connection.");
         }
     } catch (err) {
         console.error("Download Error:", err);
@@ -157,198 +160,212 @@ export const MusicPackDetail: React.FC = () => {
   );
   if (!album) return <div className="p-20 text-center opacity-50">Album not found.</div>;
 
-  const isPurchased = purchasedTracks.some(p => p.album_id === album.id);
-  const hasAccess = isPurchased || isSubscriber;
-
-  const seoDescription = album.description 
-    ? `Buy ${album.title} Music Pack. ${album.description.substring(0, 100)}...`
-    : `Buy ${album.title}, a premium collection of royalty free music tracks by Francesco Biondi.`;
+  const purchase = purchasedTracks.find(p => p.album_id === album.id);
+  const isPurchased = !!purchase;
+  const hasAccess = isPurchased || isPro;
 
   const firstTrack = tracks.length > 0 ? tracks[0] : null;
   const isPlayingFirstTrack = firstTrack && currentTrack?.id === firstTrack.id && isPlaying;
 
-  const handleAlbumPlay = () => {
-    if (firstTrack) {
-        playTrack(firstTrack);
-    }
-  };
+  const ownsStandard = isPurchased && purchase?.license_type?.toLowerCase().includes('standard');
+  const ownsExtended = isPurchased && purchase?.license_type?.toLowerCase().includes('extended');
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 pb-32">
-      <SEO title={album.title} description={seoDescription} image={album.cover_url} />
+    <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
+      <SEO title={album.title} description={album.description || ''} image={album.cover_url} />
 
       <Link to="/music-packs" className="inline-flex items-center gap-2 opacity-60 hover:opacity-100 mb-8 transition-opacity">
         <ArrowLeft size={16} /> Back to Music Packs
       </Link>
 
-      <div className="flex flex-col lg:flex-row gap-12 mb-16 items-start">
-         
+      <div className="flex flex-col md:flex-row gap-8 lg:gap-12 mb-16 items-start">
          <div 
-            className="w-full lg:w-[400px] aspect-square rounded-3xl overflow-hidden shadow-2xl flex-shrink-0 relative bg-zinc-200 dark:bg-zinc-800 group cursor-pointer"
-            onClick={handleAlbumPlay}
+            className="w-full max-w-md md:w-80 lg:w-96 aspect-square rounded-3xl overflow-hidden shadow-2xl flex-shrink-0 relative bg-zinc-200 dark:bg-zinc-800 group cursor-pointer"
+            onClick={() => firstTrack && playTrack(firstTrack)}
          >
             <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover" />
-            
-            <div className="absolute top-4 right-4 bg-sky-500 text-white font-bold px-4 py-2 rounded-full shadow-lg text-lg z-20">
-                €{(album.price / 100).toFixed(2)}
-            </div>
-
-            {firstTrack && (
-                <div className={`absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity duration-300 z-10 ${isPlayingFirstTrack ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                    <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 shadow-lg transition-transform transform group-hover:scale-110">
-                        {isPlayingFirstTrack ? (
-                            <Pause size={40} className="text-white fill-white" />
-                        ) : (
-                            <Play size={40} className="text-white fill-white ml-2" />
-                        )}
-                    </div>
+            <div className={`absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity duration-300 z-10 ${isPlayingFirstTrack ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50">
+                    {isPlayingFirstTrack ? <Pause size={40} className="text-white"/> : <Play size={40} className="text-white ml-2"/>}
                 </div>
-            )}
+            </div>
          </div>
 
          <div className="flex-1 pt-4">
             <div className="flex items-center gap-2 text-sky-500 font-bold uppercase tracking-widest text-sm mb-4">
                 <Disc size={18} /> Premium Music Pack
             </div>
-            <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tight">{album.title}</h1>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight tracking-tight">{album.title}</h1>
             
             {album.description && (
                 <div className="text-lg opacity-80 mb-8 leading-relaxed max-w-2xl whitespace-pre-line">
                     {album.description}
                 </div>
             )}
-
-            <div className="flex flex-col gap-4 max-w-md">
-                {hasAccess ? (
-                    <button 
-                        onClick={() => navigate('/my-purchases')}
-                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-lg font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-3 transform hover:-translate-y-1"
-                    >
-                        {isSubscriber && !isPurchased ? <Zap /> : <CheckCircle2 />}
-                        {isSubscriber && !isPurchased ? 'Download with PRO' : 'Purchased - In Your Library'}
-                    </button>
-                ) : (
-                    <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <button 
-                                onClick={() => handleBuy('standard')}
-                                className="bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
-                            >
-                                Buy Standard
-                            </button>
-                            <button 
-                                onClick={() => handleBuy('extended')}
-                                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 group"
-                            >
-                                Buy Extended
-                            </button>
-                        </div>
-                        <button 
-                            onClick={openSubscriptionCheckout}
-                            className="bg-gradient-to-r from-sky-500 to-indigo-600 hover:brightness-110 text-white font-bold py-4 px-10 rounded-full shadow-lg transition-all flex items-center justify-center gap-3 transform hover:-translate-y-1"
-                        >
-                            <Zap size={20} /> Subscribe for Unlimited Access
-                        </button>
-                    </>
-                )}
-            </div>
-
-            <div className="mt-10 grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-8 text-sm opacity-70">
-                <div className="flex items-center gap-2"><Check size={18} className="text-sky-500"/> One-time payment</div>
-                <div className="flex items-center gap-2"><Check size={18} className="text-sky-500"/> 100% Royalty Free</div>
-                <div className="flex items-center gap-2"><Check size={18} className="text-sky-500"/> WAV + MP3 Included</div>
-                <div className="flex items-center gap-2"><Check size={18} className="text-sky-500"/> Commercial Use</div>
-                <div className="flex items-center gap-2"><Check size={18} className="text-sky-500"/> YouTube Monetization</div>
-                <div className="flex items-center gap-2"><Check size={18} className="text-sky-500"/> No Subscription</div>
-            </div>
          </div>
       </div>
 
-      <div className={`rounded-3xl p-6 md:p-10 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-gray-50'}`}>
-        <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
-            <span>Included Tracks</span>
-            <span className="px-3 py-1 bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300 rounded-full text-xs font-bold uppercase">{tracks.length} Tracks</span>
-        </h3>
-        
-        {tracks.length === 0 ? (
-            <div className="text-center opacity-50 py-10">No tracks linked to this album yet.</div>
-        ) : (
-            <div className="flex flex-col gap-2">
-                {tracks.map((track, index) => {
-                    const isCurrent = currentTrack?.id === track.id;
-                    const active = isCurrent && isPlaying;
-                    const isDownloading = downloadingTrackId === track.id;
-                    
-                    return (
-                        <div 
-                            key={track.id}
-                            className={`
-                                flex items-center gap-4 p-3 rounded-xl transition-all
-                                ${isDarkMode ? 'hover:bg-zinc-800' : 'bg-white border border-gray-100 hover:border-sky-200 hover:shadow-md'}
-                                ${active ? 'ring-1 ring-sky-500 bg-sky-50 dark:bg-sky-900/20' : ''}
-                            `}
-                        >
-                            <div className="hidden md:block w-8 text-center opacity-40 font-mono text-sm">{index + 1}</div>
-                            
+      {/* Main Grid: Left (Tracks) - Right (Licensing) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          
+          {/* Left Column: Included Tracks (7/12) */}
+          <div className="lg:col-span-7 space-y-8">
+            <h3 className="text-2xl font-black mb-6 flex items-center gap-3 border-b pb-2 border-sky-500/20">
+                <span>Included Tracks</span>
+                <span className="px-3 py-1 bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300 rounded-full text-xs font-bold uppercase">{tracks.length} Tracks</span>
+            </h3>
+            
+            {tracks.length === 0 ? (
+                <div className="text-center opacity-50 py-10">No tracks linked to this album yet.</div>
+            ) : (
+                <div className="flex flex-col gap-2">
+                    {tracks.map((track, index) => {
+                        const isCurrent = currentTrack?.id === track.id;
+                        const active = isCurrent && isPlaying;
+                        const isDownloading = downloadingTrackId === track.id;
+                        
+                        return (
                             <div 
-                                className="relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer flex-shrink-0 group"
-                                onClick={() => playTrack(track)}
+                                key={track.id}
+                                className={`
+                                    flex items-center gap-4 p-3 rounded-xl transition-all
+                                    ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800' : 'bg-white border border-gray-100 hover:border-sky-200 hover:shadow-md'}
+                                    ${active ? 'ring-1 ring-sky-500 bg-sky-50 dark:bg-sky-900/20' : ''}
+                                `}
                             >
-                                <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
-                                <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                    {active ? <Pause size={20} className="text-white"/> : <Play size={20} className="text-white ml-1"/>}
-                                </div>
-                            </div>
-
-                            <div className="flex-1 md:flex-none md:w-64 min-w-0 px-2">
-                                <Link to={`/track/${createSlug(track.id, track.title)}`} className={`font-bold text-lg truncate block ${active ? 'text-sky-600 dark:text-sky-400' : 'hover:text-sky-50'}`}>{track.title}</Link>
-                                <div className="flex items-center gap-2">
-                                    <Link 
-                                        to={`/library?search=${encodeURIComponent(track.artist_name)}`} 
-                                        className="text-sm opacity-60 truncate hover:underline hover:text-sky-500 transition-colors"
-                                    >
-                                        {track.artist_name}
-                                    </Link>
-                                </div>
-                            </div>
-
-                            <div className="hidden md:flex flex-1 h-10 items-center px-4 opacity-80">
-                                <WaveformVisualizer track={track} height="h-8" barCount={100} />
-                            </div>
-
-                            <div className="hidden md:flex gap-2">
-                                {Array.isArray(track.genre) ? (
-                                    track.genre.slice(0, 2).map((g) => (
-                                        <span key={g} className="text-[10px] px-2 py-1 rounded-md bg-zinc-200 dark:bg-zinc-800 opacity-70 font-medium uppercase tracking-wide">{g}</span>
-                                    ))
-                                ) : track.genre ? (
-                                    <span className="text-[10px] px-2 py-1 rounded-md bg-zinc-200 dark:bg-zinc-800 opacity-70 font-medium uppercase tracking-wide">{track.genre}</span>
-                                ) : null}
-                            </div>
-
-                            <div className="hidden md:block w-16 text-right font-mono text-sm opacity-50">
-                                {track.duration ? `${Math.floor(track.duration / 60)}:${(Math.floor(track.duration % 60)).toString().padStart(2, '0')}` : '-'}
-                            </div>
-
-                            {hasAccess && (
-                                <button 
-                                    onClick={() => handleDownloadTrack(track)}
-                                    disabled={isDownloading}
-                                    className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md active:scale-95 disabled:opacity-50"
-                                    title="Download WAV"
+                                <div className="hidden md:block w-8 text-center opacity-40 font-mono text-sm">{index + 1}</div>
+                                
+                                <div 
+                                    className="relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer flex-shrink-0 group"
+                                    onClick={() => playTrack(track)}
                                 >
-                                    {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-                                </button>
-                            )}
-                        </div>
-                    )
-                })}
+                                    <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
+                                    <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                        {active ? <Pause size={20} className="text-white"/> : <Play size={20} className="text-white ml-1"/>}
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 md:flex-none md:w-64 min-w-0 px-2">
+                                    <Link to={`/track/${createSlug(track.id, track.title)}`} className={`font-bold text-lg truncate block ${active ? 'text-sky-600 dark:text-sky-400' : 'hover:text-sky-500 transition-colors'}`}>{track.title}</Link>
+                                    <div className="flex items-center gap-2">
+                                        <Link 
+                                            to={`/library?search=${encodeURIComponent(track.artist_name)}`} 
+                                            className="text-sm opacity-60 truncate hover:underline hover:text-sky-500 transition-colors"
+                                        >
+                                            {track.artist_name}
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                <div className="hidden md:flex flex-1 h-10 items-center px-4 opacity-80">
+                                    <WaveformVisualizer track={track} height="h-8" barCount={100} enableAnalysis={active} />
+                                </div>
+
+                                <div className="hidden md:block w-16 text-right font-mono text-sm opacity-50">
+                                    {track.duration ? `${Math.floor(track.duration / 60)}:${(Math.floor(track.duration % 60)).toString().padStart(2, '0')}` : '-'}
+                                </div>
+
+                                {hasAccess && (
+                                    <button 
+                                        onClick={() => handleDownloadTrack(track)}
+                                        disabled={isDownloading}
+                                        className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md active:scale-95 disabled:opacity-50"
+                                        title="Download WAV"
+                                    >
+                                        {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+                                    </button>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+          </div>
+
+          {/* Right Column: Licensing Selection (5/12) */}
+          <div className="lg:col-span-5 space-y-6">
+            <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">Select License</h3>
+            
+            <div className="space-y-4">
+                <LicenseCard 
+                    id="standard"
+                    title="Standard Pack License"
+                    price="€49.99"
+                    selected={selectedLicense === 'standard'}
+                    locked={ownsStandard || ownsExtended || isPro}
+                    onClick={() => setSelectedLicense('standard')}
+                    features={[
+                        "Includes all tracks in the pack",
+                        "Web, Social Media & Podcasts",
+                        "Personal & client projects",
+                        "Educational & Charity films",
+                        "Monetization of 1 social channel"
+                    ]}
+                    infoLink="/user-license-agreement"
+                    isDarkMode={isDarkMode}
+                />
+
+                <LicenseCard 
+                    id="extended"
+                    title="Extended Pack License"
+                    price="€69.99"
+                    selected={selectedLicense === 'extended'}
+                    locked={ownsExtended || isPro}
+                    onClick={() => setSelectedLicense('extended')}
+                    features={[
+                        "TV, Radio, Films & OTT/VOD",
+                        "Advertising & Commercial use",
+                        "Video games & Mobile apps",
+                        "Industrial & Corporate use",
+                        "Monetization of Unlimited channels"
+                    ]}
+                    infoLink="/user-license-agreement"
+                    isDarkMode={isDarkMode}
+                />
+
+                <LicenseCard 
+                    id="pro"
+                    title="PRO Subscription"
+                    price="€99/year"
+                    selected={selectedLicense === 'pro'}
+                    locked={isPro}
+                    onClick={() => setSelectedLicense('pro')}
+                    features={[
+                        "Full access to ALL catalog content",
+                        "Includes all Extended license rights",
+                        "TV, Film, Ads & Games included",
+                        "Instant high-quality WAV downloads"
+                    ]}
+                    infoLink="/pricing"
+                    highlight={true}
+                    isDarkMode={isDarkMode}
+                />
             </div>
-        )}
+
+            <button 
+                onClick={handleAddToCart}
+                className="w-full bg-sky-500 hover:bg-sky-400 text-white font-black py-5 rounded-2xl shadow-xl shadow-sky-500/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 text-xl mt-8"
+            >
+                <ShoppingCart size={24} />
+                {selectedLicense === 'pro' ? 'Subscribe Now' : 'Add To Cart'}
+            </button>
+            
+            <div className="space-y-4 mt-8">
+              <p className="text-center text-xs opacity-50 font-medium">
+                  Secure transaction via Lemon Squeezy Merchant of Record.
+              </p>
+              
+              <div className={`p-4 rounded-xl border text-center ${isDarkMode ? 'bg-sky-500/5 border-sky-500/20' : 'bg-sky-50 border-sky-100'}`}>
+                <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium">
+                    By purchasing a license, you will receive watermark-free .wav versions of all tracks in this pack, available in your personal account area.
+                </p>
+              </div>
+            </div>
+          </div>
       </div>
 
       {relatedPacks.length > 0 && (
-          <div className="mt-16 pt-12 border-t border-gray-200 dark:border-zinc-800">
+          <div className="mt-20 pt-12 border-t border-gray-200 dark:border-zinc-800">
              <h3 className="text-2xl font-bold mb-8 flex items-center gap-2">
                 <Sparkles className="text-sky-500" size={24}/> Discover More Music Packs
              </h3>
@@ -373,19 +390,6 @@ export const MusicPackDetail: React.FC = () => {
                             <h4 className="font-bold text-lg mb-1 leading-tight group-hover:text-sky-500 transition-colors line-clamp-1">
                                 <Link to={`/music-packs/${createSlug(pack.id, pack.title)}`}>{pack.title}</Link>
                             </h4>
-                            
-                            <div className="mt-auto pt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-                                <div className="font-bold text-sky-600 dark:text-sky-400">
-                                    €{(pack.price / 100).toFixed(2)}
-                                </div>
-                                
-                                <Link 
-                                    to={`/music-packs/${createSlug(pack.id, pack.title)}`}
-                                    className={`p-2 rounded-full transition ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'}`}
-                                >
-                                    <ArrowRight size={16} />
-                                </Link>
-                            </div>
                         </div>
                     </div>
                 ))}
@@ -394,4 +398,75 @@ export const MusicPackDetail: React.FC = () => {
       )}
     </div>
   );
+};
+
+interface LicenseCardProps {
+    id: LicenseOption;
+    title: string;
+    price: string;
+    selected: boolean;
+    locked: boolean;
+    onClick: () => void;
+    features: string[];
+    infoLink: string;
+    highlight?: boolean;
+    isDarkMode: boolean;
+}
+
+const LicenseCard: React.FC<LicenseCardProps> = ({ title, price, selected, locked, onClick, features, infoLink, highlight, isDarkMode }) => {
+    if (locked) {
+        return (
+            <div className={`relative p-6 rounded-2xl border-2 border-emerald-500/30 opacity-80 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-emerald-50/30'}`}>
+                <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-black text-lg">{title}</h4>
+                    <CheckCircle2 size={24} className="text-emerald-500" />
+                </div>
+                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">License is active for this product</p>
+                <Link to="/my-purchases" className="text-xs font-black uppercase tracking-widest text-sky-500 hover:underline">Go to My Purchases</Link>
+            </div>
+        );
+    }
+
+    return (
+        <div 
+            onClick={onClick}
+            className={`
+                relative p-6 rounded-2xl border-2 transition-all duration-300 cursor-pointer group
+                ${selected 
+                    ? (isDarkMode ? 'bg-sky-500/10 border-sky-500 shadow-xl shadow-sky-500/10 scale-[1.02]' : 'bg-sky-50 border-sky-500 shadow-xl shadow-sky-500/10 scale-[1.02]') 
+                    : (isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-600' : 'bg-white border-zinc-200 hover:border-zinc-300')}
+                ${highlight && !selected ? 'ring-1 ring-amber-500/20' : ''}
+            `}
+        >
+            {highlight && (
+                <div className="absolute -top-3 right-4 bg-amber-500 text-white text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-tighter shadow-lg">Best Value</div>
+            )}
+            
+            <div className="flex items-center justify-between">
+                <h4 className={`font-black text-lg leading-tight transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-white'}`}>{title}</h4>
+                <div className={`text-xl font-black transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-white'}`}>{price}</div>
+            </div>
+
+            {selected && (
+                <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <ul className="space-y-2 mb-4">
+                        {features.map((f, i) => (
+                            <li key={i} className="text-xs opacity-70 flex items-start gap-2">
+                                <div className="mt-1 w-1 h-1 bg-current rounded-full shrink-0" />
+                                {f}
+                            </li>
+                        ))}
+                    </ul>
+
+                    <Link 
+                        to={infoLink} 
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-sky-500 hover:underline group-hover:gap-2 transition-all"
+                    >
+                        More info <Info size={12} />
+                    </Link>
+                </div>
+            )}
+        </div>
+    );
 };

@@ -4,7 +4,7 @@ import { supabase } from '../services/supabase';
 import { Album } from '../types';
 import { useStore } from '../store/useStore';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Disc, ArrowRight, AlertCircle, Tag, CheckCircle2, Zap } from 'lucide-react';
+import { Disc, AlertCircle, Tag, CheckCircle2, Zap } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { createSlug } from '../utils/slugUtils';
 
@@ -42,29 +42,6 @@ export const MusicPacks: React.FC = () => {
     };
     fetchAlbums();
   }, []);
-
-  const handleBuy = (album: AlbumWithCount) => {
-    const userId = session?.user?.id;
-    if (!userId) {
-      navigate('/auth');
-      return;
-    }
-
-    const checkoutUuid = album.checkout_uuid;
-    if (!checkoutUuid) {
-      alert("This pack is currently unavailable for purchase.");
-      return;
-    }
-
-    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${checkoutUuid}?checkout[custom][user_id]=${userId}&checkout[custom][album_id]=${album.id}&embed=1`;
-    console.log("DEBUG URL:", checkoutUrl);
-    
-    if (window.LemonSqueezy) {
-        window.LemonSqueezy.Url.Open(checkoutUrl);
-    } else {
-        window.open(checkoutUrl, '_blank');
-    }
-  };
 
   return (
     <div className="w-full max-w-[1920px] mx-auto px-6 lg:px-10 py-12 pb-32">
@@ -133,50 +110,16 @@ export const MusicPacks: React.FC = () => {
                         </Link>
 
                         <div className="p-5 flex flex-col flex-1">
-                            <div className="mb-4">
-                                <h2 className="text-xl font-black mb-2 leading-tight group-hover:text-sky-500 transition-colors line-clamp-1">
+                            <div className="mb-2">
+                                <h2 className="text-xl font-black mb-3 leading-tight group-hover:text-sky-500 transition-colors line-clamp-1">
                                     <Link to={`/music-packs/${createSlug(album.id, album.title)}`}>{album.title}</Link>
                                 </h2>
                                 
                                 {album.description && (
-                                    <p className="text-sm opacity-70 leading-relaxed line-clamp-2 min-h-[2.5rem]">
+                                    <p className="text-sm opacity-70 leading-relaxed line-clamp-3 min-h-[3.75rem]">
                                         {album.description}
                                     </p>
                                 )}
-                            </div>
-
-                            <div className="mt-auto pt-4 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-                                <div className="text-2xl font-bold text-sky-600 dark:text-sky-400">
-                                    €{(album.price / 100).toFixed(2)}
-                                </div>
-                                
-                                <div className="flex gap-2">
-                                    <Link 
-                                        to={`/music-packs/${createSlug(album.id, album.title)}`}
-                                        className={`p-2 rounded-full transition ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-gray-100 hover:bg-gray-200 text-black'}`}
-                                        title="View Details"
-                                    >
-                                        <ArrowRight size={20} />
-                                    </Link>
-                                    
-                                    {hasAccess ? (
-                                        <button 
-                                            onClick={() => navigate('/my-purchases')}
-                                            className="p-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg transition hover:scale-105"
-                                            title="Already in collection"
-                                        >
-                                            <CheckCircle2 size={20} />
-                                        </button>
-                                    ) : (
-                                        <button 
-                                            onClick={() => handleBuy(album)}
-                                            className="p-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-500/30 transition hover:scale-105"
-                                            title="Buy Now"
-                                        >
-                                            <ShoppingCart size={20} />
-                                        </button>
-                                    )}
-                                </div>
                             </div>
                         </div>
                     </div>

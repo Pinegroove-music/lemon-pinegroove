@@ -85,7 +85,8 @@ export const useStore = create<AppState>((set, get) => ({
     if (!session?.user?.id) return;
     
     try {
-      const { data, error } = await supabase
+      // 1. Fetch direct purchases
+      const { data: rawPurchases, error } = await supabase
         .from('purchases')
         .select('track_id, album_id, license_type')
         .eq('user_id', session.user.id);
@@ -95,8 +96,38 @@ export const useStore = create<AppState>((set, get) => ({
         return;
       }
       
-      if (data) {
-        set({ purchasedTracks: data as PurchasedItem[] });
+      if (rawPurchases) {
+        const finalPurchases: PurchasedItem[] = [...rawPurchases];
+        
+        // 2. Identify purchased albums to include their tracks
+        const purchasedAlbumIds = rawPurchases
+            .filter(p => p.album_id !== null)
+            .map(p => p.album_id);
+
+        if (purchasedAlbumIds.length > 0) {
+            const { data: albumTracks } = await supabase
+                .from('album_tracks')
+                .select('album_id, track_id')
+                .in('album_id', purchasedAlbumIds);
+            
+            if (albumTracks) {
+                albumTracks.forEach(at => {
+                    // Check if the track is already in the list (avoid duplicates)
+                    const alreadyPresent = finalPurchases.some(p => p.track_id === at.track_id);
+                    if (!alreadyPresent) {
+                        // Find the license type from the parent album purchase
+                        const parentAlbum = rawPurchases.find(p => p.album_id === at.album_id);
+                        finalPurchases.push({
+                            track_id: at.track_id,
+                            album_id: at.album_id, // Link to album for context
+                            license_type: parentAlbum?.license_type || 'Standard'
+                        });
+                    }
+                });
+            }
+        }
+
+        set({ purchasedTracks: finalPurchases });
       }
     } catch (err: any) {
       console.error("Exception fetching purchases:", err.message || err);
