@@ -1,16 +1,43 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { SEO } from '../components/SEO';
-import { Check, Info, ShieldAlert, Tag, Zap, Crown, Globe, Tv, MonitorPlay, Radio, Smartphone, Rocket, HelpCircle, ArrowRight } from 'lucide-react';
+import { Check, Info, ShieldAlert, Tag, Zap, Crown, Globe, Tv, MonitorPlay, Radio, Smartphone, Rocket, HelpCircle, ArrowRight, Ticket, Copy, ShieldCheck } from 'lucide-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../services/supabase';
+import { Coupon } from '../types';
 
 export const Pricing: React.FC = () => {
   const { isDarkMode, session, isSubscriber } = useStore();
   const { openSubscriptionCheckout } = useSubscription();
   const [pricingMode, setPricingMode] = useState<'pay-per-track' | 'subscription'>('pay-per-track');
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const couponGradients = [
+    { bg: 'bg-gradient-to-br from-blue-600 to-sky-800', shadow: 'shadow-blue-500/20' },
+    { bg: 'bg-gradient-to-br from-indigo-600 to-purple-800', shadow: 'shadow-purple-500/20' },
+    { bg: 'bg-gradient-to-br from-zinc-800 to-zinc-950', shadow: 'shadow-zinc-500/20' }
+  ];
+
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      const { data: couponData } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('is_active', true)
+        .not('discount_code', 'is', null);
+      if (couponData) setCoupons(couponData as Coupon[]);
+    };
+    fetchCoupons();
+  }, []);
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
 
   const handleSubscribeClick = () => {
     if (!session) {
@@ -238,6 +265,89 @@ export const Pricing: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Active Promos Section */}
+      {coupons.length > 0 && (
+        <div className="relative z-20 max-w-6xl mx-auto mb-16">
+          <div className={`rounded-[2.5rem] p-8 md:p-14 border transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-800 shadow-2xl' : 'bg-white border-zinc-200 shadow-xl'}`}>
+            <div className="flex items-center gap-4 mb-10">
+              <div className="p-4 bg-sky-500/10 rounded-2xl">
+                <Ticket className="text-sky-500" size={32} />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-black tracking-tight uppercase">Active Promos</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {coupons.map((coupon, idx) => {
+                const style = couponGradients[idx % couponGradients.length];
+                return (
+                  <div 
+                    key={coupon.id} 
+                    className={`
+                      relative p-5 rounded-3xl border-2 border-dashed border-white/20 text-white transition-all duration-500 group
+                      hover:-translate-y-1.5 hover:shadow-2xl overflow-hidden
+                      ${style.bg} ${style.shadow}
+                    `}
+                  >
+                    <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                    <div className={`absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`} />
+                    <div className={`absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`} />
+
+                    <div className="relative z-10 flex justify-between items-start mb-3">
+                      <div className="space-y-0.5">
+                        <h3 className="font-black text-xl tracking-tight leading-tight group-hover:text-sky-200 transition-colors">
+                            {coupon.discount_name}
+                        </h3>
+                        <div className="flex items-center gap-1.5 opacity-50 text-[9px] font-black uppercase tracking-widest">
+                            <ShieldCheck size={10} /> Verified Offer
+                        </div>
+                      </div>
+                      <div className="px-3 py-1.5 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl font-black text-xl md:text-2xl shadow-lg transform group-hover:scale-110 transition-transform">
+                        -{coupon.discount_percent}%
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs mb-5 leading-relaxed font-medium opacity-80 line-clamp-2 min-h-[2rem]">
+                      {coupon.discount_description}
+                    </p>
+
+                    <div className="relative">
+                      <button
+                        onClick={() => handleCopyCode(coupon.discount_code)}
+                        className={`
+                          w-full p-3.5 rounded-xl font-mono font-black text-lg border-2 transition-all duration-300 flex items-center justify-between
+                          ${copiedCode === coupon.discount_code 
+                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg' 
+                            : 'bg-black/20 hover:bg-black/40 border-white/15 text-white'}
+                        `}
+                      >
+                        <span className="tracking-widest">{copiedCode === coupon.discount_code ? 'COPIED!' : coupon.discount_code}</span>
+                        <div className="flex items-center gap-2">
+                          {copiedCode === coupon.discount_code ? (
+                            <Check size={18} className="animate-bounce" />
+                          ) : (
+                            <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                                <span className="text-[9px] font-sans font-black uppercase tracking-tighter">Copy</span>
+                                <Copy size={16} />
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <div className="mt-8 flex items-center justify-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+              <Info size={14} className="text-sky-500" />
+              <p className="text-[11px] md:text-xs font-medium italic">
+                How to use: click on "Add Discount Code" during checkout and enter the coupon code.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Legal & Restrictions Section */}
       <div className="relative z-20 max-w-6xl mx-auto space-y-12">

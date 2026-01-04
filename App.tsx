@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
@@ -27,6 +28,7 @@ import { Menu, Search, Music, User, X } from 'lucide-react';
 import { supabase } from './services/supabase';
 import { createSlug } from './utils/slugUtils';
 import { SEO } from './components/SEO';
+import { AnnouncementBar } from './components/AnnouncementBar';
 
 const Layout: React.FC = () => {
   const { isDarkMode, session, fetchPurchases, fetchProfile } = useStore();
@@ -210,6 +212,8 @@ const Layout: React.FC = () => {
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         
+        {!isAuthPage && <AnnouncementBar />}
+
         {!isAuthPage && (
             <header className={headerClasses}>
             <button 
