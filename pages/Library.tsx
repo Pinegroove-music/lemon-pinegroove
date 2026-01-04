@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { MusicTrack } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { Play, Pause, ShoppingCart, Filter, ChevronDown, ChevronRight, ArrowRight, X, Mic2, ChevronLeft, Sparkles, Check, Trash2, LayoutList, LayoutGrid, Download, Zap } from 'lucide-react';
+import { Play, Pause, ShoppingCart, Filter, ChevronDown, ChevronRight, ArrowRight, X, Mic2, ChevronLeft, Sparkles, Check, Trash2, LayoutList, LayoutGrid, Download, Zap, Loader2 } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
@@ -571,13 +570,13 @@ const CollapsibleFilterSection: React.FC<{
 };
 
 const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = ({ track, onFindSimilar }) => {
-    const { playTrack, currentTrack, isPlaying, isDarkMode, session, purchasedTracks } = useStore();
+    const { playTrack, currentTrack, isPlaying, isDarkMode, session, ownedTrackIds } = useStore();
     const { isPro } = useSubscription();
+    const [downloading, setDownloading] = useState(false);
     const navigate = useNavigate();
     const isCurrent = currentTrack?.id === track.id;
     const active = isCurrent && isPlaying;
-    const isPurchased = purchasedTracks.some(p => p.track_id === track.id);
-    const hasAccess = isPurchased || isPro;
+    const hasAccess = ownedTrackIds.has(track.id) || isPro;
 
     const displayTitle = track.title.length > 22 ? track.title.substring(0, 22) + '...' : track.title;
 
@@ -587,30 +586,39 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
             navigate('/auth');
             return;
         }
+        setDownloading(true);
         try {
-            const response = await fetch('https://byurfsmzxeemvmwbndif.supabase.co/functions/v1/get-download-url', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({ trackId: track.id })
+            const { data, error } = await supabase.functions.invoke('get-download-url', {
+                body: { trackId: track.id }
             });
-            const data = await response.json();
+            
+            if (error) throw error;
             
             if (data?.downloadUrl) {
+                // FORCE PHYSICAL DOWNLOAD via BLOB FETCH
+                const response = await fetch(data.downloadUrl);
+                if (!response.ok) throw new Error('Download failed');
+                
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
                 const link = document.createElement('a');
-                link.href = data.downloadUrl;
+                link.href = blobUrl;
                 link.setAttribute('download', `${track.title}.wav`);
                 document.body.appendChild(link);
                 link.click();
+                
+                // Cleanup
                 document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
             } else {
                 alert("Unable to retrieve download URL. Please ensure you have an active license.");
             }
         } catch (err) {
             console.error("Download error:", err);
-            alert("An error occurred while fetching the download link.");
+            alert("An error occurred while preparing your download.");
+        } finally {
+            setDownloading(false);
         }
     };
 
@@ -683,10 +691,11 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
                     {hasAccess ? (
                         <button 
                             onClick={handleDownload}
+                            disabled={downloading}
                             className="p-1.5 md:p-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg transition-all"
                             title="Download WAV"
                         >
-                            <Download size={16} />
+                            {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                         </button>
                     ) : (
                         <Link 
@@ -705,13 +714,13 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
 }
 
 const TrackGridItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = ({ track, onFindSimilar }) => {
-    const { playTrack, currentTrack, isPlaying, isDarkMode, session, purchasedTracks } = useStore();
+    const { playTrack, currentTrack, isPlaying, isDarkMode, session, ownedTrackIds } = useStore();
     const { isPro } = useSubscription();
+    const [downloading, setDownloading] = useState(false);
     const navigate = useNavigate();
     const isCurrent = currentTrack?.id === track.id;
     const active = isCurrent && isPlaying;
-    const isPurchased = purchasedTracks.some(p => p.track_id === track.id);
-    const hasAccess = isPurchased || isPro;
+    const hasAccess = ownedTrackIds.has(track.id) || isPro;
 
     const displayTitle = track.title.length > 22 ? track.title.substring(0, 22) + '...' : track.title;
 
@@ -721,30 +730,39 @@ const TrackGridItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }>
             navigate('/auth');
             return;
         }
+        setDownloading(true);
         try {
-            const response = await fetch('https://byurfsmzxeemvmwbndif.supabase.co/functions/v1/get-download-url', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({ trackId: track.id })
+            const { data, error } = await supabase.functions.invoke('get-download-url', {
+                body: { trackId: track.id }
             });
-            const data = await response.json();
+            
+            if (error) throw error;
             
             if (data?.downloadUrl) {
+                // FORCE PHYSICAL DOWNLOAD via BLOB FETCH
+                const response = await fetch(data.downloadUrl);
+                if (!response.ok) throw new Error('Download failed');
+                
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
                 const link = document.createElement('a');
-                link.href = data.downloadUrl;
+                link.href = blobUrl;
                 link.setAttribute('download', `${track.title}.wav`);
                 document.body.appendChild(link);
                 link.click();
+                
+                // Cleanup
                 document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
             } else {
                 alert("Unable to retrieve download URL. Please ensure you have an active license.");
             }
         } catch (err) {
-            console.error("Download Error:", err);
-            alert("An error occurred during download.");
+            console.error("Download error:", err);
+            alert("An error occurred while preparing your download.");
+        } finally {
+            setDownloading(false);
         }
     };
 
@@ -785,10 +803,11 @@ const TrackGridItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }>
                         {hasAccess ? (
                             <button 
                                 onClick={handleDownload}
+                                disabled={downloading}
                                 className="p-2 rounded-full bg-emerald-500 text-white shadow-lg backdrop-blur-md transition-colors"
                                 title="Download WAV"
                             >
-                                <Download size={16} />
+                                {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                             </button>
                         ) : (
                             <Link 

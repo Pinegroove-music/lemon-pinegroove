@@ -39,6 +39,8 @@ export const Home: React.FC = () => {
   const [suggestions, setSuggestions] = useState<{type: 'track' | 'artist', text: string, id?: number}[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   
+  const [downloadingTrackId, setDownloadingTrackId] = useState<number | null>(null);
+
   const clientsScrollRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLFormElement>(null);
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,7 +59,6 @@ export const Home: React.FC = () => {
     'bg-gradient-to-br from-blue-600 to-violet-700',
   ];
 
-  // Specific Deep Gradients for Coupons
   const couponGradients = [
     { bg: 'bg-gradient-to-br from-blue-600 to-sky-800', shadow: 'shadow-blue-500/20' },
     { bg: 'bg-gradient-to-br from-indigo-600 to-purple-800', shadow: 'shadow-purple-500/20' },
@@ -132,7 +133,6 @@ export const Home: React.FC = () => {
         setTrendingTracks(finalTrending);
       }
 
-      // Fetch active coupons
       const { data: couponData } = await supabase
         .from('coupons')
         .select('*')
@@ -292,6 +292,7 @@ export const Home: React.FC = () => {
       navigate('/auth');
       return;
     }
+    setDownloadingTrackId(track.id);
     try {
         const { data, error } = await supabase.functions.invoke('get-download-url', {
           body: { trackId: track.id }
@@ -300,18 +301,26 @@ export const Home: React.FC = () => {
         if (error) throw error;
         
         if (data?.downloadUrl) {
-          const link = document.createElement('a');
-          link.href = data.downloadUrl;
-          link.setAttribute('download', `${track.title}.wav`);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+            const response = await fetch(data.downloadUrl);
+            if (!response.ok) throw new Error("Download failed");
+            
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.setAttribute('download', `${track.title}.wav`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
         } else {
           alert("Unable to retrieve download URL. Please ensure you have an active license.");
         }
     } catch (err) {
         console.error("Download Error:", err);
         alert("An error occurred during download.");
+    } finally {
+        setDownloadingTrackId(null);
     }
   };
 
@@ -478,7 +487,6 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Exclusive Deals Section - Compact & Proportional */}
       {coupons.length > 0 && (
         <section className="w-full max-w-[1920px] mx-auto px-6 lg:px-10">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -496,10 +504,8 @@ export const Home: React.FC = () => {
                     ${style.bg} ${style.shadow}
                   `}
                 >
-                  {/* Decorative Glass Circle */}
                   <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
                   
-                  {/* Compact Ticket Notches */}
                   <div className={`absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`} />
                   <div className={`absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`} />
 
@@ -512,7 +518,6 @@ export const Home: React.FC = () => {
                           <ShieldCheck size={10} /> Verified Offer
                       </div>
                     </div>
-                    {/* Balanced Percentage Label with minus sign */}
                     <div className="px-3 py-1.5 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl font-black text-xl md:text-2xl shadow-lg transform group-hover:scale-110 transition-transform">
                       -{coupon.discount_percent}%
                     </div>
@@ -742,6 +747,7 @@ export const Home: React.FC = () => {
              const isPurchased = purchasedTracks.some(p => p.track_id === track.id);
              const isSubscribed = subscriptionStatus === 'active';
              const hasAccess = isPurchased || isSubscribed;
+             const isDownloading = downloadingTrackId === track.id;
 
              return (
               <div 
@@ -792,15 +798,16 @@ export const Home: React.FC = () => {
                         {hasAccess ? (
                             <button 
                                 onClick={() => handleDownload(track)}
-                                className={`p-2 rounded-full transition flex-shrink-0 bg-emerald-500 hover:bg-emerald-600 text-white`}
+                                disabled={isDownloading}
+                                className={`p-2 rounded-full transition flex-shrink-0 bg-emerald-500 hover:bg-emerald-600 text-white shadow-md active:scale-95 disabled:opacity-50`}
                                 title="Download WAV"
                             >
-                                <Download size={18} />
+                                {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                             </button>
                         ) : (
                             <Link 
                                 to={`/track/${createSlug(track.id, track.title)}`}
-                                className={`p-2 rounded-full transition flex-shrink-0 ${isDarkMode ? 'bg-zinc-800 text-zinc-400 hover:bg-sky-900/40 hover:text-sky-400' : 'bg-gray-100 text-zinc-600 hover:bg-sky-100 hover:text-sky-600'}`}
+                                className={`p-2 rounded-full transition flex-shrink-0 ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-100 text-zinc-600 hover:bg-sky-100 hover:text-sky-600'}`}
                                 title="View Purchase Options"
                             >
                                 <ShoppingCart size={18} />
