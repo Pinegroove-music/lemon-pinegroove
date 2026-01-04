@@ -43,6 +43,8 @@ export interface Album {
   price: number;
   gumroad_link: string | null;
   checkout_uuid: string | null;
+  variant_id_standard: string | null;
+  variant_id_extended: string | null;
 }
 
 export interface MediaTheme {
@@ -50,6 +52,16 @@ export interface MediaTheme {
   created_at: string;
   title: string;
   media_theme_pic: string;
+}
+
+export interface Coupon {
+  id: number;
+  created_at: string;
+  discount_name: string;
+  discount_description: string | null;
+  discount_percent: number;
+  discount_code: string;
+  is_active: boolean;
 }
 
 export interface FilterState {

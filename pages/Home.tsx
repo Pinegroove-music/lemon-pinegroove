@@ -1,9 +1,9 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { MusicTrack, Client, Album, MediaTheme } from '../types';
+import { MusicTrack, Client, Album, MediaTheme, Coupon } from '../types';
 import { supabase } from '../services/supabase';
 import { useStore } from '../store/useStore';
-import { Search, Play, ShoppingCart, Pause, ArrowRight, Sparkles, FileCheck, ShieldCheck, Lock, Disc, Mail, Clapperboard, Music, User, TicketPercent, Copy, Check, CreditCard, Download, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
+import { Search, Play, ShoppingCart, Pause, ArrowRight, Sparkles, FileCheck, ShieldCheck, Lock, Disc, Mail, Clapperboard, Music, User, CreditCard, Download, ChevronDown, Loader2, AlertCircle, Check, Ticket, Copy, Info } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
@@ -23,6 +23,8 @@ export const Home: React.FC = () => {
   const [featuredPack, setFeaturedPack] = useState<Album | null>(null);
   const [featuredTrack, setFeaturedTrack] = useState<MusicTrack | null>(null);
   const [mediaThemes, setMediaThemes] = useState<MediaTheme[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { isDarkMode, playTrack, currentTrack, isPlaying, session, purchasedTracks, subscriptionStatus } = useStore();
   const navigate = useNavigate();
@@ -37,7 +39,6 @@ export const Home: React.FC = () => {
 
   const [suggestions, setSuggestions] = useState<{type: 'track' | 'artist', text: string, id?: number}[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [copied, setCopied] = useState(false);
   
   const clientsScrollRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLFormElement>(null);
@@ -55,6 +56,13 @@ export const Home: React.FC = () => {
     'bg-gradient-to-br from-violet-500 to-purple-600',
     'bg-gradient-to-br from-sky-600 to-indigo-700',
     'bg-gradient-to-br from-blue-600 to-violet-700',
+  ];
+
+  // Specific Deep Gradients for Coupons
+  const couponGradients = [
+    { bg: 'bg-gradient-to-br from-blue-600 to-sky-800', shadow: 'shadow-blue-500/20' },
+    { bg: 'bg-gradient-to-br from-indigo-600 to-purple-800', shadow: 'shadow-purple-500/20' },
+    { bg: 'bg-gradient-to-br from-zinc-800 to-zinc-950', shadow: 'shadow-zinc-500/20' }
   ];
 
   useEffect(() => {
@@ -125,6 +133,14 @@ export const Home: React.FC = () => {
         setTrendingTracks(finalTrending);
       }
 
+      // Fetch active coupons
+      const { data: couponData } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('is_active', true)
+        .not('discount_code', 'is', null);
+      if (couponData) setCoupons(couponData as Coupon[]);
+
       const { data: clientData } = await supabase.from('clients').select('*');
       if (clientData) setClients(clientData);
 
@@ -161,6 +177,12 @@ export const Home: React.FC = () => {
 
     fetchData();
   }, []);
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
 
   useEffect(() => {
     if (clients.length === 0) return;
@@ -264,12 +286,6 @@ export const Home: React.FC = () => {
           setSearchQuery(item.text);
           handleSearch({ preventDefault: () => {} } as React.FormEvent, item.text);
       }
-  };
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText('MYOTY3MA');
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = async (track: MusicTrack) => {
@@ -404,27 +420,6 @@ export const Home: React.FC = () => {
                 </Link>
             </div>
          </div>
-
-         <div className="w-full bg-gradient-to-r from-emerald-600 to-teal-700 text-white py-3 px-4 shadow-md z-20 border-t border-white/20 relative">
-            <div className="max-w-[1920px] mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-4 text-sm md:text-base text-center sm:text-left">
-                <div className="flex items-center gap-2 font-medium">
-                    <TicketPercent size={18} className="animate-bounce" />
-                    <span>Lemon Squeezy Sale: Get <span className="font-bold text-emerald-50 bg-white/10 px-1 rounded">50% OFF</span> all licenses for a limited time.</span>
-                </div>
-                
-                <button 
-                    onClick={handleCopyCode}
-                    className="flex items-center gap-2 bg-black/20 hover:bg-black/40 rounded-full pl-3 pr-2 py-1 transition-all group active:scale-95 border border-white/20"
-                    title="Click to copy code"
-                >
-                    <span className="opacity-80 text-xs uppercase tracking-wide">Use code:</span>
-                    <span className="font-mono font-bold tracking-wider text-yellow-300 group-hover:text-white transition-colors">MYOTY3MA</span>
-                    <div className={`p-1 rounded-full ${copied ? 'bg-white text-emerald-600' : 'bg-white/10 text-white group-hover:bg-white/20'}`}>
-                        {copied ? <Check size={12} /> : <Copy size={12} />}
-                    </div>
-                </button>
-            </div>
-         </div>
       </div>
 
       <section className="w-full max-w-[1920px] mx-auto px-6 lg:px-10">
@@ -483,6 +478,87 @@ export const Home: React.FC = () => {
             </Link>
         </div>
       </section>
+
+      {/* Exclusive Deals Section - Compact & Proportional */}
+      {coupons.length > 0 && (
+        <section className="w-full max-w-[1920px] mx-auto px-6 lg:px-10">
+          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+            <Ticket className="text-sky-500" size={24} /> Exclusive Deals
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {coupons.map((coupon, idx) => {
+              const style = couponGradients[idx % couponGradients.length];
+              return (
+                <div 
+                  key={coupon.id} 
+                  className={`
+                    relative p-5 rounded-3xl border-2 border-dashed border-white/20 text-white transition-all duration-500 group
+                    hover:-translate-y-1.5 hover:shadow-2xl overflow-hidden
+                    ${style.bg} ${style.shadow}
+                  `}
+                >
+                  {/* Decorative Glass Circle */}
+                  <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                  
+                  {/* Compact Ticket Notches */}
+                  <div className={`absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`} />
+                  <div className={`absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`} />
+
+                  <div className="relative z-10 flex justify-between items-start mb-3">
+                    <div className="space-y-0.5">
+                      <h3 className="font-black text-xl tracking-tight leading-tight group-hover:text-sky-200 transition-colors">
+                          {coupon.discount_name}
+                      </h3>
+                      <div className="flex items-center gap-1.5 opacity-50 text-[9px] font-black uppercase tracking-widest">
+                          <ShieldCheck size={10} /> Verified Offer
+                      </div>
+                    </div>
+                    {/* Balanced Percentage Label */}
+                    <div className="px-3 py-1.5 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl font-black text-xl md:text-2xl shadow-lg transform group-hover:scale-110 transition-transform">
+                      {coupon.discount_percent}%
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs mb-5 leading-relaxed font-medium opacity-80 line-clamp-2 min-h-[2rem]">
+                    {coupon.discount_description}
+                  </p>
+
+                  <div className="relative">
+                    <button
+                      onClick={() => handleCopyCode(coupon.discount_code)}
+                      className={`
+                        w-full p-3.5 rounded-xl font-mono font-black text-lg border-2 transition-all duration-300 flex items-center justify-between
+                        ${copiedCode === coupon.discount_code 
+                          ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg' 
+                          : 'bg-black/20 hover:bg-black/40 border-white/15 text-white'}
+                      `}
+                    >
+                      <span className="tracking-widest">{copiedCode === coupon.discount_code ? 'COPIED!' : coupon.discount_code}</span>
+                      <div className="flex items-center gap-2">
+                        {copiedCode === coupon.discount_code ? (
+                          <Check size={18} className="animate-bounce" />
+                        ) : (
+                          <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                              <span className="text-[9px] font-sans font-black uppercase tracking-tighter">Copy</span>
+                              <Copy size={16} />
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="mt-8 flex items-center justify-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+            <Info size={14} className="text-sky-500" />
+            <p className="text-[11px] md:text-xs font-medium italic">
+              How to use: click on "Add Discount Code" during checkout and enter the coupon code.
+            </p>
+          </div>
+        </section>
+      )}
 
       <section className="w-full max-w-[1920px] mx-auto px-6 lg:px-10 py-4">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">

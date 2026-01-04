@@ -669,9 +669,7 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
                     {track.bpm && <div>{track.bpm} BPM</div>}
                 </div>
                 
-                <div className="hidden md:block">
-                    <FavoriteButton trackId={track.id} />
-                </div>
+                <FavoriteButton trackId={track.id} />
                 
                 <button 
                     onClick={(e) => { e.stopPropagation(); onFindSimilar && onFindSimilar(); }}
