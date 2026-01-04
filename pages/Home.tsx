@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { MusicTrack, Client, Album, MediaTheme } from '../types';
 import { supabase } from '../services/supabase';
 import { useStore } from '../store/useStore';
-import { Search, Play, ShoppingCart, Pause, ArrowRight, Sparkles, FileCheck, ShieldCheck, Lock, Disc, Mail, Clapperboard, Music, User, TicketPercent, Copy, Check, CreditCard, Download, ChevronDown } from 'lucide-react';
+import { Search, Play, ShoppingCart, Pause, ArrowRight, Sparkles, FileCheck, ShieldCheck, Lock, Disc, Mail, Clapperboard, Music, User, TicketPercent, Copy, Check, CreditCard, Download, ChevronDown, Loader2, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
@@ -27,6 +27,14 @@ export const Home: React.FC = () => {
   const { isDarkMode, playTrack, currentTrack, isPlaying, session, purchasedTracks, subscriptionStatus } = useStore();
   const navigate = useNavigate();
   
+  // Newsletter States
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterFirstName, setNewsletterFirstName] = useState('');
+  const [newsletterLastName, setNewsletterLastName] = useState('');
+  const [newsletterConsent, setNewsletterConsent] = useState(false);
+  const [isSubmittingNewsletter, setIsSubmittingNewsletter] = useState(false);
+  const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
   const [suggestions, setSuggestions] = useState<{type: 'track' | 'artist', text: string, id?: number}[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -292,16 +300,38 @@ export const Home: React.FC = () => {
     }
   };
 
-  const handlePurchase = (checkoutUuid: string | null, userId: string) => {
-    if (!checkoutUuid) return;
-    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${checkoutUuid}?embed=1&checkout[custom][user_id]=${userId}`;
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail || !newsletterFirstName || !newsletterLastName || !newsletterConsent) return;
 
-    if (window.LemonSqueezy) {
-      window.LemonSqueezy.Url.Open(checkoutUrl);
-    } else {
-      window.location.href = checkoutUrl;
+    setIsSubmittingNewsletter(true);
+    setNewsletterStatus('idle');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('sender-newsletter', {
+        body: {
+          email: newsletterEmail,
+          firstname: newsletterFirstName,
+          lastname: newsletterLastName
+        }
+      });
+
+      if (error) throw error;
+
+      setNewsletterStatus('success');
+      setNewsletterEmail('');
+      setNewsletterFirstName('');
+      setNewsletterLastName('');
+      setNewsletterConsent(false);
+    } catch (err) {
+      console.error("Newsletter subscription error:", err);
+      setNewsletterStatus('error');
+    } finally {
+      setIsSubmittingNewsletter(false);
     }
   };
+
+  const isNewsletterValid = newsletterEmail.includes('@') && newsletterFirstName.trim() && newsletterLastName.trim() && newsletterConsent;
 
   const displayClients = clients.length > 0 ? [...clients, ...clients, ...clients, ...clients, ...clients, ...clients] : [];
 
@@ -693,25 +723,13 @@ export const Home: React.FC = () => {
                                 <Download size={18} />
                             </button>
                         ) : (
-                            <div className="relative">
-                                {!session ? (
-                                    <button 
-                                        onClick={() => navigate('/auth')}
-                                        className={`p-2 rounded-full transition flex-shrink-0 ${isDarkMode ? 'bg-zinc-800 hover:bg-sky-600 text-white' : 'bg-gray-100 hover:bg-sky-50 hover:text-white'}`}
-                                        title="Log in to buy"
-                                    >
-                                        <ShoppingCart size={18} />
-                                    </button>
-                                ) : (
-                                    <button 
-                                        onClick={() => handlePurchase(track.checkout_uuid, session.user.id)}
-                                        className={`p-2 rounded-full transition flex-shrink-0 ${isDarkMode ? 'bg-zinc-800 hover:bg-sky-600 text-white' : 'bg-gray-100 hover:bg-sky-50 hover:text-white'}`}
-                                        title="Buy License"
-                                    >
-                                        <ShoppingCart size={18} />
-                                    </button>
-                                )}
-                            </div>
+                            <Link 
+                                to={`/track/${createSlug(track.id, track.title)}`}
+                                className={`p-2 rounded-full transition flex-shrink-0 ${isDarkMode ? 'bg-zinc-800 text-zinc-400 hover:bg-sky-900/40 hover:text-sky-400' : 'bg-gray-100 text-zinc-600 hover:bg-sky-100 hover:text-sky-600'}`}
+                                title="View Purchase Options"
+                            >
+                                <ShoppingCart size={18} />
+                            </Link>
                         )}
                     </div>
                 </div>
@@ -722,7 +740,7 @@ export const Home: React.FC = () => {
       </section>
 
       <section className="w-full max-w-[1920px] mx-auto px-6 lg:px-10 py-8">
-        <div className={`relative overflow-hidden rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 border ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-xl'}`}>
+        <div className={`relative overflow-hidden rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-12 border ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-xl'}`}>
 
             <div className="absolute -right-16 -bottom-16 pointer-events-none">
                 <CreditCard className="w-64 h-64 opacity-5 transform rotate-12" />
@@ -732,21 +750,72 @@ export const Home: React.FC = () => {
                 <h2 className="text-2xl font-bold mb-3 flex items-center justify-center md:justify-start gap-2">
                     <Mail className="text-sky-500"/> Subscribe for Updates
                 </h2>
-                <p className={`text-lg leading-relaxed ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                    We partner with <strong>Lemon Squeezy</strong> to ensure 100% secure licensing transactions and instant file delivery. Subscribe to get notified about new releases.
+                <p className={`text-lg leading-relaxed mb-6 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                    Stay in the loop. Subscribe to receive exclusive coupon codes, early access to new music drops, and news about our latest placements in films and media. No spam, just pure inspiration.
                 </p>
+                {newsletterStatus === 'success' && (
+                    <div className="flex items-center gap-2 p-3 bg-green-500/10 text-green-500 rounded-xl text-sm font-bold animate-in fade-in slide-in-from-top-2">
+                        <Check size={18} /> Subscription successful!
+                    </div>
+                )}
+                {newsletterStatus === 'error' && (
+                    <div className="flex items-center gap-2 p-3 bg-red-500/10 text-red-500 rounded-xl text-sm font-bold animate-in fade-in slide-in-from-top-2">
+                        <AlertCircle size={18} /> Error subscribing. Please try again.
+                    </div>
+                )}
             </div>
 
-            <div className="relative z-10 flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                <input
-                    type="email"
-                    placeholder="Your email address"
-                    className={`px-5 py-3.5 rounded-xl outline-none border-2 transition-all w-full sm:w-72 ${isDarkMode ? 'bg-black border-zinc-700 focus:border-sky-500 text-white' : 'bg-gray-50 border-gray-200 focus:border-sky-500 text-black'}`}
-                />
-                <button className="bg-sky-600 hover:bg-sky-500 text-white px-8 py-3.5 rounded-xl font-bold transition shadow-md hover:shadow-lg whitespace-nowrap">
-                    Subscribe Now
-                </button>
-            </div>
+            <form onSubmit={handleNewsletterSubmit} className="relative z-10 flex flex-col gap-4 w-full md:w-auto max-w-md">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                      required
+                      type="text"
+                      placeholder="First Name"
+                      value={newsletterFirstName}
+                      onChange={(e) => setNewsletterFirstName(e.target.value)}
+                      className={`px-5 py-3.5 rounded-xl outline-none border-2 transition-all w-full sm:w-1/2 ${isDarkMode ? 'bg-black border-zinc-700 focus:border-sky-500 text-white' : 'bg-gray-50 border-gray-200 focus:border-sky-500 text-black'}`}
+                  />
+                  <input
+                      required
+                      type="text"
+                      placeholder="Last Name"
+                      value={newsletterLastName}
+                      onChange={(e) => setNewsletterLastName(e.target.value)}
+                      className={`px-5 py-3.5 rounded-xl outline-none border-2 transition-all w-full sm:w-1/2 ${isDarkMode ? 'bg-black border-zinc-700 focus:border-sky-500 text-white' : 'bg-gray-50 border-gray-200 focus:border-sky-500 text-black'}`}
+                  />
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                      required
+                      type="email"
+                      placeholder="Your email address"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      className={`px-5 py-3.5 rounded-xl outline-none border-2 transition-all w-full sm:w-72 ${isDarkMode ? 'bg-black border-zinc-700 focus:border-sky-500 text-white' : 'bg-gray-50 border-gray-200 focus:border-sky-500 text-black'}`}
+                  />
+                  <button 
+                    type="submit"
+                    disabled={!isNewsletterValid || isSubmittingNewsletter}
+                    className={`bg-sky-600 hover:bg-sky-500 text-white px-8 py-3.5 rounded-xl font-bold transition shadow-md hover:shadow-lg whitespace-nowrap flex items-center justify-center gap-2 ${(!isNewsletterValid || isSubmittingNewsletter) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                      {isSubmittingNewsletter ? <Loader2 size={18} className="animate-spin" /> : 'Subscribe Now'}
+                  </button>
+                </div>
+
+                <label className="flex items-start gap-3 cursor-pointer group select-none">
+                    <input 
+                      required
+                      type="checkbox" 
+                      checked={newsletterConsent}
+                      onChange={(e) => setNewsletterConsent(e.target.checked)}
+                      className="mt-1 w-4 h-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
+                    />
+                    <span className={`text-xs font-medium leading-snug ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                      I would like to receive newsletter and promotions
+                    </span>
+                </label>
+            </form>
         </div>
       </section>
 

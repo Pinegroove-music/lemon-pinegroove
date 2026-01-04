@@ -399,7 +399,7 @@ export const Library: React.FC = () => {
       <div className="flex-1 p-4 lg:p-8">
         <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-                 <h2 className="text-3xl font-bold">Library</h2>
+                 <h2 className="text-3xl font-bold text-zinc-900 dark:text-white">Library</h2>
                  {tracks.length > 0 && <span className="text-sm font-normal opacity-50 bg-gray-100 dark:bg-zinc-800 px-3 py-1 rounded-full">{tracks.length} Tracks</span>}
             </div>
 
@@ -429,19 +429,21 @@ export const Library: React.FC = () => {
           </div>
         ) : (
           <>
-            {viewMode === 'list' ? (
-                <div className="flex flex-col gap-3">
-                    {currentTracks.map(track => (
-                    <TrackItem key={track.id} track={track} onFindSimilar={() => findSimilar(track)} />
-                    ))}
-                </div>
-            ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                    {currentTracks.map(track => (
-                    <TrackGridItem key={track.id} track={track} onFindSimilar={() => findSimilar(track)} />
-                    ))}
-                </div>
-            )}
+            <div>
+                {viewMode === 'list' ? (
+                    <div className="flex flex-col gap-3">
+                        {currentTracks.map(track => (
+                            <TrackItem key={track.id} track={track} onFindSimilar={() => findSimilar(track)} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                        {currentTracks.map(track => (
+                            <TrackGridItem key={track.id} track={track} onFindSimilar={() => findSimilar(track)} />
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {totalPages > 1 && (
                 <div className="mt-12 flex justify-center items-center gap-2">
@@ -570,13 +572,14 @@ const CollapsibleFilterSection: React.FC<{
 
 const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = ({ track, onFindSimilar }) => {
     const { playTrack, currentTrack, isPlaying, isDarkMode, session, purchasedTracks } = useStore();
-    const { isPro, openSubscriptionCheckout } = useSubscription();
-    const [licenseType, setLicenseType] = useState<'standard' | 'extended'>('standard');
+    const { isPro } = useSubscription();
     const navigate = useNavigate();
     const isCurrent = currentTrack?.id === track.id;
     const active = isCurrent && isPlaying;
     const isPurchased = purchasedTracks.some(p => p.track_id === track.id);
     const hasAccess = isPurchased || isPro;
+
+    const displayTitle = track.title.length > 22 ? track.title.substring(0, 22) + '...' : track.title;
 
     const handleDownload = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -611,118 +614,91 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
         }
     };
 
-    const handlePurchase = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!session?.user?.id) {
-            navigate('/auth');
-            return;
-        }
-
-        const variantId = licenseType === 'standard' ? track.variant_id_standard : track.variant_id_extended;
-        if (!variantId) {
-            alert("This license variant is currently unavailable for this track.");
-            return;
-        }
-
-        const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${variantId}?checkout[custom][user_id]=${session.user.id}&checkout[custom][track_id]=${track.id}&checkout[custom][license_type]=${licenseType}&embed=1`;
-        console.log("DEBUG URL:", checkoutUrl);
-
-        if (window.LemonSqueezy) {
-            window.LemonSqueezy.Url.Open(checkoutUrl);
-        } else {
-            window.location.href = checkoutUrl;
-        }
-    };
-
     return (
         <div className={`
-            flex flex-col md:flex-row items-center gap-4 p-3 rounded-xl transition-all duration-200
+            flex items-center gap-3 p-2 md:p-3 rounded-xl transition-all duration-200
             ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-200 shadow-sm hover:shadow-md border'}
             ${active ? 'ring-1 ring-sky-500/50' : ''}
         `}>
+            {/* Column 1: Cover Image */}
             <div 
-                className="relative group w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden cursor-pointer"
+                className="relative group w-12 h-12 md:w-16 md:h-16 flex-shrink-0 rounded-lg overflow-hidden cursor-pointer"
                 onClick={() => playTrack(track)}
             >
                 <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className={`absolute inset-0 bg-sky-900/40 flex items-center justify-center transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                    {active ? <Pause className="text-white" size={20} /> : <Play className="text-white ml-1" size={20} />}
+                    {active ? <Pause className="text-white" size={18} /> : <Play className="text-white ml-1" size={18} />}
                 </div>
             </div>
 
-            <div className="flex-1 md:flex-none md:w-60 min-w-0">
-                <Link to={`/track/${createSlug(track.id, track.title)}`} className="font-bold text-base hover:text-sky-500 transition-colors block truncate">{track.title}</Link>
+            {/* Column 2: Info (Title, Artist, Genre) - Narrower on desktop to give room to waveform */}
+            <div className="flex-1 md:flex-none md:w-52 min-w-0">
+                <Link to={`/track/${createSlug(track.id, track.title)}`} className="font-bold text-sm md:text-base hover:text-sky-500 transition-colors block truncate leading-tight" title={track.title}>{displayTitle}</Link>
                 <div className="flex items-center gap-2">
-                    <Link to={`/library?search=${encodeURIComponent(track.artist_name)}`} className="text-xs opacity-70 hover:underline">{track.artist_name}</Link>
+                    <Link to={`/library?search=${encodeURIComponent(track.artist_name)}`} className="text-[10px] md:text-xs opacity-70 hover:underline truncate">{track.artist_name}</Link>
                     {track.lyrics && (
-                        <span title="Has Lyrics">
-                            <Mic2 size={12} className="text-sky-500 opacity-80" />
+                        <span title="Has Lyrics" className="shrink-0">
+                            <Mic2 size={10} className="text-sky-500 opacity-80" />
                         </span>
                     )}
                 </div>
-                <div className="flex flex-wrap gap-2 mt-1">
-                    {Array.isArray(track.genre) ? track.genre.slice(0, 1).map(g => (
-                        <span key={g} className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-sm bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">{g}</span>
-                    )) : track.genre ? (
-                        <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-sm bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">{track.genre}</span>
+                <div className="mt-1">
+                    {Array.isArray(track.genre) ? (
+                        <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded-sm bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300 inline-block">{track.genre[0]}</span>
+                    ) : track.genre ? (
+                        <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded-sm bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300 inline-block">{track.genre}</span>
                     ) : null}
                 </div>
             </div>
 
+            {/* Hidden on Mobile: Waveform - Now takes ALL remaining space with minimal padding */}
             <div className="hidden md:flex flex-1 h-12 items-center px-2">
                 <WaveformVisualizer 
                     track={track} 
                     height="h-10" 
-                    barCount={150} 
+                    barCount={200} 
                     interactive={true} 
                     enableAnalysis={active}
                 />
             </div>
 
-            <div className="flex items-center gap-4 relative pr-2">
-                <div className="text-right text-xs opacity-60 font-mono hidden lg:block w-16">
+            {/* Column 3: Actions */}
+            <div className="flex items-center gap-1 md:gap-3 flex-shrink-0">
+                <div className="text-right text-[10px] opacity-60 font-mono hidden lg:block w-14 leading-tight">
                     <div>{track.duration ? `${Math.floor(track.duration / 60)}:${(track.duration % 60).toString().padStart(2, '0')}` : '0:00'}</div>
                     {track.bpm && <div>{track.bpm} BPM</div>}
                 </div>
                 
-                <FavoriteButton trackId={track.id} />
+                <div className="hidden md:block">
+                    <FavoriteButton trackId={track.id} />
+                </div>
                 
                 <button 
                     onClick={(e) => { e.stopPropagation(); onFindSimilar && onFindSimilar(); }}
-                    className="p-2 rounded-full hover:bg-sky-100 dark:hover:bg-zinc-700 text-sky-500 transition-colors"
+                    className="p-1.5 md:p-2 rounded-full hover:bg-sky-100 dark:hover:bg-zinc-700 text-sky-500 transition-colors"
                     title="Find similar tracks"
                 >
-                    <Sparkles size={18} />
+                    <Sparkles size={16} />
                 </button>
 
-                <div className="w-auto flex items-center justify-center gap-2">
+                <div className="w-auto flex items-center justify-center">
                     {hasAccess ? (
                         <button 
                             onClick={handleDownload}
-                            className="p-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg transition-all"
+                            className="p-1.5 md:p-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg transition-all"
                             title="Download WAV"
                         >
-                            <Download size={18} />
+                            <Download size={16} />
                         </button>
                     ) : (
-                        <div className="flex items-center gap-2">
-                            <select 
-                                value={licenseType}
-                                onChange={(e) => setLicenseType(e.target.value as 'standard' | 'extended')}
-                                className={`text-xs p-2 rounded-lg border outline-none ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-gray-50 border-gray-200 text-black'}`}
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <option value="standard">Standard</option>
-                                <option value="extended">Extended</option>
-                            </select>
-                            <button 
-                                onClick={handlePurchase}
-                                className="p-2 rounded-full bg-sky-500 hover:bg-sky-600 text-white shadow-lg transition-all"
-                                title={`Buy ${licenseType} License`}
-                            >
-                                <ShoppingCart size={18} />
-                            </button>
-                        </div>
+                        <Link 
+                            to={`/track/${createSlug(track.id, track.title)}`}
+                            className={`p-1.5 md:p-2 rounded-full transition-all shadow-md ${isDarkMode ? 'bg-zinc-800 text-zinc-400 hover:bg-sky-900/40 hover:text-sky-400' : 'bg-gray-100 text-zinc-600 hover:bg-sky-100 hover:text-sky-600'}`}
+                            title="View Purchase Options"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <ShoppingCart size={16} />
+                        </Link>
                     )}
                 </div>
             </div>
@@ -738,6 +714,8 @@ const TrackGridItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }>
     const active = isCurrent && isPlaying;
     const isPurchased = purchasedTracks.some(p => p.track_id === track.id);
     const hasAccess = isPurchased || isPro;
+
+    const displayTitle = track.title.length > 22 ? track.title.substring(0, 22) + '...' : track.title;
 
     const handleDownload = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -829,7 +807,7 @@ const TrackGridItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }>
 
             <div className="p-4 text-center">
                 <Link to={`/track/${createSlug(track.id, track.title)}`} className="font-bold text-sm truncate block hover:text-sky-500 transition-colors mb-1" title={track.title}>
-                    {track.title}
+                    {displayTitle}
                 </Link>
                 <Link 
                     to={`/library?search=${encodeURIComponent(track.artist_name)}`} 
