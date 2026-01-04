@@ -17,7 +17,8 @@ interface AppState {
   isSubscriber: boolean;
   renewsAt: string | null;
   setSession: (session: Session | null) => void;
-  purchasedTracks: PurchasedItem[]; // Tracks both single tracks and albums
+  purchasedTracks: PurchasedItem[]; // Rows from purchases table
+  ownedTrackIds: Set<number>; // Flat set of all owned track IDs (direct + via albums)
   fetchPurchases: () => Promise<void>;
   fetchProfile: () => Promise<void>;
 
@@ -50,10 +51,11 @@ export const useStore = create<AppState>((set, get) => ({
       get().fetchPurchases();
       get().fetchProfile();
     } else {
-      set({ purchasedTracks: [], subscriptionStatus: null, isSubscriber: false, renewsAt: null });
+      set({ purchasedTracks: [], ownedTrackIds: new Set(), subscriptionStatus: null, isSubscriber: false, renewsAt: null });
     }
   },
   purchasedTracks: [],
+  ownedTrackIds: new Set(),
   fetchProfile: async () => {
     const session = get().session;
     if (!session?.user?.id) return;
@@ -82,22 +84,46 @@ export const useStore = create<AppState>((set, get) => ({
   },
   fetchPurchases: async () => {
     const session = get().session;
-    if (!session?.user?.id) return;
+    const userId = session?.user?.id;
+    if (!userId) return;
     
     try {
-      const { data, error } = await supabase
+      // 1. Get direct purchases from the purchases table
+      // We strictly use squeeze_tracks as the source of truth
+      const { data: purchases, error: purchaseError } = await supabase
         .from('purchases')
         .select('track_id, album_id, license_type')
-        .eq('user_id', session.user.id);
+        .eq('user_id', userId);
       
-      if (error) {
-        console.error("Error fetching purchases:", error.message);
+      if (purchaseError) {
+        console.error("Error fetching purchases:", purchaseError.message);
         return;
       }
       
-      if (data) {
-        set({ purchasedTracks: data as PurchasedItem[] });
+      const trackIds = new Set<number>();
+      const albumIds: number[] = [];
+
+      purchases?.forEach(p => {
+        if (p.track_id) trackIds.add(p.track_id);
+        if (p.album_id) albumIds.push(p.album_id);
+      });
+
+      // 2. Resolve tracks inside purchased albums (Music Packs)
+      if (albumIds.length > 0) {
+        const { data: albumTracks, error: albumTracksError } = await supabase
+          .from('album_tracks')
+          .select('track_id')
+          .in('album_id', albumIds);
+
+        if (!albumTracksError && albumTracks) {
+          albumTracks.forEach(at => trackIds.add(at.track_id));
+        }
       }
+      
+      set({ 
+        purchasedTracks: (purchases || []) as PurchasedItem[],
+        ownedTrackIds: trackIds
+      });
     } catch (err: any) {
       console.error("Exception fetching purchases:", err.message || err);
     }

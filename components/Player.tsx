@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { Play, Pause, ShoppingCart, Volume2, VolumeX, Volume1, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { Play, Pause, ShoppingCart, Volume2, VolumeX, Volume1, ChevronDown, ChevronUp, Download, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { WaveformVisualizer } from './WaveformVisualizer';
 import { createSlug } from '../utils/slugUtils';
@@ -16,11 +16,12 @@ const formatTime = (time: number) => {
 };
 
 export const Player: React.FC = () => {
-  const { currentTrack, isPlaying, togglePlay, isDarkMode, setProgress, volume, setVolume, seekTime, setSeekTime, progress, session, purchasedTracks } = useStore();
+  const { currentTrack, isPlaying, togglePlay, isDarkMode, setProgress, volume, setVolume, seekTime, setSeekTime, progress, session, purchasedTracks, ownedTrackIds } = useStore();
   const { isPro } = useSubscription();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [downloading, setDownloading] = useState(false);
   const navigate = useNavigate();
 
   const [isMobileMinimized, setIsMobileMinimized] = useState(false);
@@ -125,6 +126,7 @@ export const Player: React.FC = () => {
 
   const handleDownload = async () => {
     if (!currentTrack || !session) return;
+    setDownloading(true);
     try {
         const { data, error } = await supabase.functions.invoke('get-download-url', {
           body: { trackId: currentTrack.id }
@@ -133,18 +135,23 @@ export const Player: React.FC = () => {
         if (error) throw error;
         
         if (data?.downloadUrl) {
+            // FORCE PHYSICAL DOWNLOAD via BLOB
+            const response = await fetch(data.downloadUrl);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.href = data.downloadUrl;
-            link.setAttribute('download', `${currentTrack.title}.wav`);
-            document.body.appendChild(link);
-            link.click();
+            link.href = blobUrl; link.setAttribute('download', `${currentTrack.title}.wav`);
+            document.body.appendChild(link); link.click(); 
             document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
         } else {
             alert("Unable to retrieve download URL.");
         }
     } catch (err) {
         console.error("Download Error:", err);
         alert("Errore nel download.");
+    } finally {
+        setDownloading(false);
     }
   };
 
@@ -157,7 +164,7 @@ export const Player: React.FC = () => {
 
   const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
   const remainingTime = duration - currentTime;
-  const isPurchased = purchasedTracks.some(p => p.track_id === currentTrack.id);
+  const isPurchased = ownedTrackIds.has(currentTrack.id);
   const hasAccess = isPurchased || isPro;
 
   return (
@@ -303,10 +310,11 @@ export const Player: React.FC = () => {
                 {hasAccess ? (
                     <button 
                         onClick={handleDownload}
+                        disabled={downloading}
                         className="hidden md:flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-full text-xs font-bold transition shadow-sm hover:scale-105"
                     >
-                        <Download size={14} />
-                        <span>Download WAV</span>
+                        {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                        <span>{downloading ? 'Preparing...' : 'Download WAV'}</span>
                     </button>
                 ) : (
                     !session ? (
@@ -338,10 +346,11 @@ export const Player: React.FC = () => {
                     {hasAccess ? (
                         <button 
                             onClick={handleDownload}
+                            disabled={downloading}
                             className="p-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-lg transition-colors"
                             title="Download WAV"
                         >
-                            <Download size={18} />
+                            {downloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                         </button>
                     ) : (
                         !session ? (

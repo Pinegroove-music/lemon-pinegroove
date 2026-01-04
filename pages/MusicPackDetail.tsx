@@ -17,7 +17,7 @@ export const MusicPackDetail: React.FC = () => {
   const [album, setAlbum] = useState<Album | null>(null);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [relatedPacks, setRelatedPacks] = useState<Album[]>([]);
-  const { isDarkMode, playTrack, currentTrack, isPlaying, session, purchasedTracks, isSubscriber } = useStore();
+  const { isDarkMode, playTrack, currentTrack, isPlaying, session, purchasedTracks, isSubscriber, ownedTrackIds } = useStore();
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [downloadingTrackId, setDownloadingTrackId] = useState<number | null>(null);
@@ -135,12 +135,15 @@ export const MusicPackDetail: React.FC = () => {
         if (error) throw error;
 
         if (data?.downloadUrl) {
+            // FORCE PHYSICAL DOWNLOAD via BLOB
+            const response = await fetch(data.downloadUrl);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.href = data.downloadUrl;
-            link.setAttribute('download', `${track.title}.wav`);
-            document.body.appendChild(link);
-            link.click();
+            link.href = blobUrl; link.setAttribute('download', `${track.title}.wav`);
+            document.body.appendChild(link); link.click(); 
             document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
         }
     } catch (err) {
         console.error("Download Error:", err);
@@ -223,6 +226,7 @@ export const MusicPackDetail: React.FC = () => {
                         const isCurrent = currentTrack?.id === track.id;
                         const active = isCurrent && isPlaying;
                         const isDownloading = downloadingTrackId === track.id;
+                        const hasTrackAccess = ownedTrackIds.has(track.id) || isPro;
                         
                         return (
                             <div 
@@ -265,7 +269,7 @@ export const MusicPackDetail: React.FC = () => {
                                     {track.duration ? `${Math.floor(track.duration / 60)}:${(Math.floor(track.duration % 60)).toString().padStart(2, '0')}` : '-'}
                                 </div>
 
-                                {hasAccess && (
+                                {hasTrackAccess && (
                                     <button 
                                         onClick={() => handleDownloadTrack(track)}
                                         disabled={isDownloading}
@@ -375,7 +379,7 @@ export const MusicPackDetail: React.FC = () => {
                         key={pack.id} 
                         className={`
                             group rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full
-                            ${isDarkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-zinc-100 shadow-md'}
+                            ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border border-zinc-100 shadow-md'}
                         `}
                     >
                         <Link to={`/music-packs/${createSlug(pack.id, pack.title)}`} className="w-full aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 block">

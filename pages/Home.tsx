@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { MusicTrack, Client, Album, MediaTheme, Coupon } from '../types';
 import { supabase } from '../services/supabase';
@@ -513,9 +512,9 @@ export const Home: React.FC = () => {
                           <ShieldCheck size={10} /> Verified Offer
                       </div>
                     </div>
-                    {/* Balanced Percentage Label */}
+                    {/* Balanced Percentage Label with minus sign */}
                     <div className="px-3 py-1.5 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl font-black text-xl md:text-2xl shadow-lg transform group-hover:scale-110 transition-transform">
-                      {coupon.discount_percent}%
+                      -{coupon.discount_percent}%
                     </div>
                   </div>
                   

@@ -17,7 +17,7 @@ export const TrackDetail: React.FC = () => {
   const [track, setTrack] = useState<MusicTrack | null>(null);
   const [relatedAlbum, setRelatedAlbum] = useState<Album | null>(null);
   const [recommendations, setRecommendations] = useState<MusicTrack[]>([]);
-  const { playTrack, currentTrack, isPlaying, isDarkMode, session, purchasedTracks } = useStore();
+  const { playTrack, currentTrack, isPlaying, isDarkMode, session, purchasedTracks, ownedTrackIds } = useStore();
   const { isPro, openSubscriptionCheckout } = useSubscription();
   const [selectedLicense, setSelectedLicense] = useState<LicenseOption>('standard');
   const [downloadingWav, setDownloadingWav] = useState(false);
@@ -81,7 +81,7 @@ export const TrackDetail: React.FC = () => {
   }, [slug]);
 
   const purchase = track ? purchasedTracks.find(p => p.track_id === track.id) : null;
-  const isPurchased = !!purchase;
+  const isPurchased = track ? ownedTrackIds.has(track.id) : false;
   const hasFullAccess = isPurchased || isPro;
 
   const handleDownloadMain = async () => {
@@ -100,12 +100,15 @@ export const TrackDetail: React.FC = () => {
             });
             if (error) throw error;
             if (data?.downloadUrl) {
-              const link = document.createElement('a');
-              link.href = data.downloadUrl;
-              link.setAttribute('download', `${track.title}.wav`);
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
+                // FORCE PHYSICAL DOWNLOAD via BLOB
+                const response = await fetch(data.downloadUrl);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl; link.setAttribute('download', `${track.title}.wav`);
+                document.body.appendChild(link); link.click(); 
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
             }
         } catch (err) {
             console.error("Download Error:", err);
