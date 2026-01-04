@@ -490,7 +490,7 @@ export const Home: React.FC = () => {
       {coupons.length > 0 && (
         <section className="w-full max-w-[1920px] mx-auto px-6 lg:px-10">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <Ticket className="text-sky-500" size={24} /> Exclusive Deals
+            <Ticket className="text-sky-500" size={24} /> Active Promos
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {coupons.map((coupon, idx) => {
