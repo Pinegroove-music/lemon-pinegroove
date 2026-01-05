@@ -23,7 +23,8 @@ export const MusicPackDetail: React.FC = () => {
   const [selectedLicense, setSelectedLicense] = useState<LicenseOption>('standard');
   
   // Coupon state
-  const [specialPromo, setSpecialPromo] = useState<Coupon | null>(null);
+  const [packCoupon, setPackCoupon] = useState<Coupon | null>(null);
+  const [proCoupon, setProCoupon] = useState<Coupon | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   
   const navigate = useNavigate();
@@ -87,15 +88,19 @@ export const MusicPackDetail: React.FC = () => {
                 setRelatedPacks(shuffled.slice(0, 4));
             }
 
-            // Fetch specific music pack coupon
-            const { data: promoData } = await supabase
+            // Fetch specific coupons
+            const { data: couponsData } = await supabase
               .from('coupons')
               .select('*')
-              .eq('id', '1f77183d-462e-4ff6-bef0-25e440ba5d9a')
-              .eq('is_active', true)
-              .maybeSingle();
+              .in('id', ['1f77183d-462e-4ff6-bef0-25e440ba5d9a', '6237aa1b-f40c-41c2-aac5-070fb0a11ba7'])
+              .eq('is_active', true);
             
-            if (promoData) setSpecialPromo(promoData as Coupon);
+            if (couponsData) {
+                const pC = couponsData.find(c => String(c.id) === '1f77183d-462e-4ff6-bef0-25e440ba5d9a');
+                const subC = couponsData.find(c => String(c.id) === '6237aa1b-f40c-41c2-aac5-070fb0a11ba7');
+                if (pC) setPackCoupon(pC as Coupon);
+                if (subC) setProCoupon(subC as Coupon);
+            }
 
         } catch (err: any) {
             console.error("Error loading music pack:", err);
@@ -310,24 +315,50 @@ export const MusicPackDetail: React.FC = () => {
           <div className="lg:col-span-5 space-y-6">
             <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">Select License</h3>
             
-            {/* Promo Card Positioned below Title */}
-            {specialPromo && (
-              <div className="bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white p-5 rounded-2xl shadow-xl flex items-center gap-4 border border-white/10 animate-in fade-in slide-in-from-top-4 duration-500 mb-6">
-                <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl">
-                  <Ticket className="text-emerald-100" size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs md:text-sm font-bold leading-snug">
-                    Save {specialPromo.discount_percent}% on this Music Pack using code: <span className="text-emerald-100 font-black tracking-widest">{specialPromo.discount_code}</span>
-                  </p>
-                </div>
-                <button 
-                  onClick={() => handleCopyCode(specialPromo.discount_code)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === specialPromo.discount_code ? 'bg-sky-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'}`}
-                >
-                  {copiedCode === specialPromo.discount_code ? <Check size={12} /> : <Copy size={12} />}
-                  {copiedCode === specialPromo.discount_code ? 'COPIED' : 'COPY'}
-                </button>
+            {/* Promo Section (Two Separate Coupon Types) */}
+            {(packCoupon || proCoupon) && (
+              <div className="space-y-3 mb-8">
+                {/* Pack Coupon - Green background */}
+                {packCoupon && (
+                  <div className="bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white p-4 rounded-2xl shadow-xl flex items-center gap-4 border border-white/10 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl">
+                      <Ticket className="text-emerald-100" size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold leading-snug">
+                        Save {packCoupon.discount_percent}% on this pack using code: <span className="text-emerald-100 font-black tracking-widest">{packCoupon.discount_code}</span>
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => handleCopyCode(packCoupon.discount_code)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === packCoupon.discount_code ? 'bg-sky-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'}`}
+                    >
+                      {copiedCode === packCoupon.discount_code ? <Check size={12} /> : <Copy size={12} />}
+                      {copiedCode === packCoupon.discount_code ? 'COPIED' : 'COPY'}
+                    </button>
+                  </div>
+                )}
+
+                {/* PRO Subscription Coupon - Golden background */}
+                {proCoupon && (
+                  <div className="bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-amber-950 p-4 rounded-2xl shadow-xl flex items-center gap-4 border border-amber-300/50 animate-in fade-in slide-in-from-top-6 duration-700">
+                    <div className="bg-black/10 backdrop-blur-md p-2 rounded-xl">
+                      <Zap className="text-amber-900" size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold leading-snug">
+                        Save {proCoupon.discount_percent}% on your PRO Subscription using code: <span className="text-amber-900 font-black tracking-widest">{proCoupon.discount_code}</span>
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => handleCopyCode(proCoupon.discount_code)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === proCoupon.discount_code ? 'bg-emerald-600 text-white' : 'bg-black/10 hover:bg-black/20 text-amber-950 border border-black/10'}`}
+                    >
+                      {copiedCode === proCoupon.discount_code ? <Check size={12} /> : <Copy size={12} />}
+                      {copiedCode === proCoupon.discount_code ? 'COPIED' : 'COPY'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

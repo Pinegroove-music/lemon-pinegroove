@@ -23,7 +23,8 @@ export const TrackDetail: React.FC = () => {
   const [downloadingWav, setDownloadingWav] = useState(false);
   
   // Coupon state
-  const [specialPromo, setSpecialPromo] = useState<Coupon | null>(null);
+  const [trackCoupon, setTrackCoupon] = useState<Coupon | null>(null);
+  const [proCoupon, setProCoupon] = useState<Coupon | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   
   const navigate = useNavigate();
@@ -83,14 +84,20 @@ export const TrackDetail: React.FC = () => {
           }
         });
         
-      // Fetch specific promo coupon
+      // Fetch specific promo coupons
       supabase.from('coupons')
         .select('*')
-        .eq('id', '1cc9b63f-7a17-46c7-99b8-2d05d1bcc883')
+        .in('id', ['1cc9b63f-7a17-46c7-99b8-2d05d1bcc883', '6237aa1b-f40c-41c2-aac5-070fb0a11ba7'])
         .eq('is_active', true)
-        .maybeSingle()
         .then(({ data }) => {
-            if (data) setSpecialPromo(data as Coupon);
+            if (data) {
+                // ID for single track: 1cc9b63f-7a17-46c7-99b8-2d05d1bcc883
+                // ID for pro sub: 6237aa1b-f40c-41c2-aac5-070fb0a11ba7
+                const tC = data.find(c => String(c.id) === '1cc9b63f-7a17-46c7-99b8-2d05d1bcc883');
+                const pC = data.find(c => String(c.id) === '6237aa1b-f40c-41c2-aac5-070fb0a11ba7');
+                if (tC) setTrackCoupon(tC as Coupon);
+                if (pC) setProCoupon(pC as Coupon);
+            }
         });
     }
   }, [slug]);
@@ -327,24 +334,50 @@ export const TrackDetail: React.FC = () => {
             <div className="lg:col-span-5 space-y-6">
                 <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">Select License</h3>
                 
-                {/* Promo Card Positioned below Title */}
-                {specialPromo && (
-                  <div className="bg-gradient-to-br from-purple-600 via-indigo-700 to-purple-800 text-white p-5 rounded-2xl shadow-xl flex items-center gap-4 border border-white/10 animate-in fade-in slide-in-from-top-4 duration-500 mb-6">
-                    <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl">
-                      <Ticket className="text-purple-200" size={20} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs md:text-sm font-bold leading-snug">
-                        Save {specialPromo.discount_percent}% on this track using code: <span className="text-purple-200 font-black tracking-widest">{specialPromo.discount_code}</span>
-                      </p>
-                    </div>
-                    <button 
-                      onClick={() => handleCopyCode(specialPromo.discount_code)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === specialPromo.discount_code ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'}`}
-                    >
-                      {copiedCode === specialPromo.discount_code ? <Check size={12} /> : <Copy size={12} />}
-                      {copiedCode === specialPromo.discount_code ? 'COPIED' : 'COPY'}
-                    </button>
+                {/* Promo Section (Two Separate Coupon Types) */}
+                {(trackCoupon || proCoupon) && (
+                  <div className="space-y-3 mb-8">
+                    {/* Track Coupon */}
+                    {trackCoupon && (
+                      <div className="bg-gradient-to-br from-purple-600 via-indigo-700 to-purple-800 text-white p-4 rounded-2xl shadow-xl flex items-center gap-4 border border-white/10 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl">
+                          <Ticket className="text-purple-200" size={18} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold leading-snug">
+                            Save {trackCoupon.discount_percent}% on this track using code: <span className="text-purple-200 font-black tracking-widest">{trackCoupon.discount_code}</span>
+                          </p>
+                        </div>
+                        <button 
+                          onClick={() => handleCopyCode(trackCoupon.discount_code)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === trackCoupon.discount_code ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'}`}
+                        >
+                          {copiedCode === trackCoupon.discount_code ? <Check size={12} /> : <Copy size={12} />}
+                          {copiedCode === trackCoupon.discount_code ? 'COPIED' : 'COPY'}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Pro Subscription Coupon - Golden Background */}
+                    {proCoupon && (
+                      <div className="bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-amber-950 p-4 rounded-2xl shadow-xl flex items-center gap-4 border border-amber-300/50 animate-in fade-in slide-in-from-top-6 duration-700">
+                        <div className="bg-black/10 backdrop-blur-md p-2 rounded-xl">
+                          <Zap className="text-amber-900" size={18} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold leading-snug">
+                            Save {proCoupon.discount_percent}% on your PRO Subscription using code: <span className="text-amber-900 font-black tracking-widest">{proCoupon.discount_code}</span>
+                          </p>
+                        </div>
+                        <button 
+                          onClick={() => handleCopyCode(proCoupon.discount_code)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === proCoupon.discount_code ? 'bg-emerald-600 text-white' : 'bg-black/10 hover:bg-black/20 text-amber-950 border border-black/10'}`}
+                        >
+                          {copiedCode === proCoupon.discount_code ? <Check size={12} /> : <Copy size={12} />}
+                          {copiedCode === proCoupon.discount_code ? 'COPIED' : 'COPY'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
