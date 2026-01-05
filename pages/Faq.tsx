@@ -35,7 +35,7 @@ export const Faq: React.FC = () => {
                                     <strong className="text-sky-600 dark:text-sky-400">Standard License:</strong> Ideal for Web, Social Media, Podcasts (monetized on 1 channel), School Projects, and Charity Films.
                                 </li>
                                 <li>
-                                    <strong className="text-sky-600 dark:text-sky-400">Extended License:</strong> Required for Advertising, TV, Radio, Cinema, Games, Apps, and Industrial use. It allows monetization on up to 5 Social Media channels and unlimited DVD distribution. All technical details and specific terms are available in the License PDF, which can be downloaded immediately after purchase.
+                                    <strong className="text-sky-600 dark:text-sky-400">Extended License:</strong> Required for Advertising, TV, Radio, Cinema, Games, Apps, and Industrial use. It allows monetization on multiple Social Media channels and unlimited DVD distribution. All technical details and specific terms are available in the License PDF, which can be downloaded immediately after purchase.
                                 </li>
                             </ul>
                         </div>
