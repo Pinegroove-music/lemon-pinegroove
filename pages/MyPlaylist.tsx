@@ -67,13 +67,13 @@ export const MyPlaylist: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
-      <SEO title="My Playlist" description="Your favorite tracks selected from the Pinegroove library." />
+      <SEO title="My Wishlist" description="Your favorite tracks selected from the Pinegroove library." />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
         <div>
           <h1 className="text-4xl font-black tracking-tight mb-2 flex items-center gap-3">
             <Heart className="text-red-500 fill-red-500" size={36} />
-            My Playlist
+            My Wishlist
           </h1>
           <p className="opacity-60 text-lg">Tracks you've saved for your future projects.</p>
         </div>

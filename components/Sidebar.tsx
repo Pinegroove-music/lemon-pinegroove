@@ -25,12 +25,12 @@ export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: bool
   ];
 
   const sidebarClasses = `
-    fixed inset-y-0 left-0 z-40 transform transition-all duration-300 ease-in-out
+    fixed inset-y-0 left-0 transform transition-all duration-300 ease-in-out
     ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} 
-    md:translate-x-0 md:static md:inset-0
+    md:translate-x-0 md:relative md:inset-0
     ${collapsed ? 'md:w-20' : 'md:w-64'} w-64
     ${isDarkMode ? 'bg-zinc-950 border-zinc-900 text-zinc-300' : 'bg-gray-100 border-gray-200 text-zinc-800'}
-    border-r flex flex-col pb-24 shadow-md z-50
+    border-r flex flex-col pb-24 shadow-md z-[70]
   `;
 
   const renderProgressiveText = (text: string, baseColor: string, startIndex: number) => {
@@ -95,7 +95,7 @@ export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: bool
 
           <button 
                 onClick={() => setCollapsed(!collapsed)}
-                className={`hidden md:flex absolute -right-3 top-7 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full items-center justify-center text-zinc-500 hover:text-sky-500 shadow-sm z-50`}
+                className={`hidden md:flex absolute -right-3 top-7 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full items-center justify-center text-zinc-500 hover:text-sky-500 shadow-sm z-[80]`}
             >
                 {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
@@ -158,10 +158,10 @@ export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: bool
                     to="/my-playlist"
                     onClick={() => setMobileOpen(false)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${location.pathname === '/my-playlist' ? (isDarkMode ? 'bg-sky-900/20 text-sky-400' : 'bg-white text-sky-700 shadow-sm') : (isDarkMode ? 'hover:bg-zinc-900 text-zinc-400 hover:text-white' : 'hover:bg-gray-200/50 text-zinc-600 hover:text-black')} ${collapsed ? 'justify-center' : ''}`}
-                    title={collapsed ? 'My Playlist' : ''}
+                    title={collapsed ? 'My Wishlist' : ''}
                 >
                     <Heart size={22} className="flex-shrink-0" />
-                    {!collapsed && <span className="font-medium whitespace-nowrap">My Playlist</span>}
+                    {!collapsed && <span className="font-medium whitespace-nowrap">My Wishlist</span>}
                 </Link>
 
                 {/* Account Section */}

@@ -135,7 +135,7 @@ export const UserLicenseAgreement: React.FC = () => {
                   "Industrial, corporate, and institutional use",
                   "Trade fairs, exhibitions, installations",
                   "Unlimited DVD / Blu-ray distribution",
-                  "Monetization of up to FIVE (5) channels"
+                  "Monetization of multiple channels"
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <div className="mt-1 w-4 h-4 rounded-full bg-sky-500/20 flex items-center justify-center shrink-0">

@@ -4,7 +4,7 @@ import { supabase } from '../services/supabase';
 import { MusicTrack, Album } from '../types';
 import { useStore } from '../store/useStore';
 import { useNavigate, Link } from 'react-router-dom';
-import { Download, ShoppingBag, ArrowRight, Loader2, Play, Pause, FileBadge, Info, Disc, LayoutGrid, LayoutList, Search, X } from 'lucide-react';
+import { Download, ShoppingBag, ArrowRight, Loader2, Play, Pause, FileBadge, Info, Disc, LayoutGrid, LayoutList, Search, X, Settings, LogOut, ExternalLink, Copy, Check, Shield, Fingerprint } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { createSlug } from '../utils/slugUtils';
 import { SubscriptionDashboard } from '../components/SubscriptionDashboard';
@@ -37,6 +37,13 @@ export const MyPurchases: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [downloadingLicenseId, setDownloadingLicenseId] = useState<number | null>(null);
+  
+  // UI State for Settings
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [copiedUid, setCopiedUid] = useState(false);
+
   const navigate = useNavigate();
 
   const LEMON_SQUEEZY_ICON = "https://cdn.simpleicons.org/lemonsqueezy";
@@ -141,7 +148,6 @@ export const MyPurchases: React.FC = () => {
       if (error) throw error;
 
       if (data?.downloadUrl) {
-        // FORCING PHYSICAL DOWNLOAD via BLOB FETCH
         const response = await fetch(data.downloadUrl);
         if (!response.ok) throw new Error('Download failed');
         
@@ -154,7 +160,6 @@ export const MyPurchases: React.FC = () => {
         document.body.appendChild(link);
         link.click();
         
-        // Cleanup
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
       } else {
@@ -197,6 +202,36 @@ export const MyPurchases: React.FC = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+  };
+
+  const handleResetPassword = async () => {
+    if (!session?.user?.email) return;
+    setIsResettingPassword(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(session.user.email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (error) throw error;
+      setResetSent(true);
+      setTimeout(() => setResetSent(false), 5000);
+    } catch (err) {
+      console.error("Password reset error:", err);
+      alert("Errore nell'invio dell'email di ripristino.");
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  const copyUidToClipboard = () => {
+    if (!session?.user?.id) return;
+    navigator.clipboard.writeText(session.user.id);
+    setCopiedUid(true);
+    setTimeout(() => setCopiedUid(false), 2000);
+  };
+
   if (loading && !ownedItems.length) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -210,6 +245,56 @@ export const MyPurchases: React.FC = () => {
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
       <SEO title="My Purchases" description="Access and download your high-quality WAV files and license certificates." />
       
+      {/* Account Header Section */}
+      <div className={`mb-8 p-6 rounded-3xl border flex flex-col md:flex-row items-center justify-between gap-6 transition-all ${isDarkMode ? 'bg-zinc-900/40 border-zinc-800 shadow-xl shadow-black/20' : 'bg-white border-zinc-100 shadow-xl shadow-sky-500/5'}`}>
+          <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-zinc-800' : 'bg-sky-50'}`}>
+                  <Fingerprint className="text-sky-500" size={24} />
+              </div>
+              <div className="text-center md:text-left">
+                  <h2 className="text-sm font-black uppercase tracking-widest opacity-40 mb-0.5">Welcome Back</h2>
+                  <p className="font-bold text-lg md:text-xl truncate max-w-[250px] md:max-w-md">
+                      Ciao, {session?.user?.email}
+                  </p>
+              </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+              <a 
+                href="https://app.lemonsqueezy.com/my-orders" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white' : 'bg-white border-zinc-200 text-zinc-600 hover:text-black shadow-sm'}`}
+              >
+                  <ShoppingBag size={14} />
+                  My Orders
+              </a>
+              <a 
+                href="https://pinegroove.lemonsqueezy.com/billing" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white' : 'bg-white border-zinc-200 text-zinc-600 hover:text-black shadow-sm'}`}
+              >
+                  <ExternalLink size={14} />
+                  Billing
+              </a>
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white' : 'bg-white border-zinc-200 text-zinc-600 hover:text-black shadow-sm'}`}
+              >
+                  <Settings size={14} />
+                  Settings
+              </button>
+              <button 
+                onClick={handleSignOut}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-500/10 transition-all active:scale-95"
+              >
+                  <LogOut size={14} />
+                  Logout
+              </button>
+          </div>
+      </div>
+
       <SubscriptionDashboard />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
@@ -256,32 +341,6 @@ export const MyPurchases: React.FC = () => {
                 >
                     <LayoutList size={20} />
                 </button>
-            </div>
-
-            <div className="relative group">
-                <a 
-                    href="https://app.lemonsqueezy.com/my-orders" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition-all hover:scale-105 active:scale-95 ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white' : 'bg-white border-zinc-200 text-zinc-600 hover:text-black shadow-sm'}`}
-                >
-                    <div 
-                        className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'bg-white group-hover:bg-[#FFC233]' : 'bg-zinc-600 group-hover:bg-[#FFC233]'}`}
-                        style={{
-                            maskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                            WebkitMaskImage: `url(${LEMON_SQUEEZY_ICON})`,
-                            maskRepeat: 'no-repeat',
-                            WebkitMaskRepeat: 'no-repeat',
-                            maskSize: 'contain',
-                            WebkitMaskSize: 'contain'
-                        }}
-                    />
-                    <span>Invoices</span>
-                </a>
-                <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-xl text-[10px] font-bold leading-tight opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 shadow-2xl z-50 text-center border transform translate-y-1 group-hover:translate-y-0 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-200' : 'bg-white border-zinc-100 text-zinc-600 shadow-sky-100'}`}>
-                    Download official invoices directly from Lemon Squeezy.
-                    <div className={`absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent ${isDarkMode ? 'border-t-zinc-800' : 'border-t-white'}`}></div>
-                </div>
             </div>
             
             <div className={`px-4 py-2.5 rounded-xl text-sm font-bold border ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 shadow-sm text-zinc-500'}`}>
@@ -481,6 +540,88 @@ export const MyPurchases: React.FC = () => {
                 </div>
             )}
         </>
+      )}
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+              <div 
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+                onClick={() => setIsSettingsOpen(false)}
+              />
+              
+              <div className={`relative w-full max-w-md rounded-[2rem] border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                  <div className="p-6 md:p-8">
+                      <div className="flex items-center justify-between mb-8">
+                          <h2 className="text-2xl font-black tracking-tight">Account Settings</h2>
+                          <button 
+                            onClick={() => setIsSettingsOpen(false)}
+                            className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-gray-100'}`}
+                          >
+                              <X size={24} />
+                          </button>
+                      </div>
+
+                      <div className="space-y-8">
+                          {/* Reset Password Section */}
+                          <section>
+                              <div className="flex items-center gap-2 mb-4">
+                                  <Shield className="text-sky-500" size={20} />
+                                  <h3 className="text-sm font-black uppercase tracking-widest opacity-60">Security</h3>
+                              </div>
+                              <div className={`p-5 rounded-2xl border ${isDarkMode ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-100'}`}>
+                                  <p className="text-sm opacity-70 mb-4">Riceverai un link via email per impostare una nuova password per il tuo account.</p>
+                                  <button 
+                                    onClick={handleResetPassword}
+                                    disabled={isResettingPassword || resetSent}
+                                    className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 ${resetSent ? 'bg-emerald-500 text-white' : 'bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-500/20'} disabled:opacity-50`}
+                                  >
+                                      {isResettingPassword ? <Loader2 className="animate-spin" size={18} /> : resetSent ? <Check size={18} /> : <Shield size={18} />}
+                                      {resetSent ? 'Email Inviata!' : 'Invia Email di Ripristino'}
+                                  </button>
+                              </div>
+                          </section>
+
+                          {/* Technical Section (UID) */}
+                          <section>
+                              <div className="flex items-center gap-2 mb-4">
+                                  <Fingerprint className="text-zinc-400" size={20} />
+                                  <h3 className="text-sm font-black uppercase tracking-widest opacity-40">Supporto Tecnico</h3>
+                              </div>
+                              <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-black/40 border-zinc-800' : 'bg-gray-50 border-zinc-100'}`}>
+                                  <div className="flex items-center justify-between gap-4">
+                                      <div className="min-w-0">
+                                          <p className="text-[10px] font-black uppercase tracking-widest opacity-30 mb-1">User ID (UID)</p>
+                                          <code className="block text-[10px] font-mono opacity-50 truncate">
+                                              {session?.user?.id}
+                                          </code>
+                                      </div>
+                                      <button 
+                                        onClick={copyUidToClipboard}
+                                        className={`p-2 rounded-lg transition-all active:scale-90 flex-shrink-0 ${copiedUid ? 'bg-emerald-500 text-white' : (isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400' : 'bg-white border border-zinc-200 text-zinc-500')}`}
+                                        title="Copy UID"
+                                      >
+                                          {copiedUid ? <Check size={14} /> : <Copy size={14} />}
+                                      </button>
+                                  </div>
+                              </div>
+                              <p className="mt-3 text-[10px] text-center opacity-40 leading-relaxed">
+                                  Copia e incolla il tuo UID se hai bisogno di assistenza tecnica diretta dal team di Pinegroove.
+                              </p>
+                          </section>
+                      </div>
+                  </div>
+
+                  <div className={`p-4 text-center border-t ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-zinc-100'}`}>
+                      <button 
+                        onClick={() => setIsSettingsOpen(false)}
+                        className="text-xs font-bold opacity-40 hover:opacity-100 transition-opacity"
+                      >
+                          Chiudi Impostazioni
+                      </button>
+                  </div>
+              </div>
+          </div>
       )}
     </div>
   );
