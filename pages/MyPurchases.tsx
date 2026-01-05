@@ -245,8 +245,9 @@ export const MyPurchases: React.FC = () => {
     if (!session?.user?.email) return;
     setIsResettingPassword(true);
     try {
+      // Impostato redirectTo alla pagina dedicata /reset-password
       const { error } = await supabase.auth.resetPasswordForEmail(session.user.email, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/#/reset-password`,
       });
       if (error) throw error;
       setResetSent(true);
@@ -602,7 +603,7 @@ export const MyPurchases: React.FC = () => {
                                             {track.artist_name} {item.fromAlbum && `• From: ${item.fromAlbum.title}`}
                                         </p>
                                     </div>
-                                    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${isExtended ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
+                                    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${isExtended ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-emerald-50/10 text-emerald-500 border-emerald-500/20'}`}>
                                         <FileBadge size={10} />
                                         {licenseDisplay}
                                     </div>
