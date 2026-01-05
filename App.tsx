@@ -23,6 +23,7 @@ import { InstrumentsPage } from './pages/InstrumentsPage';
 import { Pricing } from './pages/Pricing';
 import { UserLicenseAgreement } from './pages/UserLicenseAgreement';
 import { Privacy } from './pages/Privacy';
+import { ResetPassword } from './pages/ResetPassword';
 import { useStore } from './store/useStore';
 import { Menu, Search, Music, User, X } from 'lucide-react';
 import { supabase } from './services/supabase';
@@ -47,6 +48,8 @@ const Layout: React.FC = () => {
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isAuthPage = location.pathname === '/auth';
+  const isResetPasswordPage = location.pathname === '/reset-password';
+  const hideSidebar = isAuthPage || isResetPasswordPage;
 
   useEffect(() => {
     const initLemonSqueezy = () => {
@@ -203,18 +206,18 @@ const Layout: React.FC = () => {
       headerClasses += `sticky top-0 border-b ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-100'} `;
   }
 
-  const showFooter = location.pathname !== '/library' && !isAuthPage;
+  const showFooter = location.pathname !== '/library' && !isAuthPage && !isResetPasswordPage;
 
   return (
     <div className={`min-h-screen flex transition-colors duration-300 ${isDarkMode ? 'dark bg-zinc-950 text-zinc-100' : 'bg-white text-zinc-900'}`}>
       
-      {!isAuthPage && <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />}
+      {!hideSidebar && <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />}
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         
-        {!isAuthPage && <AnnouncementBar />}
+        {!hideSidebar && <AnnouncementBar />}
 
-        {!isAuthPage && (
+        {!hideSidebar && (
             <header className={headerClasses}>
             <button 
                     onClick={() => setMobileOpen(true)} 
@@ -297,6 +300,7 @@ const Layout: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/library" element={<Library />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/categories/genres" element={<GenresPage />} />
             <Route path="/categories/moods" element={<MoodsPage />} />
             <Route path="/categories/seasonal" element={<SeasonalPage />} />
@@ -318,7 +322,7 @@ const Layout: React.FC = () => {
         </main>
 
         <CookieConsent />
-        {!isAuthPage && <Player />}
+        {!hideSidebar && <Player />}
         
       </div>
     </div>
