@@ -1,10 +1,10 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../services/supabase';
-import { MusicTrack, Album } from '../types';
+import { MusicTrack, Album, Coupon } from '../types';
 import { useStore } from '../store/useStore';
 import { useNavigate, Link } from 'react-router-dom';
-import { Download, ShoppingBag, ArrowRight, Loader2, Play, Pause, FileBadge, Info, Disc, LayoutGrid, LayoutList, Search, X, Settings, LogOut, ExternalLink, Copy, Check, Shield, Fingerprint } from 'lucide-react';
+import { Download, ShoppingBag, ArrowRight, Loader2, Play, Pause, FileBadge, Info, Disc, LayoutGrid, LayoutList, Search, X, Settings, LogOut, ExternalLink, Copy, Check, Shield, Fingerprint, Ticket, ShieldCheck, Sparkles } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { createSlug } from '../utils/slugUtils';
 import { SubscriptionDashboard } from '../components/SubscriptionDashboard';
@@ -30,14 +30,19 @@ interface OwnedItem {
 }
 
 export const MyPurchases: React.FC = () => {
-  const { session, isDarkMode, playTrack, currentTrack, isPlaying } = useStore();
+  const { session, isDarkMode, playTrack, currentTrack, isPlaying, ownedTrackIds } = useStore();
   const [ownedItems, setOwnedItems] = useState<OwnedItem[]>([]);
+  const [recommendations, setRecommendations] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [downloadingLicenseId, setDownloadingLicenseId] = useState<number | null>(null);
   
+  // Coupons State
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
   // UI State for Settings
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
@@ -46,7 +51,11 @@ export const MyPurchases: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const LEMON_SQUEEZY_ICON = "https://cdn.simpleicons.org/lemonsqueezy";
+  const couponGradients = [
+    { bg: 'bg-gradient-to-br from-blue-600 to-sky-800', shadow: 'shadow-blue-500/20' },
+    { bg: 'bg-gradient-to-br from-indigo-600 to-purple-800', shadow: 'shadow-purple-500/20' },
+    { bg: 'bg-gradient-to-br from-zinc-800 to-zinc-950', shadow: 'shadow-zinc-500/20' }
+  ];
 
   useEffect(() => {
     const userId = session?.user?.id;
@@ -114,6 +123,29 @@ export const MyPurchases: React.FC = () => {
 
         uniqueItems.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
         setOwnedItems(uniqueItems);
+
+        // Fetch Coupons
+        const { data: couponData } = await supabase
+          .from('coupons')
+          .select('*')
+          .eq('is_active', true)
+          .not('discount_code', 'is', null);
+        if (couponData) setCoupons(couponData as Coupon[]);
+
+        // Fetch Suggestions (Excluding owned tracks)
+        const { data: suggestionData } = await supabase
+          .from('squeeze_tracks')
+          .select('*')
+          .limit(50);
+        
+        if (suggestionData) {
+          const filteredSuggestions = suggestionData
+            .filter((t: MusicTrack) => !ownedTrackIds.has(t.id))
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 4);
+          setRecommendations(filteredSuggestions);
+        }
+
       } catch (err) {
         console.error("Error fetching purchases:", err);
       } finally {
@@ -122,7 +154,7 @@ export const MyPurchases: React.FC = () => {
     };
 
     fetchEverything();
-  }, [session, navigate]);
+  }, [session, navigate, ownedTrackIds]);
 
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return ownedItems;
@@ -219,7 +251,7 @@ export const MyPurchases: React.FC = () => {
       setTimeout(() => setResetSent(false), 5000);
     } catch (err) {
       console.error("Password reset error:", err);
-      alert("Errore nell'invio dell'email di ripristino.");
+      alert("Error sending the reset email.");
     } finally {
       setIsResettingPassword(false);
     }
@@ -230,6 +262,12 @@ export const MyPurchases: React.FC = () => {
     navigator.clipboard.writeText(session.user.id);
     setCopiedUid(true);
     setTimeout(() => setCopiedUid(false), 2000);
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
   };
 
   if (loading && !ownedItems.length) {
@@ -254,7 +292,7 @@ export const MyPurchases: React.FC = () => {
               <div className="text-center md:text-left">
                   <h2 className="text-sm font-black uppercase tracking-widest opacity-40 mb-0.5">Welcome Back</h2>
                   <p className="font-bold text-lg md:text-xl truncate max-w-[250px] md:max-w-md">
-                      Ciao, {session?.user?.email}
+                      Hello, {session?.user?.email}
                   </p>
               </div>
           </div>
@@ -570,14 +608,14 @@ export const MyPurchases: React.FC = () => {
                                   <h3 className="text-sm font-black uppercase tracking-widest opacity-60">Security</h3>
                               </div>
                               <div className={`p-5 rounded-2xl border ${isDarkMode ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-100'}`}>
-                                  <p className="text-sm opacity-70 mb-4">Riceverai un link via email per impostare una nuova password per il tuo account.</p>
+                                  <p className="text-sm opacity-70 mb-4">You will receive a link via email to set a new password for your account.</p>
                                   <button 
                                     onClick={handleResetPassword}
                                     disabled={isResettingPassword || resetSent}
                                     className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 ${resetSent ? 'bg-emerald-500 text-white' : 'bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-500/20'} disabled:opacity-50`}
                                   >
                                       {isResettingPassword ? <Loader2 className="animate-spin" size={18} /> : resetSent ? <Check size={18} /> : <Shield size={18} />}
-                                      {resetSent ? 'Email Inviata!' : 'Invia Email di Ripristino'}
+                                      {resetSent ? 'Email Sent!' : 'Send Reset Email'}
                                   </button>
                               </div>
                           </section>
@@ -586,7 +624,7 @@ export const MyPurchases: React.FC = () => {
                           <section>
                               <div className="flex items-center gap-2 mb-4">
                                   <Fingerprint className="text-zinc-400" size={20} />
-                                  <h3 className="text-sm font-black uppercase tracking-widest opacity-40">Supporto Tecnico</h3>
+                                  <h3 className="text-sm font-black uppercase tracking-widest opacity-40">Technical Support</h3>
                               </div>
                               <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-black/40 border-zinc-800' : 'bg-gray-50 border-zinc-100'}`}>
                                   <div className="flex items-center justify-between gap-4">
@@ -606,7 +644,7 @@ export const MyPurchases: React.FC = () => {
                                   </div>
                               </div>
                               <p className="mt-3 text-[10px] text-center opacity-40 leading-relaxed">
-                                  Copia e incolla il tuo UID se hai bisogno di assistenza tecnica diretta dal team di Pinegroove.
+                                  Copy and paste your UID if you need direct technical assistance from the Pinegroove team.
                               </p>
                           </section>
                       </div>
@@ -617,11 +655,133 @@ export const MyPurchases: React.FC = () => {
                         onClick={() => setIsSettingsOpen(false)}
                         className="text-xs font-bold opacity-40 hover:opacity-100 transition-opacity"
                       >
-                          Chiudi Impostazioni
+                          Close Settings
                       </button>
                   </div>
               </div>
           </div>
+      )}
+
+      {/* Active Promos Section */}
+      {coupons.length > 0 && (
+        <div className="mt-16 relative z-20 w-full">
+          <div className={`rounded-[2.5rem] p-8 md:p-14 border transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-800 shadow-2xl' : 'bg-white border-zinc-200 shadow-xl'}`}>
+            <div className="flex items-center gap-4 mb-10">
+              <div className="p-4 bg-sky-500/10 rounded-2xl">
+                <Ticket className="text-sky-500" size={32} />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-black tracking-tight uppercase">Active Promos</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {coupons.map((coupon, idx) => {
+                const style = couponGradients[idx % couponGradients.length];
+                return (
+                  <div 
+                    key={coupon.id} 
+                    className={`
+                      relative p-5 rounded-3xl border-2 border-dashed border-white/20 text-white transition-all duration-500 group
+                      hover:-translate-y-1.5 hover:shadow-2xl overflow-hidden
+                      ${style.bg} ${style.shadow}
+                    `}
+                  >
+                    <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                    <div className={`absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`} />
+                    <div className={`absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`} />
+
+                    <div className="relative z-10 flex justify-between items-start mb-3">
+                      <div className="space-y-0.5">
+                        <h3 className="font-black text-xl tracking-tight leading-tight group-hover:text-sky-200 transition-colors">
+                            {coupon.discount_name}
+                        </h3>
+                        <div className="flex items-center gap-1.5 opacity-50 text-[9px] font-black uppercase tracking-widest">
+                            <ShieldCheck size={10} /> Verified Offer
+                        </div>
+                      </div>
+                      <div className="px-3 py-1.5 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl font-black text-xl md:text-2xl shadow-lg transform group-hover:scale-110 transition-transform">
+                        -{coupon.discount_percent}%
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs mb-5 leading-relaxed font-medium opacity-80 line-clamp-2 min-h-[2rem]">
+                      {coupon.discount_description}
+                    </p>
+
+                    <div className="relative">
+                      <button
+                        onClick={() => handleCopyCode(coupon.discount_code)}
+                        className={`
+                          w-full p-3.5 rounded-xl font-mono font-black text-lg border-2 transition-all duration-300 flex items-center justify-between
+                          ${copiedCode === coupon.discount_code 
+                            ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg' 
+                            : 'bg-black/20 hover:bg-black/40 border-white/15 text-white'}
+                        `}
+                      >
+                        <span className="tracking-widest">{copiedCode === coupon.discount_code ? 'COPIED!' : coupon.discount_code}</span>
+                        <div className="flex items-center gap-2">
+                          {copiedCode === coupon.discount_code ? (
+                            <Check size={18} className="animate-bounce" />
+                          ) : (
+                            <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                                <span className="text-[9px] font-sans font-black uppercase tracking-tighter">Copy</span>
+                                <Copy size={16} />
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <div className="mt-8 flex items-center justify-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+              <Info size={14} className="text-sky-500" />
+              <p className="text-[11px] md:text-xs font-medium italic">
+                How to use: click on "Add Discount Code" during checkout and enter the coupon code.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recommendations Section (Added after Active Promos) */}
+      {recommendations.length > 0 && (
+        <div className="mt-20 pt-12 border-t border-gray-200 dark:border-zinc-800">
+            <h3 className="text-2xl font-bold mb-8 flex items-center gap-2">
+                <Sparkles className="text-sky-500" size={24}/> You Might Also Like
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {recommendations.map(rec => {
+                    const isRecPlaying = currentTrack?.id === rec.id && isPlaying;
+                    return (
+                        <div key={rec.id} className="group">
+                            <div 
+                                className="relative aspect-square rounded-xl overflow-hidden mb-3 cursor-pointer shadow-md group-hover:shadow-xl transition-all" 
+                                onClick={() => playTrack(rec)}
+                            >
+                                <img src={rec.cover_url} alt={rec.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                <div className={`absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${isRecPlaying ? 'opacity-100' : ''}`}>
+                                    {isRecPlaying ? <Pause className="text-white" size={32} /> : <Play className="text-white pl-1" size={32} />}
+                                </div>
+                            </div>
+                            <Link to={`/track/${createSlug(rec.id, rec.title)}`} className="block font-bold truncate hover:text-sky-500 transition-colors">
+                                {rec.title}
+                            </Link>
+                            <div className="text-sm opacity-60 truncate">{rec.artist_name}</div>
+                        </div>
+                    )
+                })}
+            </div>
+            <div className="mt-10 text-center">
+                <Link 
+                    to="/library" 
+                    className="inline-flex items-center gap-2 text-sky-500 hover:text-sky-400 font-bold transition-all group"
+                >
+                    Browse Full Catalog <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+            </div>
+        </div>
       )}
     </div>
   );

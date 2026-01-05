@@ -1,14 +1,14 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { MusicTrack, Album } from '../types';
+import { MusicTrack, Album, Coupon } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, Download, FileBadge, Zap, CheckCircle2, Info, Loader2, ShoppingCart } from 'lucide-react';
+import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, Download, FileBadge, Zap, CheckCircle2, Info, Loader2, ShoppingCart, Heart, Ticket, Copy, Check } from 'lucide-react';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
 import { getIdFromSlug, createSlug } from '../utils/slugUtils';
+import { FavoriteButton } from '../components/FavoriteButton';
 
 type LicenseOption = 'standard' | 'extended' | 'pro';
 
@@ -21,6 +21,11 @@ export const TrackDetail: React.FC = () => {
   const { isPro, openSubscriptionCheckout } = useSubscription();
   const [selectedLicense, setSelectedLicense] = useState<LicenseOption>('standard');
   const [downloadingWav, setDownloadingWav] = useState(false);
+  
+  // Coupon state
+  const [specialPromo, setSpecialPromo] = useState<Coupon | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  
   const navigate = useNavigate();
 
   const PINEGROOVE_LOGO = "https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/logo-pinegroove.svg";
@@ -77,6 +82,16 @@ export const TrackDetail: React.FC = () => {
                 });
           }
         });
+        
+      // Fetch specific promo coupon
+      supabase.from('coupons')
+        .select('*')
+        .eq('id', '1cc9b63f-7a17-46c7-99b8-2d05d1bcc883')
+        .eq('is_active', true)
+        .maybeSingle()
+        .then(({ data }) => {
+            if (data) setSpecialPromo(data as Coupon);
+        });
     }
   }, [slug]);
 
@@ -84,47 +99,56 @@ export const TrackDetail: React.FC = () => {
   const isPurchased = track ? ownedTrackIds.has(track.id) : false;
   const hasFullAccess = isPurchased || isPro;
 
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
   const handleDownloadMain = async () => {
     if (!track) return;
     
-    if (hasFullAccess) {
-        // Download High Quality WAV
-        if (!session) {
-            navigate('/auth');
-            return;
-        }
-        setDownloadingWav(true);
-        try {
-            const { data, error } = await supabase.functions.invoke('get-download-url', {
-              body: { trackId: track.id }
-            });
-            if (error) throw error;
-            if (data?.downloadUrl) {
-                // FORCE PHYSICAL DOWNLOAD via BLOB
-                const response = await fetch(data.downloadUrl);
-                const blob = await response.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = blobUrl; link.setAttribute('download', `${track.title}.wav`);
-                document.body.appendChild(link); link.click(); 
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(blobUrl);
-            }
-        } catch (err) {
-            console.error("Download Error:", err);
-            alert("An error occurred while fetching the download link.");
-        } finally {
-            setDownloadingWav(false);
-        }
-    } else {
-        // Download MP3 Preview
-        const link = document.createElement('a');
-        link.href = track.mp3_url;
-        link.setAttribute('download', `${track.title}_Preview.mp3`);
-        link.setAttribute('target', '_blank');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    setDownloadingWav(true);
+    try {
+      if (hasFullAccess) {
+          // Download High Quality WAV
+          if (!session) {
+              navigate('/auth');
+              return;
+          }
+          const { data, error } = await supabase.functions.invoke('get-download-url', {
+            body: { trackId: track.id }
+          });
+          if (error) throw error;
+          if (data?.downloadUrl) {
+              const response = await fetch(data.downloadUrl);
+              const blob = await response.blob();
+              const blobUrl = window.URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = blobUrl; link.setAttribute('download', `${track.title}.wav`);
+              document.body.appendChild(link); link.click(); 
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(blobUrl);
+          }
+      } else {
+          // Download MP3 Preview - Forced physical download via Blob
+          const response = await fetch(track.mp3_url);
+          if (!response.ok) throw new Error("Download failed");
+          const blob = await response.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.setAttribute('download', `${track.title}_Preview.mp3`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+      }
+    } catch (err) {
+        console.error("Download Error:", err);
+        alert("An error occurred while fetching the download.");
+    } finally {
+        setDownloadingWav(false);
     }
   };
 
@@ -211,14 +235,20 @@ export const TrackDetail: React.FC = () => {
                     </div>
                 </div>
 
-                <button 
-                    onClick={handleDownloadMain}
-                    disabled={downloadingWav}
-                    className={`w-full md:w-fit px-10 py-4 rounded-full font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 ${hasFullAccess ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-zinc-800 hover:bg-zinc-700 text-white'}`}
-                >
-                    {downloadingWav ? <Loader2 className="animate-spin" /> : <Download size={20} />}
-                    {hasFullAccess ? 'Download Track (WAV)' : 'Download Preview (MP3)'}
-                </button>
+                <div className="flex items-center gap-4 w-full md:w-fit">
+                    <button 
+                        onClick={handleDownloadMain}
+                        disabled={downloadingWav}
+                        className={`flex-1 md:flex-none px-10 py-4 rounded-full font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 ${hasFullAccess ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-zinc-800 hover:bg-zinc-700 text-white'}`}
+                    >
+                        {downloadingWav ? <Loader2 className="animate-spin" /> : <Download size={20} />}
+                        {hasFullAccess ? 'Download Track (WAV)' : 'Download Preview (MP3)'}
+                    </button>
+                    
+                    <div className={`p-1.5 rounded-full border shadow-lg transition-transform hover:scale-110 active:scale-90 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'}`}>
+                        <FavoriteButton trackId={track.id} size={32} />
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -234,7 +264,7 @@ export const TrackDetail: React.FC = () => {
                     </div>
                 </section>
 
-                {/* Music Pack Card - Moved above Track Details, Tags, and Genres */}
+                {/* Music Pack Card */}
                 {relatedAlbum && (
                     <section>
                         <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-700 text-white shadow-xl flex flex-col sm:flex-row items-center gap-6 overflow-hidden relative group">
@@ -254,7 +284,7 @@ export const TrackDetail: React.FC = () => {
                     </section>
                 )}
 
-                {/* Track Details Section - Positioned above Tags and Genres */}
+                {/* Track Details Section */}
                 <section>
                     <h3 className="text-xl font-bold mb-6">Track Details</h3>
                     <div className={`p-6 rounded-2xl border space-y-4 text-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-gray-200'}`}>
@@ -297,6 +327,27 @@ export const TrackDetail: React.FC = () => {
             <div className="lg:col-span-5 space-y-6">
                 <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">Select License</h3>
                 
+                {/* Promo Card Positioned below Title */}
+                {specialPromo && (
+                  <div className="bg-gradient-to-br from-purple-600 via-indigo-700 to-purple-800 text-white p-5 rounded-2xl shadow-xl flex items-center gap-4 border border-white/10 animate-in fade-in slide-in-from-top-4 duration-500 mb-6">
+                    <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl">
+                      <Ticket className="text-purple-200" size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-bold leading-snug">
+                        Save {specialPromo.discount_percent}% on this track using code: <span className="text-purple-200 font-black tracking-widest">{specialPromo.discount_code}</span>
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => handleCopyCode(specialPromo.discount_code)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === specialPromo.discount_code ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'}`}
+                    >
+                      {copiedCode === specialPromo.discount_code ? <Check size={12} /> : <Copy size={12} />}
+                      {copiedCode === specialPromo.discount_code ? 'COPIED' : 'COPY'}
+                    </button>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                     {/* Standard License Card */}
                     <LicenseCard 
