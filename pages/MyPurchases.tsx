@@ -245,9 +245,10 @@ export const MyPurchases: React.FC = () => {
     if (!session?.user?.email) return;
     setIsResettingPassword(true);
     try {
-      // Impostato redirectTo alla pagina dedicata /reset-password con il fragment # per HashRouter
+      // Reindirizziamo all'origine del sito. Supabase aggiungerà l'hash del token.
+      // HashRouter gestirà il caricamento degli asset correttamente perché l'URL rimane sulla radice.
       const { error } = await supabase.auth.resetPasswordForEmail(session.user.email, {
-        redirectTo: `${window.location.origin}/#/reset-password`,
+        redirectTo: window.location.origin,
       });
       if (error) throw error;
       setResetSent(true);

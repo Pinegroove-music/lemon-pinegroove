@@ -51,6 +51,18 @@ const Layout: React.FC = () => {
   const isResetPasswordPage = location.pathname === '/reset-password';
   const hideSidebar = isAuthPage || isResetPasswordPage;
 
+  // Listener globale per intercettare il recupero password di Supabase
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log("Password recovery flow detected. Navigating to reset-password.");
+        navigate('/reset-password');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   useEffect(() => {
     const initLemonSqueezy = () => {
       if (window.LemonSqueezy && typeof window.LemonSqueezy.Setup === 'function') {

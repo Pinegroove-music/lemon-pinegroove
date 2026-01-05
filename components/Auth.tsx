@@ -15,8 +15,9 @@ export const Auth: React.FC = () => {
   // Se l'utente è già loggato o si logga con successo, lo riportiamo in home.
   // TUTTAVIA: non reindirizziamo se stiamo gestendo un link di recupero password
   useEffect(() => {
+    // Identifichiamo il recovery sia tramite hash (standard Supabase) sia tramite rotta interna
     const isRecovery = window.location.hash.includes('type=recovery') || 
-                       window.location.href.includes('reset-password');
+                       window.location.hash.includes('reset-password');
     
     if (session && !isRecovery) {
       navigate('/');
@@ -61,8 +62,9 @@ export const Auth: React.FC = () => {
 
         <SupabaseAuth
           supabaseClient={supabase}
-          // redirectTo assicura che il link nell'email di "Forgot password" punti alla nostra rotta di reset
-          redirectTo={`${window.location.origin}/#/reset-password`}
+          // Usiamo l'origine del sito senza cancelletti. Supabase appenderà i parametri all'origine.
+          // HashRouter gestirà il caricamento di index.html dalla radice.
+          redirectTo={window.location.origin}
           appearance={{
             theme: ThemeSupa,
             variables: {
