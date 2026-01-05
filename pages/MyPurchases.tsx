@@ -4,11 +4,13 @@ import { supabase } from '../services/supabase';
 import { MusicTrack, Album, Coupon } from '../types';
 import { useStore } from '../store/useStore';
 import { useNavigate, Link } from 'react-router-dom';
-import { Download, ShoppingBag, ArrowRight, Loader2, Play, Pause, FileBadge, Info, Disc, LayoutGrid, LayoutList, Search, X, Settings, LogOut, ExternalLink, Copy, Check, Shield, Fingerprint, Ticket, ShieldCheck, Sparkles } from 'lucide-react';
+import { Download, ShoppingBag, ArrowRight, Loader2, Play, Pause, FileBadge, Info, Disc, LayoutGrid, LayoutList, Search, X, Settings, LogOut, ExternalLink, Copy, Check, Shield, Fingerprint, Ticket, ShieldCheck, Sparkles, ArrowLeft } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { createSlug } from '../utils/slugUtils';
 import { SubscriptionDashboard } from '../components/SubscriptionDashboard';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
+import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
 
 interface PurchaseWithRelations {
   id: number;
@@ -60,7 +62,7 @@ export const MyPurchases: React.FC = () => {
   useEffect(() => {
     const userId = session?.user?.id;
     if (!userId) {
-      if (!loading) navigate('/auth');
+      setLoading(false);
       return;
     }
 
@@ -269,6 +271,63 @@ export const MyPurchases: React.FC = () => {
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
   };
+
+  if (!session && !loading) {
+    return (
+      <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <SEO title="Log In to Access Your Purchases" />
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-500" />
+        <div className={`relative z-10 w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl border animate-in zoom-in-95 duration-300 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+          <div className="flex flex-col items-center mb-8">
+            <img 
+              src="https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/logo-pinegroove.svg" 
+              alt="Pinegroove Logo" 
+              className="w-16 h-16 mb-4 drop-shadow-lg"
+            />
+            <h1 className="font-archivo uppercase text-2xl tracking-tight text-center">
+              <span className={isDarkMode ? 'text-white' : 'text-black'}>PINE</span>
+              <span className="text-[#0288c4]">GROOVE</span>
+            </h1>
+            <p className="text-sm opacity-60 mt-2 font-medium text-center">Log in to your account to access your downloads and licenses.</p>
+          </div>
+
+          <SupabaseAuth
+            supabaseClient={supabase}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#0288c4',
+                    brandAccent: '#0ea5e9',
+                    inputText: isDarkMode ? 'white' : 'black',
+                    inputBackground: isDarkMode ? '#18181b' : '#f4f4f5',
+                    inputBorder: isDarkMode ? '#27272a' : '#e4e4e7',
+                    inputPlaceholder: '#71717a',
+                  },
+                  radii: {
+                    borderRadiusButton: '12px',
+                  },
+                  space: {
+                    buttonPadding: '10px 15px',
+                    inputPadding: '10px 15px',
+                  },
+                },
+              },
+            }}
+            theme={isDarkMode ? 'dark' : 'light'}
+            providers={[]}
+          />
+          
+          <div className="mt-8 flex justify-center">
+            <Link to="/" className="text-xs font-bold opacity-40 hover:opacity-100 flex items-center gap-1">
+               <ArrowLeft size={12} /> Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading && !ownedItems.length) {
     return (
