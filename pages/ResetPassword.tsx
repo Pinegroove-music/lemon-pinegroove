@@ -14,6 +14,17 @@ export const ResetPassword: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Ascolta l'evento di recupero password specifico per prevenire redirect errati
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log("Password recovery flow detected.");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password || password.length < 6) {
@@ -32,6 +43,9 @@ export const ResetPassword: React.FC = () => {
       if (error) throw error;
       
       setSuccess(true);
+      
+      // Opzionale: dopo il successo effettua il logout per forzare un login pulito
+      // o attendi qualche secondo prima di navigare
     } catch (err: any) {
       console.error("Error updating password:", err);
       setError(err.message || "An error occurred while updating the password.");

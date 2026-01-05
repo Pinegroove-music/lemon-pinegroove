@@ -1,18 +1,24 @@
+
 import React, { useEffect } from 'react';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../services/supabase';
 import { useStore } from '../store/useStore';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 export const Auth: React.FC = () => {
   const { isDarkMode, session } = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Se l'utente è già loggato o si logga con successo, lo riportiamo in home
+  // Se l'utente è già loggato o si logga con successo, lo riportiamo in home.
+  // TUTTAVIA: non reindirizziamo se stiamo gestendo un link di recupero password
   useEffect(() => {
-    if (session) {
+    const isRecovery = window.location.hash.includes('type=recovery') || 
+                       window.location.href.includes('reset-password');
+    
+    if (session && !isRecovery) {
       navigate('/');
     }
   }, [session, navigate]);
@@ -55,6 +61,8 @@ export const Auth: React.FC = () => {
 
         <SupabaseAuth
           supabaseClient={supabase}
+          // redirectTo assicura che il link nell'email di "Forgot password" punti alla nostra rotta di reset
+          redirectTo={`${window.location.origin}/#/reset-password`}
           appearance={{
             theme: ThemeSupa,
             variables: {
@@ -67,7 +75,6 @@ export const Auth: React.FC = () => {
                   inputBorder: isDarkMode ? '#27272a' : '#e4e4e7',
                   inputPlaceholder: '#71717a',
                 },
-                // Fix: moved buttonPadding and inputPadding from radii to space to match ThemeSupa types
                 radii: {
                   borderRadiusButton: '12px',
                 },
