@@ -51,7 +51,7 @@ export const MyPurchases: React.FC = () => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  // --- FUNZIONE DOWNLOAD TRACCIA (WAV) ---
+  // --- FUNZIONI DI DOWNLOAD ---
   const handleDownload = async (track: MusicTrack) => {
     setDownloadingId(track.id);
     try {
@@ -76,16 +76,13 @@ export const MyPurchases: React.FC = () => {
     }
   };
 
-  // --- FUNZIONE DOWNLOAD LICENZA (PDF) ---
   const handleDownloadLicense = async (purchaseId: number) => {
     if (!session) return;
     setDownloadingLicenseId(purchaseId);
     try {
       const { data, error } = await supabase.functions.invoke('generate-certificate', {
         body: { purchaseId },
-        headers: {
-          "Accept": "application/pdf" // Previene la corruzione del file
-        }
+        headers: { "Accept": "application/pdf" }
       });
 
       if (error) throw error;
@@ -93,23 +90,21 @@ export const MyPurchases: React.FC = () => {
 
       const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
-      
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `License_Pinegroove_Order_${purchaseId}.pdf`);
+      link.setAttribute('download', `License_Order_${purchaseId}.pdf`);
       document.body.appendChild(link);
       link.click();
-      
-      document.body.removeChild(link);
+      link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("License download error:", err);
+      console.error("License error:", err);
     } finally {
       setDownloadingLicenseId(null);
     }
   };
 
-  // --- 1° EFFECT: CARICAMENTO DATI DAL DATABASE ---
+  // --- EFFECT 1: CARICAMENTO DATI ---
   useEffect(() => {
     const userId = session?.user?.id;
     if (!userId) {
@@ -127,9 +122,11 @@ export const MyPurchases: React.FC = () => {
           .order('created_at', { ascending: false });
 
         if (purchaseError) throw purchaseError;
-        
+
         const finalItems: OwnedItem[] = [];
+
         for (const purchase of (purchases as any[])) {
+          // Caso Traccia Singola
           if (purchase.track_id && purchase.squeeze_tracks) {
             finalItems.push({
               track: purchase.squeeze_tracks,
@@ -137,8 +134,33 @@ export const MyPurchases: React.FC = () => {
               licenseType: purchase.license_type || 'standard',
               purchaseDate: purchase.created_at
             });
-          } else if (purchase.album_id && purchase.album) {
-             // ... qui va la tua logica per estrarre le tracce dell'album che avevi già ...
+          } 
+          // Caso Album / Music Pack
+          else if (purchase.album_id && purchase.album) {
+            const { data: albumTracks, error: albumTracksError } = await supabase
+              .from('album_tracks')
+              .select('track_id')
+              .eq('album_id', purchase.album_id);
+
+            if (!albumTracksError && albumTracks) {
+              const trackIds = albumTracks.map(at => at.track_id);
+              const { data: tracksData } = await supabase
+                .from('squeeze_tracks')
+                .select('*')
+                .in('id', trackIds);
+
+              if (tracksData) {
+                tracksData.forEach(track => {
+                  finalItems.push({
+                    track,
+                    purchaseId: purchase.id,
+                    licenseType: purchase.license_type || 'standard',
+                    fromAlbum: purchase.album,
+                    purchaseDate: purchase.created_at
+                  });
+                });
+              }
+            }
           }
         }
 
@@ -149,10 +171,11 @@ export const MyPurchases: React.FC = () => {
           return !duplicate;
         });
 
-        uniqueItems.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
-        setOwnedItems(uniqueItems);
+        setOwnedItems(uniqueItems.sort((a, b) => 
+          new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
+        ));
       } catch (err) {
-        console.error("Error fetching data:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -161,34 +184,25 @@ export const MyPurchases: React.FC = () => {
     fetchEverything();
   }, [session]);
 
-  // --- 2° EFFECT: AZIONE AUTOMATICA DA EMAIL ---
+  // --- EFFECT 2: AZIONE AUTOMATICA ---
   useEffect(() => {
     const orderId = searchParams.get('order');
     const action = searchParams.get('action');
 
-    // Esci se i parametri mancano o se i dati non sono ancora pronti
     if (!orderId || !action || loading || ownedItems.length === 0 || autoProcessed) return;
 
-    // Cerca l'ordine corrispondente nella lista caricata
     const targetItem = ownedItems.find(item => String(item.purchaseId) === String(orderId));
 
     if (targetItem) {
-      setAutoProcessed(true); // Evita loop infiniti
-
-      if (action === 'download') {
-        handleDownload(targetItem.track);
-      } else if (action === 'license') {
-        handleDownloadLicense(targetItem.purchaseId);
-      }
-
-      // Rimuove i parametri dall'URL dopo il trigger dell'azione
-      setTimeout(() => {
-        navigate('/my-purchases', { replace: true });
-      }, 1500);
+      setAutoProcessed(true);
+      if (action === 'download') handleDownload(targetItem.track);
+      if (action === 'license') handleDownloadLicense(targetItem.purchaseId);
+      
+      setTimeout(() => navigate('/my-purchases', { replace: true }), 1500);
     }
   }, [loading, ownedItems, searchParams, autoProcessed, navigate]);
 
-  // ... da qui in poi continua con il tuo return (JSX) ...
+  // ... (Qui continua con il tuo return JSX)
 
   // UI State for Settings
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
