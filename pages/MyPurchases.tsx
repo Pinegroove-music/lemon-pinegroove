@@ -32,12 +32,7 @@ interface OwnedItem {
 }
 
 export const MyPurchases: React.FC = () => {
-  // 1. HOOKS DI SISTEMA
   const { session, isDarkMode, playTrack, currentTrack, isPlaying, ownedTrackIds } = useStore();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  // 2. STATI DELL'INTERFACCIA
   const [ownedItems, setOwnedItems] = useState<OwnedItem[]>([]);
   const [recommendations, setRecommendations] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,164 +40,42 @@ export const MyPurchases: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [downloadingLicenseId, setDownloadingLicenseId] = useState<number | null>(null);
-  const [autoProcessed, setAutoProcessed] = useState(false);
-
-  // 3. STATI PER I COUPONS
+  
+  // Coupons State
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  // --- FUNZIONI DI DOWNLOAD ---
-  const handleDownload = async (track: MusicTrack) => {
-    setDownloadingId(track.id);
-    try {
-      const { data, error } = await supabase.storage
-        .from('tracks')
-        .download(track.file_path);
-      if (error) throw error;
+  // --- LOGICA PER DOWNLOAD AUTOMATICO DA EMAIL ---
+  const [searchParams] = useSearchParams();
+  const [autoProcessed, setAutoProcessed] = useState(false);
 
-      const url = window.URL.createObjectURL(data);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${track.title}.wav`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Download error:", err);
-      alert("Error downloading file.");
-    } finally {
-      setDownloadingId(null);
-    }
-  };
-
-  const handleDownloadLicense = async (purchaseId: number) => {
-    if (!session) return;
-    setDownloadingLicenseId(purchaseId);
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-certificate', {
-        body: { purchaseId },
-        headers: { "Accept": "application/pdf" }
-      });
-
-      if (error) throw error;
-      if (!data) throw new Error("No data returned");
-
-      const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `License_Order_${purchaseId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("License error:", err);
-    } finally {
-      setDownloadingLicenseId(null);
-    }
-  };
-
-  // --- EFFECT 1: CARICAMENTO DATI ---
   useEffect(() => {
-    const userId = session?.user?.id;
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+    // Se non abbiamo ancora caricato i prodotti o se abbiamo già processato l'auto-click, esci
+    if (loading || ownedItems.length === 0 || autoProcessed) return;
 
-    const fetchEverything = async () => {
-      setLoading(true);
-      try {
-        const { data: purchases, error: purchaseError } = await supabase
-          .from('purchases')
-          .select('*, squeeze_tracks(*), album(*)')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
-
-        if (purchaseError) throw purchaseError;
-
-        const finalItems: OwnedItem[] = [];
-
-        for (const purchase of (purchases as any[])) {
-          // Caso Traccia Singola
-          if (purchase.track_id && purchase.squeeze_tracks) {
-            finalItems.push({
-              track: purchase.squeeze_tracks,
-              purchaseId: purchase.id,
-              licenseType: purchase.license_type || 'standard',
-              purchaseDate: purchase.created_at
-            });
-          } 
-          // Caso Album / Music Pack
-          else if (purchase.album_id && purchase.album) {
-            const { data: albumTracks, error: albumTracksError } = await supabase
-              .from('album_tracks')
-              .select('track_id')
-              .eq('album_id', purchase.album_id);
-
-            if (!albumTracksError && albumTracks) {
-              const trackIds = albumTracks.map(at => at.track_id);
-              const { data: tracksData } = await supabase
-                .from('squeeze_tracks')
-                .select('*')
-                .in('id', trackIds);
-
-              if (tracksData) {
-                tracksData.forEach(track => {
-                  finalItems.push({
-                    track,
-                    purchaseId: purchase.id,
-                    licenseType: purchase.license_type || 'standard',
-                    fromAlbum: purchase.album,
-                    purchaseDate: purchase.created_at
-                  });
-                });
-              }
-            }
-          }
-        }
-
-        const seen = new Set();
-        const uniqueItems = finalItems.filter(item => {
-          const duplicate = seen.has(item.track.id);
-          seen.add(item.track.id);
-          return !duplicate;
-        });
-
-        setOwnedItems(uniqueItems.sort((a, b) => 
-          new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
-        ));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEverything();
-  }, [session]);
-
-  // --- EFFECT 2: AZIONE AUTOMATICA ---
-  useEffect(() => {
     const orderId = searchParams.get('order');
     const action = searchParams.get('action');
 
-    if (!orderId || !action || loading || ownedItems.length === 0 || autoProcessed) return;
+    if (orderId && action) {
+      // Troviamo l'item corrispondente nell'elenco dei prodotti posseduti
+      // Usiamo l'ID ordine dell'email (stringa) confrontandolo con purchaseId (numero o stringa)
+      const targetItem = ownedItems.find(item => String(item.purchaseId) === orderId);
 
-    const targetItem = ownedItems.find(item => String(item.purchaseId) === String(orderId));
-
-    if (targetItem) {
-      setAutoProcessed(true);
-      if (action === 'download') handleDownload(targetItem.track);
-      if (action === 'license') handleDownloadLicense(targetItem.purchaseId);
-      
-      setTimeout(() => navigate('/my-purchases', { replace: true }), 1500);
+      if (targetItem) {
+        setAutoProcessed(true); // Evita loop infiniti
+        
+        if (action === 'download') {
+          handleDownload(targetItem.track);
+        } else if (action === 'license') {
+          handleDownloadLicense(Number(orderId));
+        }
+        
+        // Puliamo l'URL per non far ripartire il download al refresh
+        navigate('/my-purchases', { replace: true });
+      }
     }
-  }, [loading, ownedItems, searchParams, autoProcessed, navigate]);
-
-  // ... (Qui continua con il tuo return JSX)
+  }, [loading, ownedItems, searchParams, autoProcessed]);
+  // -----------------------------------------------
 
   // UI State for Settings
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
