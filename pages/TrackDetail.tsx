@@ -204,7 +204,14 @@ export const TrackDetail: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
-        <SEO title={`${track.title} by ${track.artist_name}`} description={track.description?.substring(0, 150)} image={track.cover_url} />
+        <SEO 
+  title={track.title} 
+  description={track.description?.substring(0, 150)} 
+  image={track.cover_url}
+  url={`https://pinegroove.net/track/${slug || id}`} 
+  isTrack={true}
+  artistName={track.artist_name}
+/>
 
         {/* Top Header Section */}
         <div className="flex flex-col md:flex-row gap-8 lg:gap-12 mb-12 items-start">
