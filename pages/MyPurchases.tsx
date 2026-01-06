@@ -32,7 +32,12 @@ interface OwnedItem {
 }
 
 export const MyPurchases: React.FC = () => {
+  // 1. HOOKS DI SISTEMA
   const { session, isDarkMode, playTrack, currentTrack, isPlaying, ownedTrackIds } = useStore();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // 2. STATI DELL'INTERFACCIA
   const [ownedItems, setOwnedItems] = useState<OwnedItem[]>([]);
   const [recommendations, setRecommendations] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,42 +45,150 @@ export const MyPurchases: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [downloadingLicenseId, setDownloadingLicenseId] = useState<number | null>(null);
-  
-  // Coupons State
+  const [autoProcessed, setAutoProcessed] = useState(false);
+
+  // 3. STATI PER I COUPONS
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-// --- LOGICA PER AZIONE AUTOMATICA DA EMAIL ---
-const [searchParams] = useSearchParams();
-const [autoProcessed, setAutoProcessed] = useState(false);
+  // --- FUNZIONE DOWNLOAD TRACCIA (WAV) ---
+  const handleDownload = async (track: MusicTrack) => {
+    setDownloadingId(track.id);
+    try {
+      const { data, error } = await supabase.storage
+        .from('tracks')
+        .download(track.file_path);
+      if (error) throw error;
 
-useEffect(() => {
-  // Eseguiamo solo se: non sta caricando, ci sono oggetti posseduti e non abbiamo già processato l'azione
-  if (loading || ownedItems.length === 0 || autoProcessed) return;
+      const url = window.URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${track.title}.wav`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download error:", err);
+      alert("Error downloading file.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
-  const orderId = searchParams.get('order');
-  const action = searchParams.get('action');
+  // --- FUNZIONE DOWNLOAD LICENZA (PDF) ---
+  const handleDownloadLicense = async (purchaseId: number) => {
+    if (!session) return;
+    setDownloadingLicenseId(purchaseId);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-certificate', {
+        body: { purchaseId },
+        headers: {
+          "Accept": "application/pdf" // Previene la corruzione del file
+        }
+      });
 
-  if (orderId && action) {
-    // Cerchiamo l'acquisto specifico nella lista caricata
+      if (error) throw error;
+      if (!data) throw new Error("No data returned");
+
+      const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `License_Pinegroove_Order_${purchaseId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("License download error:", err);
+    } finally {
+      setDownloadingLicenseId(null);
+    }
+  };
+
+  // --- 1° EFFECT: CARICAMENTO DATI DAL DATABASE ---
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchEverything = async () => {
+      setLoading(true);
+      try {
+        const { data: purchases, error: purchaseError } = await supabase
+          .from('purchases')
+          .select('*, squeeze_tracks(*), album(*)')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        if (purchaseError) throw purchaseError;
+        
+        const finalItems: OwnedItem[] = [];
+        for (const purchase of (purchases as any[])) {
+          if (purchase.track_id && purchase.squeeze_tracks) {
+            finalItems.push({
+              track: purchase.squeeze_tracks,
+              purchaseId: purchase.id,
+              licenseType: purchase.license_type || 'standard',
+              purchaseDate: purchase.created_at
+            });
+          } else if (purchase.album_id && purchase.album) {
+             // ... qui va la tua logica per estrarre le tracce dell'album che avevi già ...
+          }
+        }
+
+        const seen = new Set();
+        const uniqueItems = finalItems.filter(item => {
+          const duplicate = seen.has(item.track.id);
+          seen.add(item.track.id);
+          return !duplicate;
+        });
+
+        uniqueItems.sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
+        setOwnedItems(uniqueItems);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEverything();
+  }, [session]);
+
+  // --- 2° EFFECT: AZIONE AUTOMATICA DA EMAIL ---
+  useEffect(() => {
+    const orderId = searchParams.get('order');
+    const action = searchParams.get('action');
+
+    // Esci se i parametri mancano o se i dati non sono ancora pronti
+    if (!orderId || !action || loading || ownedItems.length === 0 || autoProcessed) return;
+
+    // Cerca l'ordine corrispondente nella lista caricata
     const targetItem = ownedItems.find(item => String(item.purchaseId) === String(orderId));
 
     if (targetItem) {
-      setAutoProcessed(true); // Blocca esecuzioni multiple
+      setAutoProcessed(true); // Evita loop infiniti
 
       if (action === 'download') {
         handleDownload(targetItem.track);
       } else if (action === 'license') {
-        // Importante: passiamo l'ID come numero se il tuo DB usa interi
-        handleDownloadLicense(Number(targetItem.purchaseId));
+        handleDownloadLicense(targetItem.purchaseId);
       }
 
-      // Puliamo l'URL per estetica e per evitare ri-download al refresh
-      navigate('/my-purchases', { replace: true });
+      // Rimuove i parametri dall'URL dopo il trigger dell'azione
+      setTimeout(() => {
+        navigate('/my-purchases', { replace: true });
+      }, 1500);
     }
-  }
-}, [loading, ownedItems, searchParams, autoProcessed, navigate]);
-  // -----------------------------------------------
+  }, [loading, ownedItems, searchParams, autoProcessed, navigate]);
+
+  // ... da qui in poi continua con il tuo return (JSX) ...
 
   // UI State for Settings
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
