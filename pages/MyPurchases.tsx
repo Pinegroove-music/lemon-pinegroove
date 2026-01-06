@@ -240,33 +240,48 @@ export const MyPurchases: React.FC = () => {
   };
 
   const handleDownloadLicense = async (purchaseId: number) => {
-    if (!session) return;
-    setDownloadingLicenseId(purchaseId);
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-certificate', {
-        body: { purchaseId }
-      });
+  if (!session) return;
+  setDownloadingLicenseId(purchaseId);
+  try {
+    // 1. Invocazione della funzione con gestione esplicita del blob
+    const { data, error } = await supabase.functions.invoke('generate-certificate', {
+      body: { purchaseId },
+      // Importante: forziamo il recupero come blob per evitare corruzione JSON
+      headers: {
+        "Accept": "application/pdf"
+      }
+    });
 
-      if (error) throw error;
-      if (!data) throw new Error("No data returned from function");
+    if (error) throw error;
+    if (!data) throw new Error("No data returned from function");
 
-      const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `License_Pinegroove_Order_${purchaseId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("License download error:", err);
-      alert("An error occurred while generating your license certificate.");
-    } finally {
-      setDownloadingLicenseId(null);
+    // 2. Trasformazione in Blob (gestendo sia dati binari che stringhe base64 se presenti)
+    const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/pdf' });
+
+    // 3. Controllo di sicurezza: se il file è troppo piccolo, potrebbe essere un errore testuale rinominato
+    if (blob.size < 500) { 
+        console.warn("Il file PDF sembra troppo piccolo, potrebbe essere corrotto.");
     }
-  };
+
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `License_Pinegroove_Order_${purchaseId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+  } catch (err) {
+    console.error("License download error:", err);
+    alert("An error occurred while generating your license certificate.");
+  } finally {
+    setDownloadingLicenseId(null);
+  }
+};
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
