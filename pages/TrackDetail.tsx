@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -91,8 +92,6 @@ export const TrackDetail: React.FC = () => {
         .eq('is_active', true)
         .then(({ data }) => {
             if (data) {
-                // ID for single track: 1cc9b63f-7a17-46c7-99b8-2d05d1bcc883
-                // ID for pro sub: 6237aa1b-f40c-41c2-aac5-070fb0a11ba7
                 const tC = data.find(c => String(c.id) === '1cc9b63f-7a17-46c7-99b8-2d05d1bcc883');
                 const pC = data.find(c => String(c.id) === '6237aa1b-f40c-41c2-aac5-070fb0a11ba7');
                 if (tC) setTrackCoupon(tC as Coupon);
@@ -118,7 +117,6 @@ export const TrackDetail: React.FC = () => {
     setDownloadingWav(true);
     try {
       if (hasFullAccess) {
-          // Download High Quality WAV
           if (!session) {
               navigate('/auth');
               return;
@@ -138,7 +136,6 @@ export const TrackDetail: React.FC = () => {
               window.URL.revokeObjectURL(blobUrl);
           }
       } else {
-          // Download MP3 Preview - Forced physical download via Blob
           const response = await fetch(track.mp3_url);
           if (!response.ok) throw new Error("Download failed");
           const blob = await response.blob();
@@ -191,7 +188,6 @@ export const TrackDetail: React.FC = () => {
 
   const active = currentTrack?.id === track.id && isPlaying;
   
-  // Checking specific license ownership for locking boxes
   const ownsStandard = isPurchased && purchase?.license_type?.toLowerCase().includes('standard');
   const ownsExtended = isPurchased && purchase?.license_type?.toLowerCase().includes('extended');
 
@@ -202,9 +198,23 @@ export const TrackDetail: React.FC = () => {
     ));
   };
 
+  // Formattazione durata ISO 8601 per Schema.org (es. PT3M45S)
+  const durationISO = track.duration ? `PT${Math.floor(track.duration / 60)}M${track.duration % 60}S` : undefined;
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
-        <SEO title={`${track.title} by ${track.artist_name}`} description={track.description?.substring(0, 150)} image={track.cover_url} />
+        <SEO 
+          title={`${track.title} by ${track.artist_name}`} 
+          description={track.description?.substring(0, 150)} 
+          image={track.cover_url}
+          type="music.song"
+          trackData={{
+            artist: track.artist_name,
+            duration: durationISO,
+            genre: Array.isArray(track.genre) ? track.genre[0] : (track.genre || undefined),
+            datePublished: track.year?.toString()
+          }}
+        />
 
         {/* Top Header Section */}
         <div className="flex flex-col md:flex-row gap-8 lg:gap-12 mb-12 items-start">
@@ -371,7 +381,7 @@ export const TrackDetail: React.FC = () => {
                         </div>
                         <button 
                           onClick={() => handleCopyCode(proCoupon.discount_code)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === proCoupon.discount_code ? 'bg-emerald-600 text-white' : 'bg-black/10 hover:bg-black/20 text-amber-950 border border-black/10'}`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === proCoupon.discount_code ? 'bg-emerald-500 text-white' : 'bg-black/10 hover:bg-black/20 text-amber-950 border border-black/10'}`}
                         >
                           {copiedCode === proCoupon.discount_code ? <Check size={12} /> : <Copy size={12} />}
                           {copiedCode === proCoupon.discount_code ? 'COPIED' : 'COPY'}

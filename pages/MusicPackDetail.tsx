@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -160,7 +161,6 @@ export const MusicPackDetail: React.FC = () => {
         if (error) throw error;
 
         if (data?.downloadUrl) {
-            // FORCE PHYSICAL DOWNLOAD via BLOB
             const response = await fetch(data.downloadUrl);
             const blob = await response.blob();
             const blobUrl = window.URL.createObjectURL(blob);
@@ -200,7 +200,17 @@ export const MusicPackDetail: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
-      <SEO title={album.title} description={album.description || ''} image={album.cover_url} />
+      <SEO 
+        title={album.title} 
+        description={album.description || ''} 
+        image={album.cover_url}
+        type="music.album"
+        albumData={{
+            artist: "Francesco Biondi",
+            numTracks: tracks.length,
+            genre: tracks.length > 0 ? (Array.isArray(tracks[0].genre) ? tracks[0].genre[0] : (tracks[0].genre || undefined)) : undefined
+        }}
+      />
 
       <Link to="/music-packs" className="inline-flex items-center gap-2 opacity-60 hover:opacity-100 mb-8 transition-opacity">
         <ArrowLeft size={16} /> Back to Music Packs
