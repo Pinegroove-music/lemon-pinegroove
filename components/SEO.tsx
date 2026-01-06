@@ -6,7 +6,6 @@ interface SEOProps {
   description?: string;
   image?: string;
   url?: string;
-  // Aggiungiamo props opzionali per i dati musicali
   isTrack?: boolean;
   artistName?: string;
 }
@@ -21,9 +20,9 @@ export const SEO: React.FC<SEOProps> = ({
 }) => {
   const siteTitle = "Pinegroove";
   const fullTitle = `${title} | ${siteTitle}`;
-  const effectiveDescription = description || "Pinegroove offers a catalog of high-quality, royalty-free stock music perfect for videos, YouTube, social media, TV, and web projects.";
+  const effectiveDescription = description || "Pinegroove offers high-quality, royalty-free stock music.";
 
-  // Generiamo l'oggetto JSON-LD per Google
+  // Creazione dell'oggetto JSON-LD
   const structuredData = isTrack ? {
     "@context": "https://schema.org",
     "@type": "MusicRecording",
@@ -47,14 +46,14 @@ export const SEO: React.FC<SEOProps> = ({
       <meta property="og:type" content={isTrack ? "music.song" : "website"} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={effectiveDescription} key="og:description" />
-      {image && <meta property="og:image" content={image} />}
+      <meta property="og:image" content={image} />
       {url && <meta property="og:url" content={url} />}
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={effectiveDescription} key="twitter:description" />
-      {image && <meta name="twitter:image" content={image} />}
+      <meta name="twitter:image" content={image} />
 
       {/* Google Rich Results (JSON-LD) */}
       {structuredData && (

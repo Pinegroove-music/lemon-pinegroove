@@ -208,7 +208,7 @@ export const TrackDetail: React.FC = () => {
   title={track.title} 
   description={track.description?.substring(0, 150)} 
   image={track.cover_url}
-  url={`https://pinegroove.net/track/${slug || id}`} 
+  url={`https://pinegroove.net/track/${slug}`} // rimosso 'id' che non esiste qui
   isTrack={true}
   artistName={track.artist_name}
 />
