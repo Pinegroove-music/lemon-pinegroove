@@ -319,9 +319,9 @@ const Layout: React.FC = () => {
             <Route path="/categories/instruments" element={<InstrumentsPage />} />
             <Route path="/track/:slug" element={<TrackDetail />} />
             <Route path="/track/:id" element={<TrackDetail />} />
-            <Route path="/t/:id" element={<TrackDetail />} />
             <Route path="/music-packs" element={<MusicPacks />} />
             <Route path="/music-packs/:slug" element={<MusicPackDetail />} />
+            <Route path="/music-packs/:id" element={<MusicPackDetail />} />
             <Route path="/about" element={<About />} />
             <Route path="/faq" element={<Faq />} />
             <Route path="/content-id" element={<ContentId />} />
