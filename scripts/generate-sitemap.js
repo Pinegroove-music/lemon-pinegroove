@@ -88,26 +88,18 @@ async function generateSitemap() {
     });
   }
 
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(url => `  <url>
-    <loc>${url.loc}</loc>
-    <lastmod>${url.lastmod}</lastmod>
-    <changefreq>${url.changefreq}</changefreq>
-    <priority>${url.priority}</priority>
-  </url>`).join('\n')}
-</urlset>`;
+  // Usa process.cwd() che in Vercel punta alla cartella principale (lemon-pinegroove)
+const publicDir = path.join(process.cwd(), 'public');
 
-  const publicDir = path.resolve(__dirname, '../public');
-  
-  if (!fs.existsSync(publicDir)) {
-      console.log('⚠️ Cartella public non trovata, provo a scrivere nella root...');
-      fs.writeFileSync('sitemap.xml', sitemap);
-  } else {
-      fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemap);
-  }
+if (!fs.existsSync(publicDir)) {
+    console.log('Creating public directory...');
+    fs.mkdirSync(publicDir, { recursive: true });
+}
 
-  console.log(`✅ Sitemap generata con successo con ${urls.length} URL!`);
+const outputPath = path.join(publicDir, 'sitemap.xml');
+fs.writeFileSync(outputPath, sitemap);
+
+console.log(`✅ Sitemap successfully generated at: ${outputPath}`);
 }
 
 generateSitemap();
