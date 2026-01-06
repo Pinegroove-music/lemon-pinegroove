@@ -26,7 +26,6 @@ const staticRoutes = [
   '/content-id',
 ];
 
-// Helper per creare lo slug (deve essere identico a quello in utils/slugUtils.ts)
 const createSlug = (id, title) => {
   const slug = title
     .toLowerCase()
@@ -43,6 +42,7 @@ async function generateSitemap() {
   let urls = [];
   const currentDate = new Date().toISOString();
 
+  // Rotte statiche
   staticRoutes.forEach(route => {
     urls.push({
       loc: `${DOMAIN}${route}`,
@@ -52,7 +52,7 @@ async function generateSitemap() {
     });
   });
 
-  // 1. Fetch Tracks from the new squeeze_tracks table
+  // 1. Fetch Tracks
   const { data: tracks, error: tracksError } = await supabase
     .from('squeeze_tracks')
     .select('id, title');
@@ -63,14 +63,14 @@ async function generateSitemap() {
     tracks.forEach(track => {
       urls.push({
         loc: `${DOMAIN}/track/${createSlug(track.id, track.title)}`,
-        lastmod: currentDate, // Usiamo la data di generazione
+        lastmod: currentDate,
         changefreq: 'weekly',
         priority: '0.7'
       });
     });
   }
 
-  // 2. Fetch Albums (senza chiedere date specifiche per evitare errori)
+  // 2. Fetch Albums
   const { data: albums, error: albumsError } = await supabase
     .from('album')
     .select('id, title');
@@ -81,25 +81,39 @@ async function generateSitemap() {
     albums.forEach(album => {
       urls.push({
         loc: `${DOMAIN}/music-packs/${createSlug(album.id, album.title)}`,
-        lastmod: currentDate, // Usiamo la data di generazione
+        lastmod: currentDate,
         changefreq: 'weekly',
         priority: '0.9'
       });
     });
   }
 
-  // Usa process.cwd() che in Vercel punta alla cartella principale (lemon-pinegroove)
-const publicDir = path.join(process.cwd(), 'public');
+  // --- QUI C'ERA L'ERRORE: MANCAVA LA DEFINIZIONE DI sitemap ---
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(url => `  <url>
+    <loc>${url.loc}</loc>
+    <lastmod>${url.lastmod}</lastmod>
+    <changefreq>${url.changefreq}</changefreq>
+    <priority>${url.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
 
-if (!fs.existsSync(publicDir)) {
-    console.log('Creating public directory...');
-    fs.mkdirSync(publicDir, { recursive: true });
-}
+  const publicDir = path.join(process.cwd(), 'public');
 
-const outputPath = path.join(publicDir, 'sitemap.xml');
-fs.writeFileSync(outputPath, sitemap);
+  if (!fs.existsSync(publicDir)) {
+      console.log('Creating public directory...');
+      fs.mkdirSync(publicDir, { recursive: true });
+  }
 
-console.log(`✅ Sitemap successfully generated at: ${outputPath}`);
+  const outputPath = path.join(publicDir, 'sitemap.xml');
+  
+  try {
+      fs.writeFileSync(outputPath, sitemap);
+      console.log(`✅ Sitemap successfully generated at: ${outputPath}`);
+  } catch (err) {
+      console.error('❌ Errore durante la scrittura della sitemap:', err);
+  }
 }
 
 generateSitemap();
