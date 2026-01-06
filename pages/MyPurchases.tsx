@@ -45,36 +45,36 @@ export const MyPurchases: React.FC = () => {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  // --- LOGICA PER DOWNLOAD AUTOMATICO DA EMAIL ---
-  const [searchParams] = useSearchParams();
-  const [autoProcessed, setAutoProcessed] = useState(false);
+// --- LOGICA PER AZIONE AUTOMATICA DA EMAIL ---
+const [searchParams] = useSearchParams();
+const [autoProcessed, setAutoProcessed] = useState(false);
 
-  useEffect(() => {
-    // Se non abbiamo ancora caricato i prodotti o se abbiamo già processato l'auto-click, esci
-    if (loading || ownedItems.length === 0 || autoProcessed) return;
+useEffect(() => {
+  // Eseguiamo solo se: non sta caricando, ci sono oggetti posseduti e non abbiamo già processato l'azione
+  if (loading || ownedItems.length === 0 || autoProcessed) return;
 
-    const orderId = searchParams.get('order');
-    const action = searchParams.get('action');
+  const orderId = searchParams.get('order');
+  const action = searchParams.get('action');
 
-    if (orderId && action) {
-      // Troviamo l'item corrispondente nell'elenco dei prodotti posseduti
-      // Usiamo l'ID ordine dell'email (stringa) confrontandolo con purchaseId (numero o stringa)
-      const targetItem = ownedItems.find(item => String(item.purchaseId) === orderId);
+  if (orderId && action) {
+    // Cerchiamo l'acquisto specifico nella lista caricata
+    const targetItem = ownedItems.find(item => String(item.purchaseId) === String(orderId));
 
-      if (targetItem) {
-        setAutoProcessed(true); // Evita loop infiniti
-        
-        if (action === 'download') {
-          handleDownload(targetItem.track);
-        } else if (action === 'license') {
-          handleDownloadLicense(Number(orderId));
-        }
-        
-        // Puliamo l'URL per non far ripartire il download al refresh
-        navigate('/my-purchases', { replace: true });
+    if (targetItem) {
+      setAutoProcessed(true); // Blocca esecuzioni multiple
+
+      if (action === 'download') {
+        handleDownload(targetItem.track);
+      } else if (action === 'license') {
+        // Importante: passiamo l'ID come numero se il tuo DB usa interi
+        handleDownloadLicense(Number(targetItem.purchaseId));
       }
+
+      // Puliamo l'URL per estetica e per evitare ri-download al refresh
+      navigate('/my-purchases', { replace: true });
     }
-  }, [loading, ownedItems, searchParams, autoProcessed]);
+  }
+}, [loading, ownedItems, searchParams, autoProcessed, navigate]);
   // -----------------------------------------------
 
   // UI State for Settings
