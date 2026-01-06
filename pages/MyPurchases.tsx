@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../services/supabase';
 import { MusicTrack, Album, Coupon } from '../types';
 import { useStore } from '../store/useStore';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Download, ShoppingBag, ArrowRight, Loader2, Play, Pause, FileBadge, Info, Disc, LayoutGrid, LayoutList, Search, X, Settings, LogOut, ExternalLink, Copy, Check, Shield, Fingerprint, Ticket, ShieldCheck, Sparkles, ArrowLeft } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { createSlug } from '../utils/slugUtils';
@@ -44,6 +44,38 @@ export const MyPurchases: React.FC = () => {
   // Coupons State
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  // --- LOGICA PER DOWNLOAD AUTOMATICO DA EMAIL ---
+  const [searchParams] = useSearchParams();
+  const [autoProcessed, setAutoProcessed] = useState(false);
+
+  useEffect(() => {
+    // Se non abbiamo ancora caricato i prodotti o se abbiamo già processato l'auto-click, esci
+    if (loading || ownedItems.length === 0 || autoProcessed) return;
+
+    const orderId = searchParams.get('order');
+    const action = searchParams.get('action');
+
+    if (orderId && action) {
+      // Troviamo l'item corrispondente nell'elenco dei prodotti posseduti
+      // Usiamo l'ID ordine dell'email (stringa) confrontandolo con purchaseId (numero o stringa)
+      const targetItem = ownedItems.find(item => String(item.purchaseId) === orderId);
+
+      if (targetItem) {
+        setAutoProcessed(true); // Evita loop infiniti
+        
+        if (action === 'download') {
+          handleDownload(targetItem.track);
+        } else if (action === 'license') {
+          handleDownloadLicense(Number(orderId));
+        }
+        
+        // Puliamo l'URL per non far ripartire il download al refresh
+        navigate('/my-purchases', { replace: true });
+      }
+    }
+  }, [loading, ownedItems, searchParams, autoProcessed]);
+  // -----------------------------------------------
 
   // UI State for Settings
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
