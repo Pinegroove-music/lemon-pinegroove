@@ -1,8 +1,8 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { MusicTrack, Album, Coupon } from '../types';
+import { MusicTrack, Album, Coupon, PricingItem } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
 import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, Download, FileBadge, Zap, CheckCircle2, Info, Loader2, ShoppingCart, Heart, Ticket, Copy, Check } from 'lucide-react';
@@ -18,6 +18,7 @@ export const TrackDetail: React.FC = () => {
   const [track, setTrack] = useState<MusicTrack | null>(null);
   const [relatedAlbum, setRelatedAlbum] = useState<Album | null>(null);
   const [recommendations, setRecommendations] = useState<MusicTrack[]>([]);
+  const [pricingData, setPricingData] = useState<PricingItem[]>([]);
   const { playTrack, currentTrack, isPlaying, isDarkMode, session, purchasedTracks, ownedTrackIds } = useStore();
   const { isPro, openSubscriptionCheckout } = useSubscription();
   const [selectedLicense, setSelectedLicense] = useState<LicenseOption>('standard');
@@ -44,6 +45,7 @@ export const TrackDetail: React.FC = () => {
     if (id) {
       window.scrollTo(0, 0); 
       
+      // Fetch Track Data
       supabase.from('squeeze_tracks').select('*').eq('id', id).single()
         .then(({ data: trackData }) => {
           if (trackData) {
@@ -85,6 +87,12 @@ export const TrackDetail: React.FC = () => {
           }
         });
         
+      // Fetch dynamic prices
+      supabase.from('pricing').select('*')
+        .then(({ data: pData }) => {
+            if (pData) setPricingData(pData as PricingItem[]);
+        });
+
       // Fetch specific promo coupons
       supabase.from('coupons')
         .select('*')
@@ -100,6 +108,13 @@ export const TrackDetail: React.FC = () => {
         });
     }
   }, [slug]);
+
+  // Pricing Helpers
+  const getDynamicPrice = (type: string, defaultPrice: string) => {
+    const item = pricingData.find(p => p.product_type === type);
+    if (!item) return defaultPrice;
+    return `${item.currency} ${item.price}${type === 'full_catalog' ? '/year' : ''}`;
+  };
 
   const purchase = track ? purchasedTracks.find(p => p.track_id === track.id) : null;
   const isPurchased = track ? ownedTrackIds.has(track.id) : false;
@@ -200,6 +215,9 @@ export const TrackDetail: React.FC = () => {
 
   // Formattazione durata ISO 8601 per Schema.org (es. PT3M45S)
   const durationISO = track.duration ? `PT${Math.floor(track.duration / 60)}M${track.duration % 60}S` : undefined;
+
+  // Verifica se esistono crediti extra
+  const hasCredits = track.credits && Array.isArray(track.credits) && track.credits.length > 0;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
@@ -306,8 +324,8 @@ export const TrackDetail: React.FC = () => {
                     <h3 className="text-xl font-bold mb-6">Track Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         
-                {/* Box 1: Dettagli */}
-                     <div className={`p-6 rounded-2xl border space-y-4 text-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-gray-200'}`}>
+                {/* Box 1: Dettagli - Esteso a col-span-2 se non ci sono crediti */}
+                     <div className={`p-6 rounded-2xl border space-y-4 text-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-gray-200'} ${!hasCredits ? 'md:col-span-2' : ''}`}>
                         <DetailRow label="Duration" value={track.duration ? `${Math.floor(track.duration / 60)}:${(track.duration % 60).toString().padStart(2, '0')}` : '-'} icon={<Clock size={16}/>} />
                         <DetailRow label="BPM" value={track.bpm} icon={<Music2 size={16}/>} />
                         <DetailRow label="Released" value={track.year} icon={<Calendar size={16}/>} />
@@ -316,11 +334,11 @@ export const TrackDetail: React.FC = () => {
                     </div>
 
                 {/* Box 2: Credits (Appare solo se esistono) */}
-                {track.credits && Array.isArray(track.credits) && track.credits.length > 0 && (
+                {hasCredits && (
                     <div className={`p-6 rounded-2xl border text-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-gray-200'}`}>
                         <h4 className="font-bold mb-3 text-sm uppercase tracking-wider opacity-80">Additional Credits</h4>
                         <div className="space-y-2">
-                            {track.credits.map((credit: any, i: number) => (
+                            {(track.credits as any[]).map((credit: any, i: number) => (
                             <div key={i} className="text-sm">
                             <Link 
                                 to={`/library?search=${encodeURIComponent(credit.name)}`}
@@ -376,7 +394,7 @@ export const TrackDetail: React.FC = () => {
                     <LicenseCard 
                         id="standard"
                         title="Standard Sync License"
-                        price="€9.99"
+                        price={getDynamicPrice('single_track_standard', '€9.99')}
                         selected={selectedLicense === 'standard'}
                         locked={ownsStandard || ownsExtended || isPro}
                         onClick={() => setSelectedLicense('standard')}
@@ -398,7 +416,7 @@ export const TrackDetail: React.FC = () => {
                     <LicenseCard 
                         id="extended"
                         title="Extended Sync License"
-                        price="€39.99"
+                        price={getDynamicPrice('single_track_extended', '€39.99')}
                         selected={selectedLicense === 'extended'}
                         locked={ownsExtended || isPro}
                         onClick={() => setSelectedLicense('extended')}
@@ -422,7 +440,7 @@ export const TrackDetail: React.FC = () => {
                     <LicenseCard 
                         id="pro"
                         title="PRO Subscription"
-                        price="€99/year"
+                        price={getDynamicPrice('full_catalog', '€99/year')}
                         selected={selectedLicense === 'pro'}
                         locked={isPro}
                         onClick={() => setSelectedLicense('pro')}
