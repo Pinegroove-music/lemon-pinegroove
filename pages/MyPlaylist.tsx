@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { MusicTrack, Coupon } from '../types';
@@ -96,19 +97,21 @@ export const MyPlaylist: React.FC = () => {
           </h1>
           <p className="opacity-60 text-lg mb-6">Tracks you've saved for your future projects.</p>
           
-          {/* Special Purple Promo Card - Aligned Left, compact height */}
+          {/* Special Purple Promo Card - Responsive fix for mobile */}
           {specialPromo && (
-            <div className="flex justify-start">
-              <div className="bg-gradient-to-br from-purple-600 via-indigo-700 to-purple-800 text-white px-4 py-2 rounded-2xl shadow-xl flex items-center gap-4 border border-white/10 animate-in fade-in slide-in-from-left-4 duration-700 w-fit">
+            <div className="flex justify-start max-w-full">
+              <div className="bg-gradient-to-br from-purple-600 via-indigo-700 to-purple-800 text-white p-4 sm:px-4 sm:py-2 rounded-2xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 border border-white/10 animate-in fade-in slide-in-from-left-4 duration-700 w-full sm:w-fit">
                 <div className="shrink-0 flex items-center justify-center">
                   <Ticket className="text-purple-200" size={18} />
                 </div>
-                <p className="text-xs md:text-sm font-bold whitespace-nowrap overflow-hidden">
-                  Save {specialPromo.discount_percent}% on your favorite tracks using code <span className="text-purple-200 font-black tracking-widest px-1">{specialPromo.discount_code}</span>
-                </p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs md:text-sm font-bold leading-relaxed sm:leading-snug">
+                    Save {specialPromo.discount_percent}% on your favorite tracks using code <span className="text-purple-200 font-black tracking-widest px-1 bg-black/10 rounded">{specialPromo.discount_code}</span>
+                  </p>
+                </div>
                 <button 
                   onClick={() => handleCopyCode(specialPromo.discount_code)}
-                  className={`flex items-center gap-2 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0 ${copiedCode === specialPromo.discount_code ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'}`}
+                  className={`flex items-center justify-center gap-2 px-4 py-2 sm:px-3 sm:py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shrink-0 w-full sm:w-auto ${copiedCode === specialPromo.discount_code ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'}`}
                 >
                   {copiedCode === specialPromo.discount_code ? <Check size={12} /> : <Copy size={12} />}
                   {copiedCode === specialPromo.discount_code ? 'COPIED' : 'COPY'}

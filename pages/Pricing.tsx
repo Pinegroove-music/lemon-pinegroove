@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { SEO } from '../components/SEO';
-import { Check, Info, ShieldAlert, Tag, Zap, Crown, Globe, Tv, MonitorPlay, Radio, Smartphone, Rocket, HelpCircle, ArrowRight, Ticket, Copy, ShieldCheck } from 'lucide-react';
+import { Check, Info, ShieldAlert, Tag, Zap, Crown, Globe, Tv, ArrowRight, Ticket, Copy, ShieldCheck, HelpCircle } from 'lucide-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { Coupon } from '../types';
+import { Coupon, PricingItem } from '../types';
 
 export const Pricing: React.FC = () => {
   const { isDarkMode, session, isSubscriber } = useStore();
   const { openSubscriptionCheckout } = useSubscription();
   const [pricingMode, setPricingMode] = useState<'pay-per-track' | 'subscription'>('pay-per-track');
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [pricingData, setPricingData] = useState<PricingItem[]>([]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -22,15 +24,22 @@ export const Pricing: React.FC = () => {
   ];
 
   useEffect(() => {
-    const fetchCoupons = async () => {
+    const fetchData = async () => {
+      // Fetch Coupons
       const { data: couponData } = await supabase
         .from('coupons')
         .select('*')
         .eq('is_active', true)
         .not('discount_code', 'is', null);
       if (couponData) setCoupons(couponData as Coupon[]);
+
+      // Fetch dynamic prices
+      const { data: pData } = await supabase
+        .from('pricing')
+        .select('*');
+      if (pData) setPricingData(pData as PricingItem[]);
     };
-    fetchCoupons();
+    fetchData();
   }, []);
 
   const handleCopyCode = (code: string) => {
@@ -49,13 +58,20 @@ export const Pricing: React.FC = () => {
     }
   };
 
-  const payPerTrackItems = [
+  // Pricing Helpers
+  const getPrice = (type: string, defaultPrice: string) => {
+    const item = pricingData.find(p => p.product_type === type);
+    if (!item) return defaultPrice;
+    return `${item.currency} ${item.price}`;
+  };
+
+  const payPerTrackItems = useMemo(() => [
     {
       title: "Standard Sync License",
       icon: <Globe className="text-sky-500" size={32} />,
       prices: [
-        { label: "Single Track", value: "€ 9.99" },
-        { label: "Music Pack", value: "€ 49.99" }
+        { label: "Single Track", value: getPrice('single_track_standard', '€ 9.99') },
+        { label: "Music Pack", value: getPrice('music_pack_standard', '€ 49.99') }
       ],
       features: [
         "Web, Social Media & Podcast",
@@ -69,8 +85,8 @@ export const Pricing: React.FC = () => {
       title: "Extended Sync License",
       icon: <Tv className="text-amber-500" size={32} />,
       prices: [
-        { label: "Single Track", value: "€ 39.99" },
-        { label: "Music Pack", value: "€ 69.99" }
+        { label: "Single Track", value: getPrice('single_track_extended', '€ 39.99') },
+        { label: "Music Pack", value: getPrice('music_pack_extended', '€ 69.99') }
       ],
       features: [
         "TV, Radio, Film & Apps",
@@ -81,7 +97,13 @@ export const Pricing: React.FC = () => {
       ],
       footer: "Perpetual License - Re-download anytime from your account."
     }
-  ];
+  ], [pricingData]);
+
+  const proPrice = useMemo(() => {
+    const item = pricingData.find(p => p.product_type === 'full_catalog');
+    if (!item) return "€ 99";
+    return `${item.currency} ${item.price}`;
+  }, [pricingData]);
 
   const prohibitedUses = [
     "Sell, resell, trade in, or give away the music to any other party or otherwise distribute the music \"as is.\"",
@@ -89,6 +111,7 @@ export const Pricing: React.FC = () => {
     "No Stand-alone use: You cannot use/include the music in music compilations (CDs, DVDs, or digital albums) or as stand-alone elements. This applies strictly to Podcasts: the music must be used as a background element synchronized with voice-over or other primary content.",
     "Record the music under any Content ID fingerprinting system such as AdRev, Identifyy, TuneCore, etc.",
     "Redistribute the music as a part of different multimedia templates (e.g., website templates, video templates, slideshow templates) subsequently offered to multiple end-users.",
+    "Use or redistribute the music as a part of different multimedia templates (e.g., website templates, video templates, slideshow templates) subsequently offered to multiple end-users.",
     "Use or redistribute the music as a part of telephone or mobile phone ringtones."
   ];
 
@@ -206,7 +229,7 @@ export const Pricing: React.FC = () => {
                     <p className="text-xl opacity-80 font-medium max-w-xl">The ultimate toolkit for filmmakers, agencies and professional creators.</p>
                   </div>
                   <div className="text-6xl md:text-7xl font-black drop-shadow-xl text-right">
-                    € 99 <span className="text-2xl opacity-70 font-bold">/ year</span>
+                    {proPrice} <span className="text-2xl opacity-70 font-bold">/ year</span>
                   </div>
                 </div>
 

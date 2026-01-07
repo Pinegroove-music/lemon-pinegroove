@@ -1,118 +1,124 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { Album, MusicTrack, Coupon } from '../types';
+import { MusicTrack, Album, Coupon, PricingItem } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { ShoppingCart, Disc, Play, Pause, Check, ArrowLeft, AlertTriangle, Sparkles, ArrowRight, CheckCircle2, Zap, Library, Download, Loader2, Info, Ticket, Copy } from 'lucide-react';
+import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, Download, FileBadge, Zap, CheckCircle2, Info, Loader2, ShoppingCart, Heart, Ticket, Copy, Check } from 'lucide-react';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
 import { getIdFromSlug, createSlug } from '../utils/slugUtils';
+import { FavoriteButton } from '../components/FavoriteButton';
 
 type LicenseOption = 'standard' | 'extended' | 'pro';
 
-export const MusicPackDetail: React.FC = () => {
+export const TrackDetail: React.FC = () => {
   const { slug } = useParams();
-  const [album, setAlbum] = useState<Album | null>(null);
-  const [tracks, setTracks] = useState<MusicTrack[]>([]);
-  const [relatedPacks, setRelatedPacks] = useState<Album[]>([]);
-  const { isDarkMode, playTrack, currentTrack, isPlaying, session, purchasedTracks, isSubscriber, ownedTrackIds } = useStore();
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [downloadingTrackId, setDownloadingTrackId] = useState<number | null>(null);
+  const [track, setTrack] = useState<MusicTrack | null>(null);
+  const [relatedAlbum, setRelatedAlbum] = useState<Album | null>(null);
+  const [recommendations, setRecommendations] = useState<MusicTrack[]>([]);
+  const [pricingData, setPricingData] = useState<PricingItem[]>([]);
+  const { playTrack, currentTrack, isPlaying, isDarkMode, session, purchasedTracks, ownedTrackIds } = useStore();
+  const { isPro, openSubscriptionCheckout } = useSubscription();
   const [selectedLicense, setSelectedLicense] = useState<LicenseOption>('standard');
+  const [downloadingWav, setDownloadingWav] = useState(false);
   
   // Coupon state
-  const [packCoupon, setPackCoupon] = useState<Coupon | null>(null);
+  const [trackCoupon, setTrackCoupon] = useState<Coupon | null>(null);
   const [proCoupon, setProCoupon] = useState<Coupon | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   
   const navigate = useNavigate();
 
-  const { isPro, openSubscriptionCheckout } = useSubscription();
+  const PINEGROOVE_LOGO = "https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/logo-pinegroove.svg";
+
+  useEffect(() => {
+    if (window.createLemonSqueezy) {
+        window.createLemonSqueezy();
+    }
+  }, [track]);
 
   useEffect(() => {
     const id = getIdFromSlug(slug);
 
     if (id) {
-      window.scrollTo(0, 0);
+      window.scrollTo(0, 0); 
+      
+      // Fetch Track Data
+      supabase.from('squeeze_tracks').select('*').eq('id', id).single()
+        .then(({ data: trackData }) => {
+          if (trackData) {
+            setTrack(trackData);
 
-      const fetchData = async () => {
-        setLoading(true);
-        try {
-            const { data: albumData, error: albumError } = await supabase
-                .from('album')
-                .select('*')
-                .eq('id', id)
-                .single();
-            
-            if (albumError) throw albumError;
-            setAlbum(albumData);
-
-            const { data: junctionData, error: junctionError } = await supabase
+            supabase
                 .from('album_tracks')
-                .select('track_id, track_order')
-                .eq('album_id', id)
-                .order('track_order', { ascending: true });
+                .select('album(*)')
+                .eq('track_id', trackData.id)
+                .maybeSingle()
+                .then(({ data: albumData }) => {
+                    if (albumData && albumData.album) {
+                        setRelatedAlbum(albumData.album as unknown as Album);
+                    } else {
+                        setRelatedAlbum(null);
+                    }
+                });
 
-            if (junctionError) throw junctionError;
+            supabase.from('squeeze_tracks').select('*').neq('id', trackData.id).limit(50)
+                .then(({ data: allOtherTracks }) => {
+                    if (allOtherTracks) {
+                        let scored = allOtherTracks.map(t => {
+                            let score = 0;
+                            if (trackData.genre && t.genre) {
+                                const intersection = (trackData.genre as string[]).filter((g:string) => (t.genre as string[]).includes(g));
+                                score += intersection.length * 2;
+                            }
+                            if (trackData.mood && t.mood) {
+                                const intersection = (trackData.mood as string[]).filter((m:string) => (t.mood as string[]).includes(m));
+                                score += intersection.length;
+                            }
+                            return { track: t, score };
+                        });
+                        
+                        scored.sort((a, b) => b.score - a.score);
+                        setRecommendations(scored.slice(0, 4).map(s => s.track));
+                    }
+                });
+          }
+        });
+        
+      // Fetch dynamic prices
+      supabase.from('pricing').select('*')
+        .then(({ data: pData }) => {
+            if (pData) setPricingData(pData as PricingItem[]);
+        });
 
-            if (junctionData && junctionData.length > 0) {
-                const trackIds = junctionData.map(j => j.track_id);
-                
-                const { data: tracksData, error: tracksError } = await supabase
-                    .from('squeeze_tracks')
-                    .select('*')
-                    .in('id', trackIds);
-
-                if (tracksError) throw tracksError;
-
-                if (tracksData) {
-                    const sortedTracks = junctionData.map(j => 
-                        tracksData.find(t => t.id === j.track_id)
-                    ).filter(t => t !== undefined) as MusicTrack[];
-                    
-                    setTracks(sortedTracks);
-                }
-            } else {
-                setTracks([]);
+      // Fetch specific promo coupons
+      supabase.from('coupons')
+        .select('*')
+        .in('id', ['1cc9b63f-7a17-46c7-99b8-2d05d1bcc883', '6237aa1b-f40c-41c2-aac5-070fb0a11ba7'])
+        .eq('is_active', true)
+        .then(({ data }) => {
+            if (data) {
+                const tC = data.find(c => String(c.id) === '1cc9b63f-7a17-46c7-99b8-2d05d1bcc883');
+                const pC = data.find(c => String(c.id) === '6237aa1b-f40c-41c2-aac5-070fb0a11ba7');
+                if (tC) setTrackCoupon(tC as Coupon);
+                if (pC) setProCoupon(pC as Coupon);
             }
-
-            const { data: otherPacks } = await supabase
-                .from('album')
-                .select('*')
-                .neq('id', id);
-            
-            if (otherPacks) {
-                const shuffled = [...otherPacks].sort(() => 0.5 - Math.random());
-                setRelatedPacks(shuffled.slice(0, 4));
-            }
-
-            // Fetch specific coupons
-            const { data: couponsData } = await supabase
-              .from('coupons')
-              .select('*')
-              .in('id', ['1f77183d-462e-4ff6-bef0-25e440ba5d9a', '6237aa1b-f40c-41c2-aac5-070fb0a11ba7'])
-              .eq('is_active', true);
-            
-            if (couponsData) {
-                const pC = couponsData.find(c => String(c.id) === '1f77183d-462e-4ff6-bef0-25e440ba5d9a');
-                const subC = couponsData.find(c => String(c.id) === '6237aa1b-f40c-41c2-aac5-070fb0a11ba7');
-                if (pC) setPackCoupon(pC as Coupon);
-                if (subC) setProCoupon(subC as Coupon);
-            }
-
-        } catch (err: any) {
-            console.error("Error loading music pack:", err);
-            setErrorMsg(err.message || "Unknown error");
-        } finally {
-            setLoading(false);
-        }
-      };
-      fetchData();
+        });
     }
   }, [slug]);
+
+  // Pricing Helpers
+  const getDynamicPrice = (type: string, defaultPrice: string) => {
+    const item = pricingData.find(p => p.product_type === type);
+    if (!item) return defaultPrice;
+    return `${item.currency} ${item.price}${type === 'full_catalog' ? '/year' : ''}`;
+  };
+
+  const purchase = track ? purchasedTracks.find(p => p.track_id === track.id) : null;
+  const isPurchased = track ? ownedTrackIds.has(track.id) : false;
+  const hasFullAccess = isPurchased || isPro;
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -120,333 +126,396 @@ export const MusicPackDetail: React.FC = () => {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  const handleDownloadMain = async () => {
+    if (!track) return;
+    
+    setDownloadingWav(true);
+    try {
+      if (hasFullAccess) {
+          if (!session) {
+              navigate('/auth');
+              return;
+          }
+          const { data, error } = await supabase.functions.invoke('get-download-url', {
+            body: { trackId: track.id }
+          });
+          if (error) throw error;
+          if (data?.downloadUrl) {
+              const response = await fetch(data.downloadUrl);
+              const blob = await response.blob();
+              const blobUrl = window.URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = blobUrl; link.setAttribute('download', `${track.title}.wav`);
+              document.body.appendChild(link); link.click(); 
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(blobUrl);
+          }
+      } else {
+          const response = await fetch(track.mp3_url);
+          if (!response.ok) throw new Error("Download failed");
+          const blob = await response.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.setAttribute('download', `${track.title}_Preview.mp3`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+      }
+    } catch (err) {
+        console.error("Download Error:", err);
+        alert("An error occurred while fetching the download.");
+    } finally {
+        setDownloadingWav(false);
+    }
+  };
+
   const handleAddToCart = () => {
-    if (!album) return;
+    if (!track) return;
     if (!session?.user?.id) {
-      navigate('/auth');
-      return;
+        navigate('/auth');
+        return;
     }
 
     if (selectedLicense === 'pro') {
         openSubscriptionCheckout();
         return;
     }
-    
-    const variantId = selectedLicense === 'standard' ? album.variant_id_standard : album.variant_id_extended;
+
+    const variantId = selectedLicense === 'standard' ? track.variant_id_standard : track.variant_id_extended;
     if (!variantId) {
-      alert("This license variant is currently unavailable for this pack.");
-      return;
-    }
-
-    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${variantId}?checkout[custom][user_id]=${session.user.id}&checkout[custom][license_type]=${selectedLicense}&checkout[custom][album_id]=${album.id}&embed=1`;
-    
-    if (window.LemonSqueezy) {
-        window.LemonSqueezy.Url.Open(checkoutUrl);
-    } else {
-        window.open(checkoutUrl, '_blank');
-    }
-  };
-
-  const handleDownloadTrack = async (track: MusicTrack) => {
-    if (!session) {
-        navigate('/auth');
+        alert("This license variant is currently unavailable for this track.");
         return;
     }
-    setDownloadingTrackId(track.id);
-    try {
-        const { data, error } = await supabase.functions.invoke('get-download-url', {
-            body: { trackId: track.id }
-        });
 
-        if (error) throw error;
+    const displayTitle = `${track.title} - ${selectedLicense === 'standard' ? 'Standard Sync License' : 'Extended Sync License'}`;
+    const checkoutUrl = `https://pinegroove.lemonsqueezy.com/checkout/buy/${variantId}?checkout[custom][user_id]=${session.user.id}&checkout[custom][track_id]=${track.id}&checkout[custom][license_type]=${selectedLicense}&checkout[product_name]=${encodeURIComponent(displayTitle)}&checkout[product_description]=${encodeURIComponent(displayTitle)}&embed=1`;
 
-        if (data?.downloadUrl) {
-            const response = await fetch(data.downloadUrl);
-            const blob = await response.blob();
-            const blobUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = blobUrl; link.setAttribute('download', `${track.title}.wav`);
-            document.body.appendChild(link); link.click(); 
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(blobUrl);
-        }
-    } catch (err) {
-        console.error("Download Error:", err);
-        alert("An error occurred while preparing your download.");
-    } finally {
-        setDownloadingTrackId(null);
+    if (window.LemonSqueezy) {
+      window.LemonSqueezy.Url.Open(checkoutUrl);
+    } else {
+      window.location.href = checkoutUrl;
     }
   };
 
-  if (loading) return <div className="p-20 text-center opacity-50">Loading album...</div>;
-  if (errorMsg) return (
-      <div className="p-20 text-center text-red-500 flex flex-col items-center">
-          <AlertTriangle size={32} className="mb-2"/>
-          <div>Error: {errorMsg}</div>
-          <Link to="/music-packs" className="mt-4 underline">Back to Packs</Link>
-      </div>
-  );
-  if (!album) return <div className="p-20 text-center opacity-50">Album not found.</div>;
+  if (!track) return <div className="p-20 text-center opacity-50">Loading track details...</div>;
 
-  const purchase = purchasedTracks.find(p => p.album_id === album.id);
-  const isPurchased = !!purchase;
-  const hasAccess = isPurchased || isPro;
-
-  const firstTrack = tracks.length > 0 ? tracks[0] : null;
-  const isPlayingFirstTrack = firstTrack && currentTrack?.id === firstTrack.id && isPlaying;
-
+  const active = currentTrack?.id === track.id && isPlaying;
+  
   const ownsStandard = isPurchased && purchase?.license_type?.toLowerCase().includes('standard');
   const ownsExtended = isPurchased && purchase?.license_type?.toLowerCase().includes('extended');
 
+  const formatDescription = (desc: string | null) => {
+    if (!desc) return null;
+    return desc.split('\n').map((line, i) => (
+      <p key={i} className="mb-2">{line}</p>
+    ));
+  };
+
+  // Formattazione durata ISO 8601 per Schema.org (es. PT3M45S)
+  const durationISO = track.duration ? `PT${Math.floor(track.duration / 60)}M${track.duration % 60}S` : undefined;
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
-      <SEO 
-        title={album.title} 
-        description={album.description || ''} 
-        image={album.cover_url}
-        type="music.album"
-        albumData={{
-            artist: "Francesco Biondi",
-            numTracks: tracks.length,
-            genre: tracks.length > 0 ? (Array.isArray(tracks[0].genre) ? tracks[0].genre[0] : (tracks[0].genre || undefined)) : undefined
-        }}
-      />
+        <SEO 
+          title={`${track.title} by ${track.artist_name}`} 
+          description={track.description?.substring(0, 150)} 
+          image={track.cover_url}
+          type="music.song"
+          trackData={{
+            artist: track.artist_name,
+            duration: durationISO,
+            genre: Array.isArray(track.genre) ? track.genre[0] : (track.genre || undefined),
+            datePublished: track.year?.toString()
+          }}
+        />
 
-      <Link to="/music-packs" className="inline-flex items-center gap-2 opacity-60 hover:opacity-100 mb-8 transition-opacity">
-        <ArrowLeft size={16} /> Back to Music Packs
-      </Link>
+        {/* Top Header Section */}
+        <div className="flex flex-col md:flex-row gap-8 lg:gap-12 mb-12 items-start">
+            <div className="w-full max-w-md md:w-80 lg:w-96 flex-shrink-0 aspect-square rounded-2xl overflow-hidden shadow-2xl relative group mx-auto md:mx-0">
+                <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
+                <button 
+                    onClick={() => playTrack(track)}
+                    className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                >
+                    <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50">
+                        {active ? <Pause size={40} className="text-white"/> : <Play size={40} className="text-white ml-2"/>}
+                    </div>
+                </button>
+            </div>
 
-      <div className="flex flex-col md:flex-row gap-8 lg:gap-12 mb-16 items-start">
-         <div 
-            className="w-full max-w-md md:w-80 lg:w-96 aspect-square rounded-3xl overflow-hidden shadow-2xl flex-shrink-0 relative bg-zinc-200 dark:bg-zinc-800 group cursor-pointer"
-            onClick={() => firstTrack && playTrack(firstTrack)}
-         >
-            <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover" />
-            <div className={`absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity duration-300 z-10 ${isPlayingFirstTrack ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50">
-                    {isPlayingFirstTrack ? <Pause size={40} className="text-white"/> : <Play size={40} className="text-white ml-2"/>}
+            <div className="flex-1 flex flex-col justify-center w-full">
+                <div className="flex items-center gap-4 mb-2 opacity-70 text-sm font-bold uppercase tracking-wider">
+                    <span className="bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300 px-2 py-1 rounded">{(Array.isArray(track.genre) ? track.genre[0] : track.genre)}</span>
+                    {track.bpm && <span className="flex items-center gap-1"><Music2 size={14}/> {track.bpm} BPM</span>}
+                </div>
+                
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-2 tracking-tight">{track.title}</h1>
+                <h2 className="text-2xl mb-6 font-medium">
+                    <Link to={`/library?search=${encodeURIComponent(track.artist_name)}`} className="text-sky-600 dark:text-sky-400 hover:underline">
+                        {track.artist_name}
+                    </Link>
+                </h2>
+
+                <div className="h-32 w-full bg-zinc-50 dark:bg-zinc-900 rounded-xl mb-6 px-6 flex items-center gap-6 shadow-inner border border-zinc-200 dark:border-zinc-800">
+                    <button onClick={() => playTrack(track)} className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition hover:scale-105 shadow-md ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                        {active ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1"/>}
+                    </button>
+                    <div className="flex-1 h-full flex items-center">
+                        <WaveformVisualizer track={track} height="h-20" barCount={200} enableAnalysis={true} interactive={true} />
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-4 w-full md:w-fit">
+                    <button 
+                        onClick={handleDownloadMain}
+                        disabled={downloadingWav}
+                        className={`flex-1 md:flex-none px-10 py-4 rounded-full font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 ${hasFullAccess ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-zinc-800 hover:bg-zinc-700 text-white'}`}
+                    >
+                        {downloadingWav ? <Loader2 className="animate-spin" /> : <Download size={20} />}
+                        {hasFullAccess ? 'Download Track (WAV)' : 'Download Preview (MP3)'}
+                    </button>
+                    
+                    <div className={`p-1.5 rounded-full border shadow-lg transition-transform hover:scale-110 active:scale-90 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'}`}>
+                        <FavoriteButton trackId={track.id} size={32} />
+                    </div>
                 </div>
             </div>
-         </div>
+        </div>
 
-         <div className="flex-1 pt-4">
-            <div className="flex items-center gap-2 text-sky-500 font-bold uppercase tracking-widest text-sm mb-4">
-                <Disc size={18} /> Premium Music Pack
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight tracking-tight">{album.title}</h1>
+        {/* Content Section: Two Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
             
-            {album.description && (
-                <div className="text-lg opacity-80 mb-8 leading-relaxed max-w-2xl whitespace-pre-line">
-                    {album.description}
-                </div>
-            )}
-         </div>
-      </div>
+            {/* Left Column: Info & Details (7/12) */}
+            <div className="lg:col-span-7 space-y-12">
+                <section>
+                    <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">About this track</h3>
+                    <div className="text-lg opacity-80 leading-relaxed">
+                        {formatDescription(track.description)}
+                    </div>
+                </section>
 
-      {/* Main Grid: Left (Tracks) - Right (Licensing) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          
-          {/* Left Column: Included Tracks (7/12) */}
-          <div className="lg:col-span-7 space-y-8">
-            <h3 className="text-2xl font-black mb-6 flex items-center gap-3 border-b pb-2 border-sky-500/20">
-                <span>Included Tracks</span>
-                <span className="px-3 py-1 bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300 rounded-full text-xs font-bold uppercase">{tracks.length} Tracks</span>
-            </h3>
-            
-            {tracks.length === 0 ? (
-                <div className="text-center opacity-50 py-10">No tracks linked to this album yet.</div>
-            ) : (
-                <div className="flex flex-col gap-2">
-                    {tracks.map((track, index) => {
-                        const isCurrent = currentTrack?.id === track.id;
-                        const active = isCurrent && isPlaying;
-                        const isDownloading = downloadingTrackId === track.id;
-                        const hasTrackAccess = ownedTrackIds.has(track.id) || isPro;
-                        
-                        return (
-                            <div 
-                                key={track.id}
-                                className={`
-                                    flex items-center gap-4 p-3 rounded-xl transition-all
-                                    ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800' : 'bg-white border border-gray-100 hover:border-sky-200 hover:shadow-md'}
-                                    ${active ? 'ring-1 ring-sky-500 bg-sky-50 dark:bg-sky-900/20' : ''}
-                                `}
+                {/* Music Pack Card */}
+                {relatedAlbum && (
+                    <section>
+                        <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-700 text-white shadow-xl flex flex-col sm:flex-row items-center gap-6 overflow-hidden relative group">
+                            <div className="relative z-10 flex-1">
+                                <div className="flex items-center gap-2 mb-2 opacity-90">
+                                    <Package size={18} />
+                                    <span className="text-xs font-bold uppercase tracking-wider">Music Pack</span>
+                                </div>
+                                <h4 className="font-bold text-xl mb-2">Included in: {relatedAlbum.title}</h4>
+                                <p className="opacity-90 text-sm mb-4">Get this track plus many others and save by purchasing the complete bundle.</p>
+                                <Link to={`/music-packs/${createSlug(relatedAlbum.id, relatedAlbum.title)}`} className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold px-6 py-2 rounded-full hover:bg-indigo-50 transition-colors shadow-sm text-sm">
+                                    View Pack <ArrowRight size={16} />
+                                </Link>
+                            </div>
+                            <img src={relatedAlbum.cover_url} alt="" className="w-24 h-24 rounded-lg object-cover shadow-lg rotate-3 group-hover:rotate-0 transition-transform duration-500 shrink-0" />
+                        </div>
+                    </section>
+                )}
+
+                {/* Track Details Section */}
+                <section className="mb-8">
+                    <h3 className="text-xl font-bold mb-6">Track Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+        
+                {/* Box 1: Dettagli */}
+                     <div className={`p-6 rounded-2xl border space-y-4 text-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-gray-200'}`}>
+                        <DetailRow label="Duration" value={track.duration ? `${Math.floor(track.duration / 60)}:${(track.duration % 60).toString().padStart(2, '0')}` : '-'} icon={<Clock size={16}/>} />
+                        <DetailRow label="BPM" value={track.bpm} icon={<Music2 size={16}/>} />
+                        <DetailRow label="Released" value={track.year} icon={<Calendar size={16}/>} />
+                        <DetailRow label="ISRC" value={track.isrc} icon={<FileText size={16}/>} />
+                        <DetailRow label="ISWC" value={track.iswc} icon={<FileText size={16}/>} />
+                    </div>
+
+                {/* Box 2: Credits (Appare solo se esistono) */}
+                {track.credits && Array.isArray(track.credits) && track.credits.length > 0 && (
+                    <div className={`p-6 rounded-2xl border text-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-gray-200'}`}>
+                        <h4 className="font-bold mb-3 text-sm uppercase tracking-wider opacity-80">Additional Credits</h4>
+                        <div className="space-y-2">
+                            {track.credits.map((credit: any, i: number) => (
+                            <div key={i} className="text-sm">
+                            <Link 
+                                to={`/library?search=${encodeURIComponent(credit.name)}`}
+                                className="font-semibold opacity-90 hover:text-sky-500 hover:underline transition-colors"
                             >
-                                <div className="hidden md:block w-8 text-center opacity-40 font-mono text-sm">{index + 1}</div>
-                                
-                                <div 
-                                    className="relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer flex-shrink-0 group"
-                                    onClick={() => playTrack(track)}
-                                >
-                                    <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
-                                    <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                        {active ? <Pause size={20} className="text-white"/> : <Play size={20} className="text-white ml-1"/>}
+                                {credit.name}
+                            </Link>
+                            <span className="opacity-50 mx-1">—</span>
+                            <span className="opacity-70">{credit.role}</span>
+                                </div>
+                            ))}
+                         </div>
+                    </div>
+                        )}
+                    </div>
+                </section>
+
+                {/* Tags Section */}
+                {track.tags && Array.isArray(track.tags) && track.tags.length > 0 && (
+                    <section className="mb-8">
+                        <h3 className="text-lg font-bold mb-6">Tags</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {track.tags.map((tag: string, i: number) => (
+                                <Link key={i} to={`/library?search=${encodeURIComponent(tag)}`} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-600'}`}>
+                                    #{tag}
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Genres Section */}
+                {(Array.isArray(track.genre) ? track.genre : track.genre ? [track.genre] : []).length > 0 && (
+                    <section className="mb-8">
+                        <h3 className="text-lg font-bold mb-4">Genres</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {(Array.isArray(track.genre) ? track.genre : [track.genre as string]).map((g, i) => (
+                                <Link key={i} to={`/library?search=${encodeURIComponent(g)}`} className="px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest bg-sky-500 text-white shadow-md hover:brightness-110">
+                                    {g}
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
+            </div>
+
+            {/* Right Column: Licensing Selection (5/12) */}
+            <div className="lg:col-span-5 space-y-6">
+                <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">Select License</h3>
+                
+                <div className="space-y-4">
+                    {/* Standard License Card */}
+                    <LicenseCard 
+                        id="standard"
+                        title="Standard Sync License"
+                        price={getDynamicPrice('single_track_standard', '€9.99')}
+                        selected={selectedLicense === 'standard'}
+                        locked={ownsStandard || ownsExtended || isPro}
+                        onClick={() => setSelectedLicense('standard')}
+                        features={[
+                            "Web-based content, Social media, Podcasts",
+                            "Personal and client projects",
+                            "Educational projects, Charity films",
+                            "Tutorials and online courses",
+                            "Monetization of ONE (1) social channel"
+                        ]}
+                        infoLink="/user-license-agreement"
+                        isDarkMode={isDarkMode}
+                        coupon={trackCoupon}
+                        onCopyCoupon={handleCopyCode}
+                        copiedCode={copiedCode}
+                    />
+
+                    {/* Extended License Card */}
+                    <LicenseCard 
+                        id="extended"
+                        title="Extended Sync License"
+                        price={getDynamicPrice('single_track_extended', '€39.99')}
+                        selected={selectedLicense === 'extended'}
+                        locked={ownsExtended || isPro}
+                        onClick={() => setSelectedLicense('extended')}
+                        features={[
+                            "TV & Radio, Films, OTT / VOD",
+                            "Advertising & Commercial campaigns",
+                            "Video games & Interactive media",
+                            "Mobile & Desktop applications",
+                            "Industrial, Corporate & Institutional",
+                            "Unlimited DVD / Blu-ray distribution",
+                            "Monetization of Unlimited channels"
+                        ]}
+                        infoLink="/user-license-agreement"
+                        isDarkMode={isDarkMode}
+                        coupon={trackCoupon}
+                        onCopyCoupon={handleCopyCode}
+                        copiedCode={copiedCode}
+                    />
+
+                    {/* PRO Subscription Card */}
+                    <LicenseCard 
+                        id="pro"
+                        title="PRO Subscription"
+                        price={getDynamicPrice('full_catalog', '€99/year')}
+                        selected={selectedLicense === 'pro'}
+                        locked={isPro}
+                        onClick={() => setSelectedLicense('pro')}
+                        features={[
+                            "Full access to ALL catalog content",
+                            "Web & Social, Podcasts & Radio",
+                            "TV, Film, Advertising & Games",
+                            "OTT & VOD included",
+                            "Includes all Extended license rights"
+                        ]}
+                        infoLink="/pricing"
+                        highlight={true}
+                        isDarkMode={isDarkMode}
+                        coupon={proCoupon}
+                        onCopyCoupon={handleCopyCode}
+                        copiedCode={copiedCode}
+                    />
+                </div>
+
+                <button 
+                    onClick={handleAddToCart}
+                    className="w-full bg-sky-500 hover:bg-sky-400 text-white font-black py-5 rounded-2xl shadow-xl shadow-sky-500/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 text-xl mt-8"
+                >
+                    <ShoppingCart size={24} />
+                    {selectedLicense === 'pro' ? 'Subscribe Now' : 'Add To Cart'}
+                </button>
+                
+                <div className="space-y-4 mt-8">
+                  <p className="text-center text-xs opacity-50 font-medium">
+                      Secure transaction via Lemon Squeezy Merchant of Record.
+                  </p>
+                  
+                  <div className={`p-4 rounded-xl border text-center ${isDarkMode ? 'bg-sky-500/5 border-sky-500/20' : 'bg-sky-50 border-sky-100'}`}>
+                    <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium">
+                        By purchasing a license, you will receive a 44.1 kHz watermark-free .wav version of the track, downloadable at any time from your personal account area or from this page.
+                    </p>
+                  </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Recommendations Section */}
+        {recommendations.length > 0 && (
+            <div className="pt-12 mt-20 border-t border-gray-200 dark:border-zinc-800">
+                <h3 className="text-2xl font-bold mb-8 flex items-center gap-2">
+                    <Sparkles className="text-sky-500" size={24}/> You Might Also Like
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    {recommendations.map(rec => {
+                        const isRecPlaying = currentTrack?.id === rec.id && isPlaying;
+                        return (
+                            <div key={rec.id} className="group">
+                                <div className="relative aspect-square rounded-xl overflow-hidden mb-3 cursor-pointer shadow-md group-hover:shadow-xl transition-all" onClick={() => playTrack(rec)}>
+                                    <img src={rec.cover_url} alt={rec.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                    <div className={`absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${isRecPlaying ? 'opacity-100' : ''}`}>
+                                        {isRecPlaying ? <Pause className="text-white" size={32} /> : <Play className="text-white pl-1" size={32} />}
                                     </div>
                                 </div>
-
-                                <div className="flex-1 md:flex-none md:w-64 min-w-0 px-2">
-                                    <Link to={`/track/${createSlug(track.id, track.title)}`} className={`font-bold text-lg truncate block ${active ? 'text-sky-600 dark:text-sky-400' : 'hover:text-sky-500 transition-colors'}`}>{track.title}</Link>
-                                    <div className="flex items-center gap-2">
-                                        <Link 
-                                            to={`/library?search=${encodeURIComponent(track.artist_name)}`} 
-                                            className="text-sm opacity-60 truncate hover:underline hover:text-sky-500 transition-colors"
-                                        >
-                                            {track.artist_name}
-                                        </Link>
-                                    </div>
-                                </div>
-
-                                <div className="hidden md:flex flex-1 h-10 items-center px-4 opacity-80">
-                                    <WaveformVisualizer track={track} height="h-8" barCount={100} enableAnalysis={active} />
-                                </div>
-
-                                <div className="hidden md:block w-16 text-right font-mono text-sm opacity-50">
-                                    {track.duration ? `${Math.floor(track.duration / 60)}:${(Math.floor(track.duration % 60)).toString().padStart(2, '0')}` : '-'}
-                                </div>
-
-                                {hasTrackAccess && (
-                                    <button 
-                                        onClick={() => handleDownloadTrack(track)}
-                                        disabled={isDownloading}
-                                        className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md active:scale-95 disabled:opacity-50"
-                                        title="Download WAV"
-                                    >
-                                        {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-                                    </button>
-                                )}
+                                <Link to={`/track/${createSlug(rec.id, rec.title)}`} className="block font-bold truncate hover:text-sky-500 transition-colors">{rec.title}</Link>
+                                <div className="text-sm opacity-60 truncate">{rec.artist_name}</div>
                             </div>
                         )
                     })}
                 </div>
-            )}
-          </div>
-
-          {/* Right Column: Licensing Selection (5/12) */}
-          <div className="lg:col-span-5 space-y-6">
-            <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">Select License</h3>
-            
-            <div className="space-y-4">
-                <LicenseCard 
-                    id="standard"
-                    title="Standard Pack License"
-                    price="€49.99"
-                    selected={selectedLicense === 'standard'}
-                    locked={ownsStandard || ownsExtended || isPro}
-                    onClick={() => setSelectedLicense('standard')}
-                    features={[
-                        "Includes all tracks in the pack",
-                        "Web, Social Media & Podcasts",
-                        "Personal & client projects",
-                        "Educational & Charity films",
-                        "Monetization of 1 social channel"
-                    ]}
-                    infoLink="/user-license-agreement"
-                    isDarkMode={isDarkMode}
-                    coupon={packCoupon}
-                    onCopyCoupon={handleCopyCode}
-                    copiedCode={copiedCode}
-                />
-
-                <LicenseCard 
-                    id="extended"
-                    title="Extended Pack License"
-                    price="€69.99"
-                    selected={selectedLicense === 'extended'}
-                    locked={ownsExtended || isPro}
-                    onClick={() => setSelectedLicense('extended')}
-                    features={[
-                        "TV, Radio, Films & OTT/VOD",
-                        "Advertising & Commercial use",
-                        "Video games & Mobile apps",
-                        "Industrial & Corporate use",
-                        "Monetization of Unlimited channels"
-                    ]}
-                    infoLink="/user-license-agreement"
-                    isDarkMode={isDarkMode}
-                    coupon={packCoupon}
-                    onCopyCoupon={handleCopyCode}
-                    copiedCode={copiedCode}
-                />
-
-                <LicenseCard 
-                    id="pro"
-                    title="PRO Subscription"
-                    price="€99/year"
-                    selected={selectedLicense === 'pro'}
-                    locked={isPro}
-                    onClick={() => setSelectedLicense('pro')}
-                    features={[
-                        "Full access to ALL catalog content",
-                        "Includes all Extended license rights",
-                        "TV, Film, Ads & Games included",
-                        "Instant high-quality WAV downloads"
-                    ]}
-                    infoLink="/pricing"
-                    highlight={true}
-                    isDarkMode={isDarkMode}
-                    coupon={proCoupon}
-                    onCopyCoupon={handleCopyCode}
-                    copiedCode={copiedCode}
-                />
             </div>
-
-            <button 
-                onClick={handleAddToCart}
-                className="w-full bg-sky-500 hover:bg-sky-400 text-white font-black py-5 rounded-2xl shadow-xl shadow-sky-500/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 text-xl mt-8"
-            >
-                <ShoppingCart size={24} />
-                {selectedLicense === 'pro' ? 'Subscribe Now' : 'Add To Cart'}
-            </button>
-            
-            <div className="space-y-4 mt-8">
-              <p className="text-center text-xs opacity-50 font-medium">
-                  Secure transaction via Lemon Squeezy Merchant of Record.
-              </p>
-              
-              <div className={`p-4 rounded-xl border text-center ${isDarkMode ? 'bg-sky-500/5 border-sky-500/20' : 'bg-sky-50 border-sky-100'}`}>
-                <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium">
-                    By purchasing a license, you will receive watermark-free .wav versions of all tracks in this pack, available in your personal account area.
-                </p>
-              </div>
-            </div>
-          </div>
-      </div>
-
-      {relatedPacks.length > 0 && (
-          <div className="mt-20 pt-12 border-t border-gray-200 dark:border-zinc-800">
-             <h3 className="text-2xl font-bold mb-8 flex items-center gap-2">
-                <Sparkles className="text-sky-500" size={24}/> Discover More Music Packs
-             </h3>
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {relatedPacks.map(pack => (
-                     <div 
-                        key={pack.id} 
-                        className={`
-                            group rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full
-                            ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border border-zinc-100 shadow-md'}
-                        `}
-                    >
-                        <Link to={`/music-packs/${createSlug(pack.id, pack.title)}`} className="w-full aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 block">
-                            <img 
-                                src={pack.cover_url} 
-                                alt={pack.title} 
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                            />
-                        </Link>
-
-                        <div className="p-4 flex flex-col flex-1">
-                            <h4 className="font-bold text-lg mb-1 leading-tight group-hover:text-sky-500 transition-colors line-clamp-1">
-                                <Link to={`/music-packs/${createSlug(pack.id, pack.title)}`}>{pack.title}</Link>
-                            </h4>
-                        </div>
-                    </div>
-                ))}
-             </div>
-          </div>
-      )}
+        )}
     </div>
   );
 };
+
+const DetailRow: React.FC<{ label: string, value: any, icon: React.ReactNode }> = ({ label, value, icon }) => (
+    <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 opacity-60">
+            {icon} <span>{label}</span>
+        </div>
+        <div className="font-mono font-medium">{value || 'N/A'}</div>
+    </div>
+);
 
 interface LicenseCardProps {
     id: LicenseOption;
@@ -521,13 +590,13 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
 
                     {/* Reveal Coupon only when selected */}
                     {coupon && (
-                      <div className={`mt-4 animate-in fade-in slide-in-from-top-4 duration-500 p-4 rounded-xl border flex items-center gap-4 transition-all shadow-lg ${id === 'pro' ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-amber-950 border-amber-300/50' : 'bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white border-white/10'}`}>
+                      <div className={`mt-4 animate-in fade-in slide-in-from-top-4 duration-500 p-4 rounded-xl border flex items-center gap-4 transition-all shadow-lg ${id === 'pro' ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-amber-950 border-amber-300/50' : 'bg-gradient-to-br from-purple-600 via-indigo-700 to-purple-800 text-white border-white/10'}`}>
                         <div className={`p-2 rounded-xl backdrop-blur-md ${id === 'pro' ? 'bg-black/10' : 'bg-white/10'}`}>
-                          {id === 'pro' ? <Zap className="text-amber-900" size={18} /> : <Ticket className="text-emerald-100" size={18} />}
+                          {id === 'pro' ? <Zap className="text-amber-900" size={18} /> : <Ticket className="text-purple-200" size={18} />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] md:text-xs font-bold leading-snug">
-                            Save {coupon.discount_percent}% with code: <span className={`font-black tracking-widest ${id === 'pro' ? 'text-amber-900' : 'text-emerald-100'}`}>{coupon.discount_code}</span>
+                            Save {coupon.discount_percent}% with code: <span className={`font-black tracking-widest ${id === 'pro' ? 'text-amber-900' : 'text-purple-200'}`}>{coupon.discount_code}</span>
                           </p>
                         </div>
                         <button 

@@ -64,6 +64,14 @@ export interface Coupon {
   is_active: boolean;
 }
 
+export interface PricingItem {
+  id: number;
+  product_name: string;
+  product_type: string;
+  price: number;
+  currency: string;
+}
+
 export interface FilterState {
   genres: string[];
   moods: string[];

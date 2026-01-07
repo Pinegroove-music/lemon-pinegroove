@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { MusicTrack, Client, Album, MediaTheme, Coupon } from '../types';
+
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { MusicTrack, Client, Album, MediaTheme, Coupon, PricingItem } from '../types';
 import { supabase } from '../services/supabase';
 import { useStore } from '../store/useStore';
-import { Search, Play, ShoppingCart, Pause, ArrowRight, Sparkles, FileCheck, ShieldCheck, Lock, Disc, Mail, Clapperboard, Music, User, CreditCard, Download, ChevronDown, Loader2, AlertCircle, Check, Ticket, Copy, Info } from 'lucide-react';
+import { useSubscription } from '../hooks/useSubscription';
+import { Search, Play, ShoppingCart, Pause, ArrowRight, Sparkles, FileCheck, ShieldCheck, Lock, Disc, Mail, Clapperboard, Music, User, CreditCard, Download, ChevronDown, Loader2, AlertCircle, Check, Ticket, Copy, Info, Zap, Globe, Tv, Crown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
@@ -23,9 +25,11 @@ export const Home: React.FC = () => {
   const [featuredTrack, setFeaturedTrack] = useState<MusicTrack | null>(null);
   const [mediaThemes, setMediaThemes] = useState<MediaTheme[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [pricingData, setPricingData] = useState<PricingItem[]>([]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const { isDarkMode, playTrack, currentTrack, isPlaying, session, purchasedTracks, subscriptionStatus } = useStore();
+  const { isDarkMode, playTrack, currentTrack, isPlaying, session, purchasedTracks, subscriptionStatus, isSubscriber } = useStore();
+  const { openSubscriptionCheckout } = useSubscription();
   const navigate = useNavigate();
   
   // Newsletter States
@@ -140,6 +144,9 @@ export const Home: React.FC = () => {
         .not('discount_code', 'is', null);
       if (couponData) setCoupons(couponData as Coupon[]);
 
+      const { data: pricing } = await supabase.from('pricing').select('*');
+      if (pricing) setPricingData(pricing as PricingItem[]);
+
       const { data: clientData } = await supabase.from('clients').select('*');
       if (clientData) setClients(clientData);
 
@@ -181,6 +188,16 @@ export const Home: React.FC = () => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const handleSubscribeClick = () => {
+    if (!session) {
+      navigate('/auth');
+    } else if (isSubscriber) {
+      navigate('/my-purchases');
+    } else {
+      openSubscriptionCheckout();
+    }
   };
 
   useEffect(() => {
@@ -358,6 +375,13 @@ export const Home: React.FC = () => {
   const isNewsletterValid = newsletterEmail.includes('@') && newsletterFirstName.trim() && newsletterLastName.trim() && newsletterConsent;
 
   const displayClients = clients.length > 0 ? [...clients, ...clients, ...clients, ...clients, ...clients, ...clients] : [];
+
+  // Pricing Helpers
+  const getPriceStr = (type: string, defaultVal: string) => {
+    const item = pricingData.find(p => p.product_type === type);
+    if (!item) return defaultVal;
+    return `${item.currency} ${item.price}`;
+  };
 
   return (
     <div className="space-y-16 pb-20">
@@ -643,7 +667,7 @@ export const Home: React.FC = () => {
             <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl group">
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src={featuredPack.cover_url} 
+                        src="featuredPack.cover_url" 
                         alt="" 
                         className="w-full h-full object-cover blur-[80px] scale-125 opacity-70 dark:opacity-50 brightness-75 transition-transform duration-[20s] ease-in-out group-hover:scale-150"
                         aria-hidden="true"
@@ -707,6 +731,101 @@ export const Home: React.FC = () => {
             </div>
         </section>
       )}
+
+      {/* NEW Pricing Section */}
+      <section className="w-full max-w-[1920px] mx-auto px-6 lg:px-10 py-12">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-black mb-4 tracking-tight uppercase">Simple Pricing, Total Freedom</h2>
+          <p className="text-lg md:text-xl opacity-60 max-w-3xl mx-auto font-medium leading-relaxed">
+            Your music, your rules. Buy exactly what you need with individual licenses or unlock everything with our PRO Subscription. Maximum flexibility, no strings attached.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Card 1: Single Track */}
+          <div className={`p-8 md:p-10 rounded-[2.5rem] border flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-xl shadow-sky-500/5'}`}>
+            <div className="mb-8 flex items-center justify-between">
+              <Globe className="text-sky-500" size={32} />
+              <div className="text-[10px] font-black uppercase tracking-widest bg-sky-500/10 text-sky-600 px-3 py-1.5 rounded-full">Single Access</div>
+            </div>
+            <h3 className="text-3xl font-black mb-4 tracking-tight">Single Track</h3>
+            <p className="text-sm opacity-60 mb-8 font-medium">Cherry-pick your favorite tracks for specific projects.</p>
+            
+            <div className="space-y-4 mb-10">
+              <div className="flex items-end justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <span className="text-xs opacity-50 font-black uppercase tracking-wider">Standard</span>
+                <span className="text-3xl font-black text-sky-600 dark:text-sky-400">{getPriceStr('single_track_standard', '€ 9.99')}</span>
+              </div>
+              <div className="flex items-end justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <span className="text-xs opacity-50 font-black uppercase tracking-wider">Extended</span>
+                <span className="text-3xl font-black text-sky-600 dark:text-sky-400">{getPriceStr('single_track_extended', '€ 39.99')}</span>
+              </div>
+            </div>
+
+            <Link to="/library" className={`mt-auto w-full py-4 rounded-2xl font-black text-center transition-all ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-sky-50 hover:bg-sky-100 text-sky-600'}`}>
+              Browse Tracks
+            </Link>
+          </div>
+
+          {/* Card 2: Music Packs */}
+          <div className={`p-8 md:p-10 rounded-[2.5rem] border flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-xl shadow-sky-500/5'}`}>
+            <div className="mb-8 flex items-center justify-between">
+              <Tv className="text-indigo-500" size={32} />
+              <div className="text-[10px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-600 px-3 py-1.5 rounded-full">Best Value Bundle</div>
+            </div>
+            <h3 className="text-3xl font-black mb-4 tracking-tight">Music Packs</h3>
+            <p className="text-sm opacity-60 mb-8 font-medium">Thematic bundles for consistent storytelling across projects.</p>
+            
+            <div className="space-y-4 mb-10">
+              <div className="flex items-end justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <span className="text-xs opacity-50 font-black uppercase tracking-wider">Standard Pack</span>
+                <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400">{getPriceStr('music_pack_standard', '€ 49.99')}</span>
+              </div>
+              <div className="flex items-end justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <span className="text-xs opacity-50 font-black uppercase tracking-wider">Extended Pack</span>
+                <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400">{getPriceStr('music_pack_extended', '€ 69.99')}</span>
+              </div>
+            </div>
+
+            <Link to="/music-packs" className={`mt-auto w-full py-4 rounded-2xl font-black text-center transition-all ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-600'}`}>
+              View All Packs
+            </Link>
+          </div>
+
+          {/* Card 3: PRO Subscription */}
+          <div className="relative group">
+            <div className="absolute inset-0 bg-sky-500 blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
+            <div className="relative h-full p-8 md:p-10 rounded-[2.5rem] bg-gradient-to-br from-sky-600 to-indigo-700 text-white flex flex-col shadow-2xl transition-all duration-300 hover:-translate-y-1">
+              <Crown className="absolute -right-8 -bottom-8 h-48 w-48 opacity-10 rotate-12" />
+              
+              <div className="mb-8 flex items-center justify-between">
+                <Zap className="text-yellow-300" size={32} />
+                <div className="text-[10px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full">Unlimited Access</div>
+              </div>
+              <h3 className="text-3xl font-black mb-4 tracking-tight">PRO Subscription</h3>
+              <p className="text-sm opacity-80 mb-10 font-medium">Access the entire Pinegroove catalog and use our music without limits.</p>
+              
+              <div className="mb-12">
+                <div className="text-5xl font-black mb-1">{getPriceStr('full_catalog', '€ 99')}</div>
+                <div className="text-sm opacity-70 font-bold uppercase tracking-widest">Per Year • All Tracks</div>
+              </div>
+
+              <button 
+                onClick={handleSubscribeClick}
+                className="mt-auto w-full py-5 rounded-2xl bg-white text-sky-700 font-black text-center shadow-xl hover:bg-sky-50 transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                {isSubscriber ? 'Manage Subscription' : 'Unlock Everything'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-12 text-center">
+            <p className="text-xs opacity-40 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                <ShieldCheck size={14} className="text-sky-500" /> Secure Payments & Global Tax Compliance by Lemon Squeezy
+            </p>
+        </div>
+      </section>
 
       {mediaThemes.length > 0 && (
         <section className="w-full max-w-[1920px] mx-auto px-6 lg:px-10 py-8">
@@ -792,7 +911,7 @@ export const Home: React.FC = () => {
 
                     <div className="flex items-center gap-3">
                          <div className="text-xs font-mono opacity-60 sm:hidden">
-                            {track.duration ? `${Math.floor(track.duration / 60)}:${(track.duration % 60).toString().padStart(2, '0')}` : '-'}
+                            {track.duration ? `${Math.floor(track.duration / 60)}:${(Math.floor(track.duration % 60)).toString().padStart(2, '0')}` : '-'}
                         </div>
                         
                         {hasAccess ? (
@@ -911,7 +1030,7 @@ export const Home: React.FC = () => {
                 <h2 className="text-3xl md:text-5xl font-black mb-4 tracking-tight leading-tight text-white">
                     One Composer, <br/>Countless Sounds
                 </h2>
-                <p className="text-lg opacity-80 mb-8 max-w-lg mx-auto md:mx-0 font-medium leading-relaxed text-zinc-300">
+                <p className="text-lg opacity-80 mb-8 max-lg mx-auto md:mx-0 font-medium leading-relaxed text-zinc-300">
                     Meet Francesco Biondi, the composer and producer behind Pinegroove.
                 </p>
                 

@@ -4,12 +4,10 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Library, Info, HelpCircle, ShieldAlert, Music, X, Sun, Moon, ChevronLeft, ChevronRight, LogOut, User, ShoppingBag, Zap, Tag, Heart } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { useSubscription } from '../hooks/useSubscription';
 import { supabase } from '../services/supabase';
 
 export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: boolean) => void }> = ({ mobileOpen, setMobileOpen }) => {
   const { isDarkMode, toggleTheme, session } = useStore();
-  const { isPro, openSubscriptionCheckout } = useSubscription();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -124,19 +122,6 @@ export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: bool
               </Link>
             );
           })}
-
-          {/* Pro Banner - Moved inside the scrollable nav list as requested */}
-          {!collapsed && session && !isPro && (
-            <div className="pt-4 pb-2">
-              <button 
-                onClick={openSubscriptionCheckout}
-                className="w-full p-4 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg hover:brightness-110 transition-all flex flex-col items-center gap-2 group"
-              >
-                <Zap className="group-hover:animate-pulse" size={20} />
-                <span className="text-xs font-black uppercase tracking-wider">Upgrade to Pro</span>
-              </button>
-            </div>
-          )}
         </nav>
 
         {/* Bottom Controls */}
