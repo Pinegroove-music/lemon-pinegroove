@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useStore } from '../store/useStore';
+import { useNavigate } from 'react-router-dom';
 
 interface FavoriteButtonProps {
   trackId: number;
@@ -14,6 +15,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({ trackId, onToggl
   const { session, isDarkMode } = useStore();
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkIfFavorite = async () => {
@@ -39,7 +41,15 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({ trackId, onToggl
     e.preventDefault();
 
     if (!session?.user?.id) {
-      alert("Please sign in to add tracks to your favorites.");
+      // Memorizza l'intento nel localStorage per gli utenti non loggati
+      const pendingFavorites = JSON.parse(localStorage.getItem('pinegroove_pending_favorites') || '[]');
+      if (!pendingFavorites.includes(trackId)) {
+        pendingFavorites.push(trackId);
+        localStorage.setItem('pinegroove_pending_favorites', JSON.stringify(pendingFavorites));
+      }
+      
+      // Reindirizza al login
+      navigate('/auth');
       return;
     }
 

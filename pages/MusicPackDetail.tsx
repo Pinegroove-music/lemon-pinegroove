@@ -325,53 +325,6 @@ export const MusicPackDetail: React.FC = () => {
           <div className="lg:col-span-5 space-y-6">
             <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">Select License</h3>
             
-            {/* Promo Section (Two Separate Coupon Types) */}
-            {(packCoupon || proCoupon) && (
-              <div className="space-y-3 mb-8">
-                {/* Pack Coupon - Green background */}
-                {packCoupon && (
-                  <div className="bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white p-4 rounded-2xl shadow-xl flex items-center gap-4 border border-white/10 animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl">
-                      <Ticket className="text-emerald-100" size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold leading-snug">
-                        Save {packCoupon.discount_percent}% on this pack using code: <span className="text-emerald-100 font-black tracking-widest">{packCoupon.discount_code}</span>
-                      </p>
-                    </div>
-                    <button 
-                      onClick={() => handleCopyCode(packCoupon.discount_code)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === packCoupon.discount_code ? 'bg-sky-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'}`}
-                    >
-                      {copiedCode === packCoupon.discount_code ? <Check size={12} /> : <Copy size={12} />}
-                      {copiedCode === packCoupon.discount_code ? 'COPIED' : 'COPY'}
-                    </button>
-                  </div>
-                )}
-
-                {/* PRO Subscription Coupon - Golden background */}
-                {proCoupon && (
-                  <div className="bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-amber-950 p-4 rounded-2xl shadow-xl flex items-center gap-4 border border-amber-300/50 animate-in fade-in slide-in-from-top-6 duration-700">
-                    <div className="bg-black/10 backdrop-blur-md p-2 rounded-xl">
-                      <Zap className="text-amber-900" size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold leading-snug">
-                        Save {proCoupon.discount_percent}% on your PRO Subscription using code: <span className="text-amber-900 font-black tracking-widest">{proCoupon.discount_code}</span>
-                      </p>
-                    </div>
-                    <button 
-                      onClick={() => handleCopyCode(proCoupon.discount_code)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === proCoupon.discount_code ? 'bg-emerald-600 text-white' : 'bg-black/10 hover:bg-black/20 text-amber-950 border border-black/10'}`}
-                    >
-                      {copiedCode === proCoupon.discount_code ? <Check size={12} /> : <Copy size={12} />}
-                      {copiedCode === proCoupon.discount_code ? 'COPIED' : 'COPY'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
             <div className="space-y-4">
                 <LicenseCard 
                     id="standard"
@@ -389,6 +342,9 @@ export const MusicPackDetail: React.FC = () => {
                     ]}
                     infoLink="/user-license-agreement"
                     isDarkMode={isDarkMode}
+                    coupon={packCoupon}
+                    onCopyCoupon={handleCopyCode}
+                    copiedCode={copiedCode}
                 />
 
                 <LicenseCard 
@@ -407,6 +363,9 @@ export const MusicPackDetail: React.FC = () => {
                     ]}
                     infoLink="/user-license-agreement"
                     isDarkMode={isDarkMode}
+                    coupon={packCoupon}
+                    onCopyCoupon={handleCopyCode}
+                    copiedCode={copiedCode}
                 />
 
                 <LicenseCard 
@@ -425,6 +384,9 @@ export const MusicPackDetail: React.FC = () => {
                     infoLink="/pricing"
                     highlight={true}
                     isDarkMode={isDarkMode}
+                    coupon={proCoupon}
+                    onCopyCoupon={handleCopyCode}
+                    copiedCode={copiedCode}
                 />
             </div>
 
@@ -497,9 +459,12 @@ interface LicenseCardProps {
     infoLink: string;
     highlight?: boolean;
     isDarkMode: boolean;
+    coupon?: Coupon | null;
+    onCopyCoupon?: (code: string) => void;
+    copiedCode?: string | null;
 }
 
-const LicenseCard: React.FC<LicenseCardProps> = ({ title, price, selected, locked, onClick, features, infoLink, highlight, isDarkMode }) => {
+const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, locked, onClick, features, infoLink, highlight, isDarkMode, coupon, onCopyCoupon, copiedCode }) => {
     if (locked) {
         return (
             <div className={`relative p-6 rounded-2xl border-2 border-emerald-500/30 opacity-80 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-emerald-50/30'}`}>
@@ -544,13 +509,36 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ title, price, selected, locke
                         ))}
                     </ul>
 
-                    <Link 
-                        to={infoLink} 
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-sky-500 hover:underline group-hover:gap-2 transition-all"
-                    >
-                        More info <Info size={12} />
-                    </Link>
+                    <div className="flex items-center justify-between mb-4">
+                        <Link 
+                            to={infoLink} 
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-sky-500 hover:underline group-hover:gap-2 transition-all"
+                        >
+                            More info <Info size={12} />
+                        </Link>
+                    </div>
+
+                    {/* Reveal Coupon only when selected */}
+                    {coupon && (
+                      <div className={`mt-4 animate-in fade-in slide-in-from-top-4 duration-500 p-4 rounded-xl border flex items-center gap-4 transition-all shadow-lg ${id === 'pro' ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-amber-950 border-amber-300/50' : 'bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white border-white/10'}`}>
+                        <div className={`p-2 rounded-xl backdrop-blur-md ${id === 'pro' ? 'bg-black/10' : 'bg-white/10'}`}>
+                          {id === 'pro' ? <Zap className="text-amber-900" size={18} /> : <Ticket className="text-emerald-100" size={18} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] md:text-xs font-bold leading-snug">
+                            Save {coupon.discount_percent}% with code: <span className={`font-black tracking-widest ${id === 'pro' ? 'text-amber-900' : 'text-emerald-100'}`}>{coupon.discount_code}</span>
+                          </p>
+                        </div>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); onCopyCoupon?.(coupon.discount_code); }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copiedCode === coupon.discount_code ? 'bg-emerald-500 text-white shadow-md' : (id === 'pro' ? 'bg-black/10 hover:bg-black/20 text-amber-950 border border-black/10' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20')}`}
+                        >
+                          {copiedCode === coupon.discount_code ? <Check size={12} /> : <Copy size={12} />}
+                          {copiedCode === coupon.discount_code ? 'COPIED' : 'COPY'}
+                        </button>
+                      </div>
+                    )}
                 </div>
             )}
         </div>

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Player } from './components/Player';
 import { Footer } from './components/Footer';
@@ -51,12 +51,43 @@ const Layout: React.FC = () => {
   const isResetPasswordPage = location.pathname === '/reset-password';
   const hideSidebar = isAuthPage || isResetPasswordPage;
 
-  // Listener globale per intercettare il recupero password di Supabase
+  // Sincronizza i preferiti salvati nel localStorage quando l'utente si logga
+  const syncPendingFavorites = async (userId: string) => {
+    const pending = JSON.parse(localStorage.getItem('pinegroove_pending_favorites') || '[]');
+    if (pending.length === 0) return;
+
+    console.log(`Syncing ${pending.length} pending favorites for user ${userId}...`);
+    
+    try {
+      const inserts = pending.map((trackId: number) => ({
+        user_id: userId,
+        track_id: trackId
+      }));
+
+      // Usiamo upsert per evitare errori se la traccia è già presente nei preferiti
+      const { error } = await supabase
+        .from('favorites')
+        .upsert(inserts, { onConflict: 'user_id,track_id' });
+
+      if (error) throw error;
+      
+      localStorage.removeItem('pinegroove_pending_favorites');
+      console.log("Pending favorites synced successfully.");
+    } catch (err) {
+      console.error("Error syncing pending favorites:", err);
+    }
+  };
+
+  // Listener globale per intercettare il recupero password e login di Supabase
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (event === 'PASSWORD_RECOVERY') {
         console.log("Password recovery flow detected. Navigating to reset-password.");
         navigate('/reset-password');
+      }
+      
+      if (event === 'SIGNED_IN' && currentSession?.user?.id) {
+        syncPendingFavorites(currentSession.user.id);
       }
     });
 
