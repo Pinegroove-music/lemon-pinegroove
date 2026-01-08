@@ -390,7 +390,7 @@ export const Home: React.FC = () => {
       <div className="relative pt-28 text-center flex flex-col">
          <div className="absolute inset-0 z-0 overflow-hidden">
             <img 
-                src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=2070&auto=format&fit=crop" 
+                src="https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/bg-pinegroove.avif" 
                 alt="Home Studio Background" 
                 className="w-full h-full object-cover"
             />
@@ -465,7 +465,7 @@ export const Home: React.FC = () => {
                 <div key={track.id} className="group flex flex-col text-center">
                     <div 
                         className="relative aspect-square rounded-xl overflow-hidden cursor-pointer shadow-md mb-3" 
-                        onClick={() => playTrack(track)}
+                        onClick={() => playTrack(track, discoverTracks)}
                     >
                         <img 
                             src={track.cover_url} 
@@ -879,7 +879,7 @@ export const Home: React.FC = () => {
               >
                 <div 
                     className="relative w-12 h-12 flex-shrink-0 cursor-pointer rounded overflow-hidden"
-                    onClick={() => playTrack(track)}
+                    onClick={() => playTrack(track, trendingTracks)}
                 >
                     <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
                     <div className={`absolute inset-0 bg-black/30 flex items-center justify-center ${isCurrent && isPlaying ? 'opacity-100' : 'opacity-0 hover:opacity-100'}`}>

@@ -24,12 +24,15 @@ interface AppState {
 
   // Audio Player State
   currentTrack: MusicTrack | null;
+  playlist: MusicTrack[];
   isPlaying: boolean;
   volume: number;
   progress: number;
   seekTime: number | null;
   
-  playTrack: (track: MusicTrack) => void;
+  playTrack: (track: MusicTrack, tracks?: MusicTrack[]) => void;
+  playNext: () => void;
+  playPrevious: () => void;
   togglePlay: () => void;
   setVolume: (vol: number) => void;
   setProgress: (progress: number) => void;
@@ -88,8 +91,6 @@ export const useStore = create<AppState>((set, get) => ({
     if (!userId) return;
     
     try {
-      // 1. Get direct purchases from the purchases table
-      // We strictly use squeeze_tracks as the source of truth
       const { data: purchases, error: purchaseError } = await supabase
         .from('purchases')
         .select('track_id, album_id, license_type')
@@ -108,7 +109,6 @@ export const useStore = create<AppState>((set, get) => ({
         if (p.album_id) albumIds.push(p.album_id);
       });
 
-      // 2. Resolve tracks inside purchased albums (Music Packs)
       if (albumIds.length > 0) {
         const { data: albumTracks, error: albumTracksError } = await supabase
           .from('album_tracks')
@@ -130,17 +130,53 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   currentTrack: null,
+  playlist: [],
   isPlaying: false,
   volume: 1,
   progress: 0,
   seekTime: null,
   
-  playTrack: (track) => set((state) => {
+  playTrack: (track, tracks) => set((state) => {
     if (state.currentTrack?.id === track.id) {
       return { isPlaying: !state.isPlaying };
     }
-    return { currentTrack: track, isPlaying: true, progress: 0 };
+    // Se viene passata una nuova lista di brani, la impostiamo come playlist corrente
+    const newPlaylist = tracks && tracks.length > 0 ? tracks : state.playlist;
+    return { 
+      currentTrack: track, 
+      playlist: newPlaylist,
+      isPlaying: true, 
+      progress: 0 
+    };
   }),
+
+  playNext: () => {
+    const { currentTrack, playlist } = get();
+    if (!currentTrack || playlist.length === 0) return;
+    
+    const currentIndex = playlist.findIndex(t => t.id === currentTrack.id);
+    if (currentIndex !== -1 && currentIndex < playlist.length - 1) {
+      set({ 
+        currentTrack: playlist[currentIndex + 1], 
+        isPlaying: true, 
+        progress: 0 
+      });
+    }
+  },
+
+  playPrevious: () => {
+    const { currentTrack, playlist } = get();
+    if (!currentTrack || playlist.length === 0) return;
+    
+    const currentIndex = playlist.findIndex(t => t.id === currentTrack.id);
+    if (currentIndex > 0) {
+      set({ 
+        currentTrack: playlist[currentIndex - 1], 
+        isPlaying: true, 
+        progress: 0 
+      });
+    }
+  },
 
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
   

@@ -239,7 +239,7 @@ export const TrackDetail: React.FC = () => {
             <div className="w-full max-w-md md:w-80 lg:w-96 flex-shrink-0 aspect-square rounded-2xl overflow-hidden shadow-2xl relative group mx-auto md:mx-0">
                 <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
                 <button 
-                    onClick={() => playTrack(track)}
+                    onClick={() => playTrack(track, [track, ...recommendations])}
                     className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
                 >
                     <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50">
@@ -262,7 +262,7 @@ export const TrackDetail: React.FC = () => {
                 </h2>
 
                 <div className="h-32 w-full bg-zinc-50 dark:bg-zinc-900 rounded-xl mb-6 px-6 flex items-center gap-6 shadow-inner border border-zinc-200 dark:border-zinc-800">
-                    <button onClick={() => playTrack(track)} className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition hover:scale-105 shadow-md ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                    <button onClick={() => playTrack(track, [track, ...recommendations])} className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition hover:scale-105 shadow-md ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
                         {active ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1"/>}
                     </button>
                     <div className="flex-1 h-full flex items-center">
@@ -493,7 +493,7 @@ export const TrackDetail: React.FC = () => {
                         const isRecPlaying = currentTrack?.id === rec.id && isPlaying;
                         return (
                             <div key={rec.id} className="group">
-                                <div className="relative aspect-square rounded-xl overflow-hidden mb-3 cursor-pointer shadow-md group-hover:shadow-xl transition-all" onClick={() => playTrack(rec)}>
+                                <div className="relative aspect-square rounded-xl overflow-hidden mb-3 cursor-pointer shadow-md group-hover:shadow-xl transition-all" onClick={() => playTrack(rec, [track, ...recommendations])}>
                                     <img src={rec.cover_url} alt={rec.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                     <div className={`absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${isRecPlaying ? 'opacity-100' : ''}`}>
                                         {isRecPlaying ? <Pause className="text-white" size={32} /> : <Play className="text-white pl-1" size={32} />}

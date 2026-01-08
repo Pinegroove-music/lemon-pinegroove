@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { MusicTrack } from '../types';
@@ -432,13 +433,13 @@ export const Library: React.FC = () => {
                 {viewMode === 'list' ? (
                     <div className="flex flex-col gap-3">
                         {currentTracks.map(track => (
-                            <TrackItem key={track.id} track={track} onFindSimilar={() => findSimilar(track)} />
+                            <TrackItem key={track.id} track={track} onFindSimilar={() => findSimilar(track)} playlist={tracks} />
                         ))}
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                         {currentTracks.map(track => (
-                            <TrackGridItem key={track.id} track={track} onFindSimilar={() => findSimilar(track)} />
+                            <TrackGridItem key={track.id} track={track} onFindSimilar={() => findSimilar(track)} playlist={tracks} />
                         ))}
                     </div>
                 )}
@@ -569,7 +570,7 @@ const CollapsibleFilterSection: React.FC<{
     );
 };
 
-const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = ({ track, onFindSimilar }) => {
+const TrackItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFindSimilar?: () => void }> = ({ track, playlist, onFindSimilar }) => {
     const { playTrack, currentTrack, isPlaying, isDarkMode, session, ownedTrackIds } = useStore();
     const { isPro } = useSubscription();
     const [downloading, setDownloading] = useState(false);
@@ -631,7 +632,7 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
             {/* Column 1: Cover Image */}
             <div 
                 className="relative group w-12 h-12 md:w-16 md:h-16 flex-shrink-0 rounded-lg overflow-hidden cursor-pointer"
-                onClick={() => playTrack(track)}
+                onClick={() => playTrack(track, playlist)}
             >
                 <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className={`absolute inset-0 bg-sky-900/40 flex items-center justify-center transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
@@ -713,7 +714,7 @@ const TrackItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = (
     )
 }
 
-const TrackGridItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }> = ({ track, onFindSimilar }) => {
+const TrackGridItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFindSimilar?: () => void }> = ({ track, playlist, onFindSimilar }) => {
     const { playTrack, currentTrack, isPlaying, isDarkMode, session, ownedTrackIds } = useStore();
     const { isPro } = useSubscription();
     const [downloading, setDownloading] = useState(false);
@@ -783,7 +784,7 @@ const TrackGridItem: React.FC<{ track: MusicTrack; onFindSimilar?: () => void }>
                 <div className={`absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3 transition-opacity duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     
                     <button 
-                        onClick={(e) => { e.stopPropagation(); playTrack(track); }}
+                        onClick={(e) => { e.stopPropagation(); playTrack(track, playlist); }}
                         className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
                     >
                         {active ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1"/>}
