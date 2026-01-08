@@ -526,10 +526,6 @@ export const Player: React.FC = () => {
               </div>
 
               <div className="md:hidden flex items-center gap-2">
-                  <div className="text-xs font-mono opacity-60">
-                      {duration ? `${Math.floor(duration / 60)}:${(Math.floor(duration % 60)).toString().padStart(2, '0')}` : '-'}
-                  </div>
-
                   <div className="relative">
                       {hasAccess ? (
                           <button 
