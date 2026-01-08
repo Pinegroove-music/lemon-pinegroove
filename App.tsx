@@ -252,11 +252,11 @@ const Layout: React.FC = () => {
   const showFooter = location.pathname !== '/library' && !isAuthPage && !isResetPasswordPage;
 
   return (
-    <div className={`min-h-screen flex transition-colors duration-300 ${isDarkMode ? 'dark bg-zinc-950 text-zinc-100' : 'bg-white text-zinc-900'}`}>
+    <div className={`min-h-[100dvh] flex transition-colors duration-300 ${isDarkMode ? 'dark bg-zinc-950 text-zinc-100' : 'bg-white text-zinc-900'}`}>
       
       {!hideSidebar && <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />}
 
-      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
+      <div className="flex-1 flex flex-col h-[100dvh] overflow-hidden relative">
         
         {!hideSidebar && <AnnouncementBar />}
 

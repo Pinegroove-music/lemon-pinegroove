@@ -297,9 +297,9 @@ export const Player: React.FC = () => {
 
       {/* STANDARD BOTTOM PLAYER */}
       <div className={`
-        absolute bottom-0 left-0 right-0 z-50 border-t 
+        fixed bottom-0 left-0 right-0 z-[80] border-t 
         ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-zinc-200 text-zinc-900'}
-        shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] 
+        shadow-[0_-4px_12px_-2px_rgba(0,0,0,0.2)] 
         transition-all duration-300 ease-in-out
         ${isMobileMinimized ? 'h-6 cursor-pointer' : 'h-20'} md:h-20
       `}
