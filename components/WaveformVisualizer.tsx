@@ -34,7 +34,9 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   const isPlayingRef = useRef(isPlaying);
   const isActiveRef = useRef(isActive);
   
+  // NEW: Ref to track the last update time for interpolation
   const lastFrameTimeRef = useRef<number>(0);
+  // NEW: Ref to store the actual interpolated progress for smooth drawing
   const smoothProgressRef = useRef(currentProgress);
 
   const [realWaveformData, setRealWaveformData] = useState<number[] | null>(null);
@@ -46,11 +48,13 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
     isPlayingRef.current = isPlaying;
     isActiveRef.current = isActive;
     
+    // If stopped or seeking (large jump), snap immediately, don't interpolate
     if (!isPlaying || Math.abs(smoothProgressRef.current - currentProgress) > 5) {
         smoothProgressRef.current = currentProgress;
     }
   }, [currentProgress, isPlaying, isActive]);
 
+  // 1. FALLBACK SIMULATION
   const simulatedWaveformData = useMemo(() => {
     const data: number[] = [];
     let seed = track.id * 999; 
@@ -80,6 +84,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
     return data;
   }, [track.id]);
 
+  // 2. REAL AUDIO ANALYSIS
   useEffect(() => {
       setRealWaveformData(null); 
       setAnalyzing(false);
@@ -91,9 +96,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
           const analyzeAudio = async () => {
               setAnalyzing(true);
               try {
-                  const response = await fetch(track.mp3_url, { mode: 'cors' });
-                  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                  
+                  const response = await fetch(track.mp3_url);
                   const arrayBuffer = await response.arrayBuffer();
                   
                   const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -132,8 +135,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
                   requestAnimationFrame(fade);
 
               } catch (err) {
-                  console.warn("Waveform analysis skipped (likely CORS issue or file format). Falling back to simulation.", err);
-                  // We don't set error state, just stay with simulated data
+                  console.error("Error analyzing audio:", err);
               } finally {
                   setAnalyzing(false);
               }
@@ -146,13 +148,14 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
       const val = Number(e.target.value);
       setProgress(val);
       setSeekTime(val);
-      smoothProgressRef.current = val; 
+      smoothProgressRef.current = val; // Snap visual immediately on seek
   };
 
   const preventProp = (e: React.MouseEvent | React.TouchEvent) => {
       e.stopPropagation();
   };
 
+  // Drawing Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
@@ -167,6 +170,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
       const _isActive = isActiveRef.current;
       const _isPlaying = isPlayingRef.current;
       
+      // Calculate delta time for smooth interpolation
       if (_isActive && _isPlaying) {
           const target = progressRef.current;
           const current = smoothProgressRef.current;
@@ -230,6 +234,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
 
       if (_isActive) {
           ctx.save();
+          // Use smooth interpolated progress
           const progressWidth = (smoothProgressRef.current / 100) * width;
           ctx.beginPath();
           ctx.rect(0, 0, progressWidth, height);
@@ -238,11 +243,13 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
           ctx.restore();
       }
 
+      // Always animate loop to keep lerp active
       if ((_isActive && _isPlaying) || (transitionValue > 0 && transitionValue < 1)) {
         animationFrameId = requestAnimationFrame(render);
       }
     };
 
+    // Kick off
     animationFrameId = requestAnimationFrame(render);
 
     return () => {

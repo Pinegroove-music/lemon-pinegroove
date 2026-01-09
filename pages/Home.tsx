@@ -387,8 +387,7 @@ export const Home: React.FC = () => {
     <div className="space-y-16 pb-20">
       <SEO title="Royalty Free Music for Video" />
       
-      {/* Hero Section con Padding e Altezza Ottimizzati */}
-      <div className="relative pt-32 md:pt-44 lg:pt-52 pb-16 text-center flex flex-col min-h-[50vh] md:min-h-[60vh] justify-center">
+      <div className="relative pt-28 text-center flex flex-col">
          <div className="absolute inset-0 z-0 overflow-hidden">
             <img 
                 src="https://media.pinegroove.net/media/bg-pinegroove.avif" 
@@ -398,11 +397,11 @@ export const Home: React.FC = () => {
             <div className="absolute inset-0 bg-black/60 transition-colors duration-500"></div>
          </div>
 
-         <div className="relative z-30 w-full max-w-[1920px] mx-auto px-6 text-white mb-8 md:mb-12">
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 tracking-tight drop-shadow-md leading-tight">
+         <div className="relative z-30 w-full max-w-[1920px] mx-auto px-6 text-white mb-12 md:mb-16">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight drop-shadow-md leading-tight">
                 Find the perfect sound for your story.
             </h1>
-            <p className="text-xl mb-6 opacity-90 max-w-2xl mx-auto font-medium drop-shadow-sm">
+            <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto font-medium drop-shadow-sm">
                 High-quality stock music by composer Francesco Biondi.
             </p>
             
@@ -443,7 +442,7 @@ export const Home: React.FC = () => {
               )}
             </form>
             
-            <div className="mt-6">
+            <div className="mt-8">
                 <Link 
                     to="/library" 
                     className="inline-flex items-center gap-2 text-sky-200 hover:text-white transition-colors font-medium text-sm group"
