@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
@@ -24,7 +25,7 @@ import { UserLicenseAgreement } from './pages/UserLicenseAgreement';
 import { Privacy } from './pages/Privacy';
 import { ResetPassword } from './pages/ResetPassword';
 import { useStore } from './store/useStore';
-import { Menu, Search, Music, User, X, Heart, LogOut } from 'lucide-react';
+import { Menu, Search, Music, User, X } from 'lucide-react';
 import { supabase } from './services/supabase';
 import { createSlug } from './utils/slugUtils';
 import { SEO } from './components/SEO';
@@ -63,6 +64,7 @@ const Layout: React.FC = () => {
         track_id: trackId
       }));
 
+      // Usiamo upsert per evitare errori se la traccia è già presente nei preferiti
       const { error } = await supabase
         .from('favorites')
         .upsert(inserts, { onConflict: 'user_id,track_id' });
@@ -76,9 +78,11 @@ const Layout: React.FC = () => {
     }
   };
 
+  // Listener globale per intercettare il recupero password e login di Supabase
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (event === 'PASSWORD_RECOVERY') {
+        console.log("Password recovery flow detected. Navigating to reset-password.");
         navigate('/reset-password');
       }
       
@@ -97,6 +101,7 @@ const Layout: React.FC = () => {
           window.LemonSqueezy.Setup({
             eventHandler: (event: any) => {
               if (event.event === 'Checkout.Success') {
+                console.log('Payment successful! Refreshing data...');
                 fetchPurchases();
                 fetchProfile();
               }
@@ -220,11 +225,6 @@ const Layout: React.FC = () => {
       }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-  };
-
   const isHomePage = location.pathname === '/';
   const isCategoryPage = location.pathname.startsWith('/categories/');
   const isContentIdPage = location.pathname === '/content-id';
@@ -235,30 +235,18 @@ const Layout: React.FC = () => {
   const hideSearchBarContent = isCategoryPage || isContentIdPage || isAboutPage || isFaqPage || isLicenseAgreementPage;
   const shouldHideHeaderFrame = isContentIdPage || isCategoryPage || isAboutPage || isFaqPage || isLicenseAgreementPage;
 
-  // Header WRAPPER Logic: Handles positioning and grouping with AnnouncementBar
-  let headerWrapperClasses = `z-50 w-full transition-all duration-500 `;
+  let headerClasses = `p-4 flex items-center gap-4 transition-all duration-500 z-30 `;
+  
   if (shouldHideHeaderFrame) {
-      headerWrapperClasses += 'md:hidden absolute pointer-events-none ';
+      headerClasses += 'md:hidden border-transparent absolute w-full bg-transparent pointer-events-none ';
   } else if (isHomePage) {
       if (isScrolled) {
-          headerWrapperClasses += 'sticky top-0 ';
+          headerClasses += `sticky top-0 border-b ${isDarkMode ? 'bg-zinc-950/50 border-zinc-800' : 'bg-white/50 border-zinc-100'} backdrop-blur-xl shadow-sm `;
       } else {
-          headerWrapperClasses += 'absolute top-0 ';
+          headerClasses += 'absolute top-0 w-full bg-transparent border-transparent ';
       }
   } else {
-      headerWrapperClasses += 'sticky top-0 ';
-  }
-
-  // INTERNAL Header Logic: Handles layout, background, and transparency
-  let internalHeaderClasses = `transition-all duration-500 `;
-  if (isHomePage) {
-      if (isScrolled) {
-          internalHeaderClasses += `border-b ${isDarkMode ? 'bg-zinc-950/50 border-zinc-800' : 'bg-white/50 border-zinc-100'} backdrop-blur-xl shadow-sm `;
-      } else {
-          internalHeaderClasses += 'bg-transparent border-transparent ';
-      }
-  } else {
-      internalHeaderClasses += `border-b ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-100'} `;
+      headerClasses += `sticky top-0 border-b ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-100'} `;
   }
 
   const showFooter = location.pathname !== '/library' && !isAuthPage && !isResetPasswordPage;
@@ -270,119 +258,80 @@ const Layout: React.FC = () => {
 
       <div className="flex-1 flex flex-col h-[100dvh] overflow-hidden relative">
         
+        {!hideSidebar && <AnnouncementBar />}
+
         {!hideSidebar && (
-            <div className={headerWrapperClasses}>
-                <AnnouncementBar />
-                
-                <header className={internalHeaderClasses}>
-                    <div className="max-w-[1920px] mx-auto px-6 lg:px-10 py-4 flex items-center gap-4">
+            <header className={headerClasses}>
+            <button 
+                    onClick={() => setMobileOpen(true)} 
+                    className={`md:hidden p-2 flex-shrink-0 rounded-md pointer-events-auto ${isHomePage && !isScrolled ? 'bg-black/20 text-white backdrop-blur-sm' : ''}`}
+                >
+                <Menu size={24} />
+            </button>
+            
+            {!hideSearchBarContent && (
+                <form 
+                    ref={searchContainerRef}
+                    onSubmit={handleGlobalSearch} 
+                    className={`
+                        flex-1 max-w-5xl mx-auto relative w-full transition-all duration-500
+                        ${isHomePage && !isScrolled ? 'opacity-0 translate-y-[-20px] pointer-events-none' : 'opacity-100 translate-y-0'}
+                    `}
+                >
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 opacity-40" size={18} />
+                    <input 
+                    type="text" 
+                    placeholder="Search tracks, tags, artists, moods..." 
+                    value={globalSearch}
+                    onChange={(e) => setGlobalSearch(e.target.value)}
+                    onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
+                    className={`
+                        w-full pl-10 pr-10 py-2.5 rounded-full text-sm outline-none border transition shadow-sm
+                        ${isDarkMode 
+                        ? 'bg-zinc-900/80 border-zinc-800 focus:border-sky-500 placeholder-zinc-500 text-white' 
+                        : 'bg-zinc-100/80 border-zinc-200 focus:border-sky-400 placeholder-zinc-400 text-black'}
+                    `}
+                    />
+                    
+                    {globalSearch && (
                         <button 
-                            onClick={() => setMobileOpen(true)} 
-                            className={`md:hidden p-2 flex-shrink-0 rounded-md pointer-events-auto ${isHomePage && !isScrolled ? 'bg-black/20 text-white backdrop-blur-sm' : ''}`}
+                            type="button"
+                            onClick={() => { setGlobalSearch(''); setSuggestions([]); setShowSuggestions(false); }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
                         >
-                            <Menu size={24} />
+                            <X size={16} />
                         </button>
-                        
-                        {!hideSearchBarContent && (
-                            <form 
-                                ref={searchContainerRef}
-                                onSubmit={handleGlobalSearch} 
-                                className={`
-                                    flex-1 max-w-2xl transition-all duration-500
-                                    ${isHomePage && !isScrolled ? 'opacity-0 translate-y-[-20px] pointer-events-none' : 'opacity-100 translate-y-0'}
-                                `}
-                            >
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 opacity-40" size={18} />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search tracks, tags, artists, moods..." 
-                                    value={globalSearch}
-                                    onChange={(e) => setGlobalSearch(e.target.value)}
-                                    onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
-                                    className={`
-                                        w-full pl-10 pr-10 py-2.5 rounded-full text-sm outline-none border transition shadow-sm
-                                        ${isDarkMode 
-                                        ? 'bg-zinc-900/80 border-zinc-800 focus:border-sky-500 placeholder-zinc-500 text-white' 
-                                        : 'bg-zinc-100/80 border-zinc-200 focus:border-sky-400 placeholder-zinc-400 text-black'}
-                                    `}
-                                />
-                                
-                                {globalSearch && (
-                                    <button 
-                                        type="button"
-                                        onClick={() => { setGlobalSearch(''); setSuggestions([]); setShowSuggestions(false); }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                )}
+                    )}
 
-                                {showSuggestions && suggestions.length > 0 && (
-                                    <div className={`
-                                        absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl overflow-hidden z-50
-                                        ${isDarkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}
-                                    `}>
-                                        <ul>
-                                            {suggestions.map((item, index) => (
-                                                <li key={index}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleSuggestionClick(item)}
-                                                        className={`
-                                                            w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-colors
-                                                            ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-300 hover:text-white' : 'hover:bg-sky-50 text-zinc-700 hover:text-sky-700'}
-                                                        `}
-                                                    >
-                                                        <span className={`opacity-50 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                                            {item.type === 'track' ? <Music size={14} /> : <User size={14} />}
-                                                        </span>
-                                                        <span className="font-medium truncate">{item.text}</span>
-                                                    </button>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </form>
-                        )}
-
+                    {showSuggestions && suggestions.length > 0 && (
                         <div className={`
-                            flex items-center gap-3 ml-auto transition-all duration-500 pointer-events-auto
-                            ${isHomePage && !isScrolled ? 'text-white' : ''}
+                            absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl overflow-hidden z-50
+                            ${isDarkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}
                         `}>
-                            {!session ? (
-                                <div className="flex items-center gap-4">
-                                    <Link to="/auth" className={`text-sm font-bold opacity-70 hover:opacity-100 transition-opacity ${isHomePage && !isScrolled ? 'text-white' : ''}`}>
-                                        Sign In
-                                    </Link>
-                                    <Link to="/auth" className="px-5 py-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow-md transition-all active:scale-95">
-                                        Sign Up
-                                    </Link>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-1 sm:gap-2">
-                                    <Link to="/my-playlist" className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHomePage && !isScrolled ? 'hover:bg-white/10' : ''}`}>
-                                        <Heart size={20} className="text-red-500" />
-                                        <span className={`text-sm font-bold hidden sm:inline ${isHomePage && !isScrolled ? 'text-white' : ''}`}>Wishlist</span>
-                                    </Link>
-                                    <Link to="/my-purchases" className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHomePage && !isScrolled ? 'hover:bg-white/10' : ''}`}>
-                                        <User size={20} className="text-sky-500" />
-                                        <span className={`text-sm font-bold hidden sm:inline ${isHomePage && !isScrolled ? 'text-white' : ''}`}>Account</span>
-                                    </Link>
-                                    <button 
-                                        onClick={handleSignOut}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all text-red-500 ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHomePage && !isScrolled ? 'hover:bg-white/10' : ''}`}
-                                        title="Sign Out"
-                                    >
-                                        <LogOut size={20} />
-                                        <span className={`text-sm font-bold hidden lg:inline ${isHomePage && !isScrolled ? 'text-white' : ''}`}>Sign Out</span>
-                                    </button>
-                                </div>
-                            )}
+                            <ul>
+                                {suggestions.map((item, index) => (
+                                    <li key={index}>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSuggestionClick(item)}
+                                            className={`
+                                                w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-colors
+                                                ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-300 hover:text-white' : 'hover:bg-sky-50 text-zinc-700 hover:text-sky-700'}
+                                            `}
+                                        >
+                                            <span className={`opacity-50 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                                                {item.type === 'track' ? <Music size={14} /> : <User size={14} />}
+                                            </span>
+                                            <span className="font-medium truncate">{item.text}</span>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
-                    </div>
-                </header>
-            </div>
+                    )}
+                </form>
+            )}
+            </header>
         )}
 
         <main 
