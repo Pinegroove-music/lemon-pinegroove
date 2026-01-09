@@ -86,7 +86,7 @@ export const Footer: React.FC = () => {
                           Secure Payments & Instant Delivery:
                       </p>
                       <img 
-                          src="https://pub-704d512baed74c069032320c83ebe2f7.r2.dev/lemon-squeezy-logo.svg" 
+                          src="https://assets.pinegroove.net/lemon-squeezy-logo.svg" 
                           alt="Lemon Squeezy Logo" 
                           className="h-6 object-contain opacity-70 hover:opacity-100 transition-all filter grayscale hover:grayscale-0"
                       />

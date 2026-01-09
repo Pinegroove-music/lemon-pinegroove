@@ -25,7 +25,7 @@ interface SEOProps {
 export const SEO: React.FC<SEOProps> = ({ 
   title, 
   description,
-  image = "https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/logo-pinegroove.svg", 
+  image = "https://media.pinegroove.net/media/logo-pinegroove.svg", 
   url,
   type = 'website',
   trackData,
