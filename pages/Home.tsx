@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { MusicTrack, Client, Album, MediaTheme, Coupon, PricingItem } from '../types';
 import { supabase } from '../services/supabase';
@@ -387,7 +386,8 @@ export const Home: React.FC = () => {
     <div className="space-y-16 pb-20">
       <SEO title="Royalty Free Music for Video" />
       
-      <div className="relative pt-28 text-center flex flex-col">
+      {/* Hero Section - Compact height & Content shifted low */}
+      <div className="relative pt-40 pb-8 md:pt-48 md:pb-12 text-center flex flex-col items-center justify-end min-h-[340px] md:min-h-[380px]">
          <div className="absolute inset-0 z-0 overflow-hidden">
             <img 
                 src="https://media.pinegroove.net/media/bg-pinegroove.avif" 
@@ -397,18 +397,18 @@ export const Home: React.FC = () => {
             <div className="absolute inset-0 bg-black/60 transition-colors duration-500"></div>
          </div>
 
-         <div className="relative z-30 w-full max-w-[1920px] mx-auto px-6 text-white mb-12 md:mb-16">
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight drop-shadow-md leading-tight">
+         <div className="relative w-full max-w-[1920px] mx-auto px-6 text-white mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 tracking-tight drop-shadow-md leading-tight max-w-4xl mx-auto">
                 Find the perfect sound for your story.
             </h1>
-            <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto font-medium drop-shadow-sm">
+            <p className="text-sm md:text-base mb-6 opacity-90 max-w-2xl mx-auto font-medium drop-shadow-sm">
                 High-quality stock music by composer Francesco Biondi.
             </p>
             
             <form 
                 ref={searchContainerRef}
                 onSubmit={handleSearch} 
-                className="max-w-xl mx-auto relative text-zinc-900"
+                className="max-w-md mx-auto relative text-zinc-900"
             >
               <input 
                 type="text" 
@@ -416,19 +416,19 @@ export const Home: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
-                className="w-full p-4 pl-12 rounded-full shadow-2xl outline-none border border-transparent bg-white/95 focus:bg-white focus:ring-4 focus:ring-sky-500/30 transition-all backdrop-blur-sm"
+                className="w-full p-3 pl-11 rounded-full shadow-2xl outline-none border border-transparent bg-white/95 focus:bg-white focus:ring-4 focus:ring-sky-500/30 transition-all backdrop-blur-sm text-sm"
               />
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 opacity-40 text-black" size={20} />
+              <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 opacity-40 text-black" size={18} />
               
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 rounded-xl bg-white text-left shadow-2xl overflow-hidden z-50 border border-gray-100">
+                <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-white text-left shadow-2xl overflow-hidden z-50 border border-gray-100">
                     <ul>
                         {suggestions.map((item, index) => (
                             <li key={index}>
                                 <button
                                     type="button"
                                     onClick={() => handleSuggestionClick(item)}
-                                    className="w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-colors hover:bg-sky-50 text-zinc-700 hover:text-sky-700"
+                                    className="w-full text-left px-5 py-3 flex items-center gap-3 text-sm transition-colors hover:bg-sky-50 text-zinc-700 hover:text-sky-700"
                                 >
                                     <span className="opacity-50 text-zinc-400">
                                         {item.type === 'track' ? <Music size={14} /> : <User size={14} />}
@@ -442,13 +442,13 @@ export const Home: React.FC = () => {
               )}
             </form>
             
-            <div className="mt-8">
+            <div className="mt-6">
                 <Link 
                     to="/library" 
-                    className="inline-flex items-center gap-2 text-sky-200 hover:text-white transition-colors font-medium text-sm group"
+                    className="inline-flex items-center gap-2 text-sky-200 hover:text-white transition-colors font-bold text-xs md:text-sm group"
                 >
                     Explore Full Catalog 
-                    <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform"/>
+                    <ArrowRight size={14} className="transform group-hover:translate-x-1 transition-transform"/>
                 </Link>
             </div>
          </div>
