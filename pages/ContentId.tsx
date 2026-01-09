@@ -158,6 +158,7 @@ export const ContentId: React.FC = () => {
                             className={`w-full p-3 rounded-lg border bg-transparent outline-none transition-all focus:ring-2 focus:ring-sky-500 ${isDarkMode ? 'border-zinc-700 bg-zinc-900 focus:border-sky-500' : 'border-zinc-300 bg-white focus:border-sky-500'}`}
                         >
                             <option value="" disabled>Select a marketplace...</option>
+                            <option value="Pinegroove">Pinegroove (Lemon Squeezy)</option>
                             <option value="Gumroad">Gumroad</option>
                             <option value="Fourthwall">Fourthwall (Youtube Shop)</option>
                             <option value="Audiojungle">Audiojungle</option>

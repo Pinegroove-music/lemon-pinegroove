@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
@@ -233,13 +234,16 @@ const Layout: React.FC = () => {
   const isLicenseAgreementPage = location.pathname === '/user-license-agreement';
   
   const hideSearchBarContent = isCategoryPage || isContentIdPage || isAboutPage || isFaqPage || isLicenseAgreementPage;
-  const shouldHideHeaderFrame = isContentIdPage || isCategoryPage || isAboutPage || isFaqPage || isLicenseAgreementPage;
+  // ContentId e Faq rimosse da shouldHideHeaderFrame per abilitare l'header desktop
+  const shouldHideHeaderFrame = isCategoryPage || isLicenseAgreementPage;
+  // Aggiunte ContentId e Faq a isHeroPage per l'effetto trasparenza/hero
+  const isHeroPage = isHomePage || isAboutPage || isContentIdPage || isFaqPage;
 
   // Header WRAPPER Logic: Handles positioning and grouping with AnnouncementBar
   let headerWrapperClasses = `z-50 w-full transition-all duration-500 `;
   if (shouldHideHeaderFrame) {
       headerWrapperClasses += 'md:hidden absolute pointer-events-none ';
-  } else if (isHomePage) {
+  } else if (isHeroPage) {
       if (isScrolled) {
           headerWrapperClasses += 'sticky top-0 ';
       } else {
@@ -251,7 +255,7 @@ const Layout: React.FC = () => {
 
   // INTERNAL Header Logic: Handles layout, background, and transparency
   let internalHeaderClasses = `transition-all duration-500 `;
-  if (isHomePage) {
+  if (isHeroPage) {
       if (isScrolled) {
           internalHeaderClasses += `border-b ${isDarkMode ? 'bg-zinc-950/50 border-zinc-800' : 'bg-white/50 border-zinc-100'} backdrop-blur-xl shadow-sm `;
       } else {
@@ -278,7 +282,7 @@ const Layout: React.FC = () => {
                     <div className="max-w-[1920px] mx-auto px-6 lg:px-10 py-4 flex items-center gap-4">
                         <button 
                             onClick={() => setMobileOpen(true)} 
-                            className={`md:hidden p-2 flex-shrink-0 rounded-md pointer-events-auto ${isHomePage && !isScrolled ? 'bg-black/20 text-white backdrop-blur-sm' : ''}`}
+                            className={`md:hidden p-2 flex-shrink-0 rounded-md pointer-events-auto ${isHeroPage && !isScrolled ? 'bg-black/20 text-white backdrop-blur-sm' : ''}`}
                         >
                             <Menu size={24} />
                         </button>
@@ -289,7 +293,7 @@ const Layout: React.FC = () => {
                                 onSubmit={handleGlobalSearch} 
                                 className={`
                                     flex-1 max-w-2xl transition-all duration-500
-                                    ${isHomePage && !isScrolled ? 'opacity-0 translate-y-[-20px] pointer-events-none' : 'opacity-100 translate-y-0'}
+                                    ${isHeroPage && !isScrolled ? 'opacity-0 translate-y-[-20px] pointer-events-none' : 'opacity-100 translate-y-0'}
                                 `}
                             >
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 opacity-40" size={18} />
@@ -348,11 +352,11 @@ const Layout: React.FC = () => {
 
                         <div className={`
                             flex items-center gap-3 ml-auto transition-all duration-500 pointer-events-auto
-                            ${isHomePage && !isScrolled ? 'text-white' : ''}
+                            ${isHeroPage && !isScrolled ? 'text-white' : ''}
                         `}>
                             {!session ? (
                                 <div className="flex items-center gap-4">
-                                    <Link to="/auth" className={`text-sm font-bold opacity-70 hover:opacity-100 transition-opacity ${isHomePage && !isScrolled ? 'text-white' : ''}`}>
+                                    <Link to="/auth" className={`text-sm font-bold opacity-70 hover:opacity-100 transition-opacity ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>
                                         Sign In
                                     </Link>
                                     <Link to="/auth" className="px-5 py-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow-md transition-all active:scale-95">
@@ -361,21 +365,21 @@ const Layout: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-1 sm:gap-2">
-                                    <Link to="/my-playlist" className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHomePage && !isScrolled ? 'hover:bg-white/10' : ''}`}>
+                                    <Link to="/my-playlist" className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`}>
                                         <Heart size={20} className="text-red-500" />
-                                        <span className={`text-sm font-bold hidden sm:inline ${isHomePage && !isScrolled ? 'text-white' : ''}`}>Wishlist</span>
+                                        <span className={`text-sm font-bold hidden sm:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Wishlist</span>
                                     </Link>
-                                    <Link to="/my-purchases" className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHomePage && !isScrolled ? 'hover:bg-white/10' : ''}`}>
+                                    <Link to="/my-purchases" className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`}>
                                         <User size={20} className="text-sky-500" />
-                                        <span className={`text-sm font-bold hidden sm:inline ${isHomePage && !isScrolled ? 'text-white' : ''}`}>Account</span>
+                                        <span className={`text-sm font-bold hidden sm:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Account</span>
                                     </Link>
                                     <button 
                                         onClick={handleSignOut}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all text-red-500 ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHomePage && !isScrolled ? 'hover:bg-white/10' : ''}`}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all text-red-500 ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`}
                                         title="Sign Out"
                                     >
                                         <LogOut size={20} />
-                                        <span className={`text-sm font-bold hidden lg:inline ${isHomePage && !isScrolled ? 'text-white' : ''}`}>Sign Out</span>
+                                        <span className={`text-sm font-bold hidden lg:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Sign Out</span>
                                     </button>
                                 </div>
                             )}

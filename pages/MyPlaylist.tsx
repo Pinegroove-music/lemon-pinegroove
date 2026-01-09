@@ -1,10 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
-import { MusicTrack, Coupon } from '../types';
+import { MusicTrack, Album, Coupon } from '../types';
 import { useStore } from '../store/useStore';
 import { useNavigate, Link } from 'react-router-dom';
-import { Heart, Music, ArrowRight, Loader2, Play, Pause, LayoutGrid, LayoutList, Info, Ticket, Copy, Check } from 'lucide-react';
+import { Heart, Music, ArrowRight, Loader2, Play, Pause, LayoutGrid, LayoutList, Info, Ticket, Copy, Check, Disc, Sparkles } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { createSlug } from '../utils/slugUtils';
 import { FavoriteButton } from '../components/FavoriteButton';
@@ -12,7 +12,11 @@ import { WaveformVisualizer } from '../components/WaveformVisualizer';
 
 interface FavoriteWithTrack {
   track_id: number;
-  squeeze_tracks: MusicTrack;
+  squeeze_tracks: MusicTrack & {
+    album_tracks?: {
+      album: Album;
+    }[];
+  };
 }
 
 export const MyPlaylist: React.FC = () => {
@@ -33,10 +37,18 @@ export const MyPlaylist: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch Favorites
+        // Fetch Favorites with nested Album info
         const { data: favData, error: favError } = await supabase
           .from('favorites')
-          .select('track_id, squeeze_tracks(*)')
+          .select(`
+            track_id, 
+            squeeze_tracks(
+              *,
+              album_tracks(
+                album(*)
+              )
+            )
+          `)
           .eq('user_id', session.user.id);
 
         if (favError) throw favError;
@@ -76,6 +88,14 @@ export const MyPlaylist: React.FC = () => {
     setFavorites(prev => prev.filter(f => f.track_id !== trackId));
   };
 
+  const getTrackAlbum = (fav: FavoriteWithTrack): Album | null => {
+    const albumTracks = fav.squeeze_tracks.album_tracks;
+    if (albumTracks && albumTracks.length > 0 && albumTracks[0].album) {
+      return albumTracks[0].album;
+    }
+    return null;
+  };
+
   if (loading && favorites.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -97,7 +117,6 @@ export const MyPlaylist: React.FC = () => {
           </h1>
           <p className="opacity-60 text-lg mb-6">Tracks you've saved for your future projects.</p>
           
-          {/* Special Purple Promo Card - Responsive fix for mobile */}
           {specialPromo && (
             <div className="flex justify-start max-w-full">
               <div className="bg-gradient-to-br from-purple-600 via-indigo-700 to-purple-800 text-white p-4 sm:px-4 sm:py-2 rounded-2xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 border border-white/10 animate-in fade-in slide-in-from-left-4 duration-700 w-full sm:w-fit">
@@ -122,7 +141,6 @@ export const MyPlaylist: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-4 md:self-end">
-            {/* View Mode Toggle */}
             <div className={`flex items-center p-1 rounded-xl border ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                 <button 
                     onClick={() => setViewMode('grid')}
@@ -163,11 +181,11 @@ export const MyPlaylist: React.FC = () => {
           </Link>
         </div>
       ) : viewMode === 'grid' ? (
-        /* GRID VIEW */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {favorites.map((fav) => {
             const track = fav.squeeze_tracks;
             const isActive = currentTrack?.id === track.id && isPlaying;
+            const album = getTrackAlbum(fav);
 
             return (
               <div 
@@ -197,10 +215,20 @@ export const MyPlaylist: React.FC = () => {
                       size={24}
                     />
                   </div>
+
+                  {album && (
+                    <Link 
+                      to={`/music-packs/${createSlug(album.id, album.title)}`}
+                      className="absolute top-4 left-4 bg-indigo-600/90 backdrop-blur-md text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg border border-white/10 transform -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500"
+                    >
+                      <Disc size={12} className="animate-spin-slow" />
+                      In Music Pack
+                    </Link>
+                  )}
                 </div>
 
                 <div className="p-5 flex flex-col flex-1">
-                  <div className="mb-4">
+                  <div>
                     <h2 className="text-xl font-bold leading-tight line-clamp-1 mb-1 group-hover:text-sky-500 transition-colors">
                       <Link to={`/track/${createSlug(track.id, track.title)}`}>
                         {track.title}
@@ -210,99 +238,111 @@ export const MyPlaylist: React.FC = () => {
                       {track.artist_name}
                     </p>
                   </div>
-                  
-                  <div className="mt-auto pt-4 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-                    <div className="flex gap-2">
-                        {Array.isArray(track.genre) ? track.genre.slice(0, 1).map(g => (
-                            <span key={g} className="text-[10px] uppercase font-black px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">{g}</span>
-                        )) : track.genre && (
-                            <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">{track.genre}</span>
-                        )}
-                    </div>
-                    <Link 
-                      to={`/track/${createSlug(track.id, track.title)}`}
-                      className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-gray-100 text-zinc-500'}`}
-                    >
-                      <ArrowRight size={20} />
-                    </Link>
-                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        /* LIST VIEW */
         <div className="flex flex-col gap-4">
           {favorites.map((fav) => {
             const track = fav.squeeze_tracks;
             const isActive = currentTrack?.id === track.id && isPlaying;
+            const album = getTrackAlbum(fav);
 
             return (
-              <div 
-                key={track.id}
-                className={`
-                  flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300
-                  ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800/80' : 'bg-white border-zinc-200 shadow-sm hover:shadow-md'}
-                  ${isActive ? 'ring-1 ring-sky-500' : ''}
-                `}
-              >
-                {/* Cover & Play */}
+              <div key={track.id} className="flex flex-col gap-1">
                 <div 
-                  className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden group cursor-pointer shadow-md"
-                  onClick={() => playTrack(track)}
+                  className={`
+                    flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300
+                    ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800/80' : 'bg-white border-zinc-200 shadow-sm hover:shadow-md'}
+                    ${isActive ? 'ring-1 ring-sky-500' : ''}
+                    ${album ? 'rounded-b-none border-b-0' : ''}
+                  `}
                 >
-                  <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
-                  <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                    {isActive ? <Pause size={28} className="text-white fill-white"/> : <Play size={28} className="text-white fill-white ml-1"/>}
+                  <div 
+                    className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden group cursor-pointer shadow-md"
+                    onClick={() => playTrack(track)}
+                  >
+                    <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
+                    <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                      {isActive ? <Pause size={28} className="text-white fill-white"/> : <Play size={28} className="text-white fill-white ml-1"/>}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <Link 
+                      to={`/track/${createSlug(track.id, track.title)}`}
+                      className="font-bold text-xl hover:text-sky-500 transition-colors truncate block"
+                    >
+                      {track.title}
+                    </Link>
+                    <p className="text-sm opacity-50 font-medium mb-2">{track.artist_name}</p>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {Array.isArray(track.genre) ? track.genre.slice(0, 1).map(g => (
+                        <span key={g} className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">{g}</span>
+                      )) : track.genre && (
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">{track.genre}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="hidden lg:flex flex-[2] h-12 items-center px-6">
+                    <WaveformVisualizer track={track} height="h-10" barCount={100} interactive={true} enableAnalysis={isActive} />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <FavoriteButton 
+                      trackId={track.id} 
+                      onToggle={(isFav) => !isFav && handleRemoveFromList(track.id)} 
+                      size={24}
+                    />
+                    <div className="hidden sm:block h-6 w-px bg-current opacity-10 mx-1"></div>
+                    <Link 
+                      to={`/track/${createSlug(track.id, track.title)}`}
+                      className={`p-3 rounded-full transition-colors ${isDarkMode ? 'hover:bg-zinc-700 text-zinc-400' : 'hover:bg-gray-100 text-zinc-500'}`}
+                      title="View details"
+                    >
+                      <ArrowRight size={22} />
+                    </Link>
                   </div>
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
+                {album && (
                   <Link 
-                    to={`/track/${createSlug(track.id, track.title)}`}
-                    className="font-bold text-xl hover:text-sky-500 transition-colors truncate block"
+                    to={`/music-packs/${createSlug(album.id, album.title)}`}
+                    className={`
+                      flex items-center justify-between px-6 py-2.5 rounded-b-2xl text-xs font-bold border transition-all group/banner
+                      ${isDarkMode ? 'bg-indigo-900/20 border-zinc-800 text-indigo-400 hover:bg-indigo-900/30' : 'bg-indigo-50 border-zinc-200 text-indigo-700 hover:bg-indigo-100'}
+                    `}
                   >
-                    {track.title}
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 bg-indigo-500/10 rounded-lg">
+                        <Sparkles size={14} className="text-indigo-500" />
+                      </div>
+                      <span>This track is included in the <strong>{album.title}</strong> Music Pack with other similar tracks.</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 uppercase tracking-widest font-black text-[10px] group-hover/banner:translate-x-1 transition-transform">
+                      Check the bundle <ArrowRight size={14} />
+                    </div>
                   </Link>
-                  <p className="text-sm opacity-50 font-medium mb-2">{track.artist_name}</p>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    {Array.isArray(track.genre) ? track.genre.slice(0, 1).map(g => (
-                      <span key={g} className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">{g}</span>
-                    )) : track.genre && (
-                      <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">{track.genre}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Waveform */}
-                <div className="hidden lg:flex flex-[2] h-12 items-center px-6">
-                  <WaveformVisualizer track={track} height="h-10" barCount={100} interactive={true} enableAnalysis={isActive} />
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                  <FavoriteButton 
-                    trackId={track.id} 
-                    onToggle={(isFav) => !isFav && handleRemoveFromList(track.id)} 
-                    size={24}
-                  />
-                  <div className="hidden sm:block h-6 w-px bg-current opacity-10 mx-1"></div>
-                  <Link 
-                    to={`/track/${createSlug(track.id, track.title)}`}
-                    className={`p-3 rounded-full transition-colors ${isDarkMode ? 'hover:bg-zinc-700 text-zinc-400' : 'hover:bg-gray-100 text-zinc-500'}`}
-                    title="View details"
-                  >
-                    <ArrowRight size={22} />
-                  </Link>
-                </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
+      
+      <style>{`
+        .animate-spin-slow {
+          animation: spin 8s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
