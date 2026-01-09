@@ -506,7 +506,7 @@ export const Home: React.FC = () => {
                         : 'bg-white hover:bg-sky-50 text-sky-600 border border-sky-100'}
                 `}
             >
-                Explore Full Catalog <ArrowRight size={16} />
+                Explore Full Catalog Now<ArrowRight size={16} />
             </Link>
         </div>
       </section>
