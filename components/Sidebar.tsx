@@ -1,10 +1,7 @@
-
 import React, { useState } from 'react';
-// Changed react-router to react-router-dom to fix hook issues and missing export errors
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Library, Info, HelpCircle, ShieldAlert, Music, X, Sun, Moon, ChevronLeft, ChevronRight, LogOut, User, ShoppingBag, Zap, Tag, Heart } from 'lucide-react';
+import { Home, Library, Info, HelpCircle, ShieldAlert, Music, X, Sun, Moon, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { supabase } from '../services/supabase';
 
 export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: boolean) => void }> = ({ mobileOpen, setMobileOpen }) => {
   const { isDarkMode, toggleTheme, session } = useStore();
@@ -51,10 +48,6 @@ export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: bool
     } else {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
   };
 
   return (
@@ -135,52 +128,6 @@ export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: bool
                 {isDarkMode ? <Sun size={22} className="flex-shrink-0" /> : <Moon size={22} className="flex-shrink-0" />}
                 {!collapsed && <span className="font-medium whitespace-nowrap">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>}
             </button>
-            
-            {session ? (
-              <>
-                {/* Playlist Section */}
-                <Link 
-                    to="/my-playlist"
-                    onClick={() => setMobileOpen(false)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${location.pathname === '/my-playlist' ? (isDarkMode ? 'bg-sky-900/20 text-sky-400' : 'bg-white text-sky-700 shadow-sm') : (isDarkMode ? 'hover:bg-zinc-900 text-zinc-400 hover:text-white' : 'hover:bg-gray-200/50 text-zinc-600 hover:text-black')} ${collapsed ? 'justify-center' : ''}`}
-                    title={collapsed ? 'My Wishlist' : ''}
-                >
-                    <Heart size={22} className="flex-shrink-0" />
-                    {!collapsed && <span className="font-medium whitespace-nowrap">My Wishlist</span>}
-                </Link>
-
-                {/* Account Section */}
-                <Link 
-                    to="/my-purchases"
-                    onClick={() => setMobileOpen(false)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${location.pathname === '/my-purchases' ? (isDarkMode ? 'bg-sky-900/20 text-sky-400' : 'bg-white text-sky-700 shadow-sm') : (isDarkMode ? 'hover:bg-zinc-900 text-zinc-400 hover:text-white' : 'hover:bg-gray-200/50 text-zinc-600 hover:text-black')} ${collapsed ? 'justify-center' : ''}`}
-                    title={collapsed ? 'My Account' : ''}
-                >
-                    <User size={22} className="flex-shrink-0" />
-                    {!collapsed && <span className="font-medium whitespace-nowrap">My Account</span>}
-                </Link>
-
-                {/* Sign Out */}
-                <button 
-                    onClick={handleSignOut}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-red-500 hover:bg-red-500/10 ${collapsed ? 'justify-center' : ''}`}
-                    title={collapsed ? 'Sign Out' : ''}
-                >
-                    <LogOut size={22} className="flex-shrink-0" />
-                    {!collapsed && <span className="font-medium whitespace-nowrap">Sign Out</span>}
-                </button>
-              </>
-            ) : (
-              <Link 
-                  to="/auth"
-                  onClick={() => setMobileOpen(false)}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-sky-500 hover:bg-sky-500/10 ${collapsed ? 'justify-center' : ''}`}
-                  title={collapsed ? 'Sign In' : ''}
-              >
-                  <User size={22} className="flex-shrink-0" />
-                  {!collapsed && <span className="font-medium whitespace-nowrap">Sign In</span>}
-              </Link>
-            )}
         </div>
       </aside>
     </>
