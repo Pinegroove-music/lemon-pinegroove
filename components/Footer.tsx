@@ -68,7 +68,7 @@ export const Footer: React.FC = () => {
                   className="flex items-center gap-2 group w-fit cursor-pointer"
               >
                   <img 
-                      src="https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/logo-pinegroove.svg" 
+                      src="https://media.pinegroove.net/media/logo-pinegroove.svg" 
                       alt="Pinegroove Logo" 
                       className="w-9 h-9 object-contain transition-transform duration-500 group-hover:scale-110 flex-shrink-0"
                   />

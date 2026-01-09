@@ -82,7 +82,7 @@ export const ContentId: React.FC = () => {
             {/* Background Image - Videomaking/YouTube theme */}
             <div className="absolute inset-0 z-0">
                 <img 
-                    src="https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/copyright-comic.jpg" 
+                    src="https://media.pinegroove.net/media/copyright-comic.jpg" 
                     alt="Content ID Copyright" 
                     className="w-full h-full object-cover object-center"
                 />

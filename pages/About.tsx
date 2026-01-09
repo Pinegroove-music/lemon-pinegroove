@@ -41,7 +41,7 @@ export const About: React.FC = () => {
             <div className="w-full lg:w-5/12 lg:sticky lg:top-28">
                 <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl bg-black">
                     <img 
-                        src="https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/portrait.jpg" 
+                        src="https://media.pinegroove.net/media/portrait.jpg" 
                         alt="Francesco Biondi" 
                         className="w-full h-auto max-h-[600px] object-cover object-top opacity-90 hover:opacity-100 transition-opacity duration-700" 
                     />

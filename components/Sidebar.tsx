@@ -76,7 +76,7 @@ export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: bool
             className="flex items-center gap-1 group overflow-hidden"
           >
             <img 
-                src="https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/logo-pinegroove.svg" 
+                src="https://media.pinegroove.net/media/logo-pinegroove.svg" 
                 alt="Pinegroove Logo" 
                 className="w-12 h-12 object-contain transition-transform duration-500 group-hover:rotate-12 flex-shrink-0"
             />
