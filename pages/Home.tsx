@@ -1045,7 +1045,7 @@ export const Home: React.FC = () => {
             <div className="relative z-10">
                 <div className="w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl relative group">
                     <img 
-                        src="https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/Francesco-Biondi-profilo.jpg" 
+                        src="https://media.pinegroove.net/media/Francesco-Biondi-profilo.jpg" 
                         alt="Francesco Biondi" 
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
