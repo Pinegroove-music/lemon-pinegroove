@@ -41,24 +41,28 @@ export const Player: React.FC = () => {
   useEffect(() => {
     if (currentTrack) {
         setIsMobileMinimized(false);
+        // Quando la traccia cambia, forziamo il caricamento del nuovo URL
+        if (audioRef.current) {
+            audioRef.current.load();
+        }
     }
   }, [currentTrack?.id]);
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (audio) {
+    if (audio && currentTrack?.mp3_url) {
       if (isPlaying) {
         const playPromise = audio.play();
         if (playPromise !== undefined) {
             playPromise.catch(e => {
-                console.log("Playback prevented or interrupted:", e);
+                console.warn("Playback prevented or interrupted. This is often due to missing CORS headers on the audio domain or browser autoplay policies:", e);
             });
         }
       } else {
         audio.pause();
       }
     }
-  }, [isPlaying, currentTrack]);
+  }, [isPlaying, currentTrack?.id, currentTrack?.mp3_url]);
 
   useEffect(() => {
     if (audioRef.current) {

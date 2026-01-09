@@ -49,7 +49,7 @@ export const Auth: React.FC = () => {
       <div className={`relative z-10 w-full max-w-md p-8 rounded-3xl shadow-2xl backdrop-blur-xl border ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-gray-200'}`}>
         <div className="flex flex-col items-center mb-8">
           <img 
-            src="https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/logo-pinegroove.svg" 
+            src="https://media.pinegroove.net/media/logo-pinegroove.svg" 
             alt="Pinegroove Logo" 
             className="w-16 h-16 mb-4 drop-shadow-lg"
           />

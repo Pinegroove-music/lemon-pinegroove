@@ -125,7 +125,7 @@ export const Pricing: React.FC = () => {
         {/* Overflowing Logo Layer */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[-1] pointer-events-none">
             <img 
-                src="https://pub-2da555791ab446dd9afa8c2352f4f9ea.r2.dev/media/logo-pinegroove.svg" 
+                src="https://media.pinegroove.net/media/logo-pinegroove.svg" 
                 alt="" 
                 className={`
                   w-[800px] h-[800px] max-w-none transition-all duration-1000 ease-out
