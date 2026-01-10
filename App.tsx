@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import './index.css';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Player } from './components/Player';
