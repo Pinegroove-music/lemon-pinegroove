@@ -34,6 +34,15 @@ import { AnnouncementBar } from './components/AnnouncementBar';
 
 const Layout: React.FC = () => {
   const { isDarkMode, session, fetchPurchases, fetchProfile } = useStore();
+  
+  // Aggiungi questo effetto per sincronizzare la Dark Mode con il tag HTML
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);

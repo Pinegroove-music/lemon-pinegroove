@@ -1,10 +1,10 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Archivo+Black&display=swap');
 
 @theme {
+  /* Registrazione font personalizzato Archivo Black */
   --font-archivo: "Archivo Black", sans-serif;
-  --dark-mode: selector;
-
+  
+  /* Ripristino colori personalizzati sky */
   --color-sky-50: #f0f9ff;
   --color-sky-100: #e0f2fe;
   --color-sky-200: #bae6fd;
@@ -18,70 +18,69 @@
   --color-sky-950: #082f49;
 }
 
-:root {
-  font-family: 'Inter', sans-serif;
-  color: #18181b;
-  background-color: #ffffff;
+/* Importazione Font da Google */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Archivo+Black&display=swap');
+
+/* Reset e Stili Base */
+body { 
+  font-family: 'Inter', sans-serif; [cite: 6]
 }
 
-.dark {
-  color: #f4f4f5;
-  background-color: #09090b;
-}
-
-.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-  color: #ffffff !important;
-}
-
+/* Utility per nascondere la scrollbar */
 .no-scrollbar::-webkit-scrollbar { 
-  display: none; 
+  display: none; [cite: 6]
 }
-
 .no-scrollbar { 
   -ms-overflow-style: none; 
-  scrollbar-width: none; 
+  scrollbar-width: none; [cite: 7]
 }
 
+/* --- CONFIGURAZIONE COOKIE CONSENT V3 --- */
 #cc-main {
-  --cc-font-family: 'Inter', sans-serif;
-  --cc-modal-border-radius: 12px;
-  --cc-btn-border-radius: 8px;
-  --cc-bg: #ffffff;
-  --cc-text: #18181b;
-  --cc-btn-primary-bg: #0ea5e9;
-  --cc-btn-primary-text: #ffffff;
-  --cc-btn-primary-hover-bg: #0284c7;
-  --cc-btn-secondary-bg: #f4f4f5;
-  --cc-btn-secondary-text: #18181b;
-  --cc-btn-secondary-hover-bg: #e4e4e7;
+  --cc-font-family: 'Inter', sans-serif; [cite: 8]
+  --cc-modal-border-radius: 12px; [cite: 9]
+  --cc-btn-border-radius: 8px; [cite: 9]
+  
+  /* Light Mode */
+  --cc-bg: #ffffff; [cite: 9]
+  --cc-text: #18181b; [cite: 9]
+  --cc-btn-primary-bg: #0ea5e9; [cite: 10]
+  --cc-btn-primary-text: #ffffff; [cite: 10]
+  --cc-btn-primary-hover-bg: #0284c7; [cite: 10]
+  --cc-btn-secondary-bg: #f4f4f5; [cite: 10]
+  --cc-btn-secondary-text: #18181b; [cite: 10]
+  --cc-btn-secondary-hover-bg: #e4e4e7; [cite: 10]
 }
 
+/* Dark Mode per Cookie Consent */
 .dark #cc-main, .cc--darkmode #cc-main {
-  --cc-bg: #18181b;
-  --cc-text: #f4f4f5;
-  --cc-btn-secondary-bg: #27272a;
-  --cc-btn-secondary-text: #f4f4f5;
-  --cc-btn-secondary-hover-bg: #3f3f46;
+  --cc-bg: #18181b; [cite: 11]
+  --cc-text: #f4f4f5; [cite: 11]
+  --cc-btn-secondary-bg: #27272a; [cite: 12]
+  --cc-btn-secondary-text: #f4f4f5; [cite: 12]
+  --cc-btn-secondary-hover-bg: #3f3f46; [cite: 12]
 }
 
+/* Stile Modale Cookie Consent */
 #cc-main .cm {
-  background: #ffffff !important;
-  border: 1px solid #e4e4e7;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-width: 320px !important;
+  background: #ffffff !important; [cite: 13]
+  border: 1px solid #e4e4e7; [cite: 13]
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); [cite: 13]
+  max-width: 320px !important; [cite: 14]
 }
 
 .dark #cc-main .cm, .cc--darkmode #cc-main .cm {
-  background: #18181b !important;
-  border: 1px solid #27272a;
+  background: #18181b !important; [cite: 15]
+  border: 1px solid #27272a; [cite: 15]
 }
 
+/* Pulsanti Cookie Consent */
 #cc-main .cm__btns {
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: column; [cite: 15]
+  gap: 8px; [cite: 16]
 }
 
 #cc-main .cm__btn {
-  width: 100%;
-  margin-inline-start: 0 !important;
+  width: 100%; [cite: 16]
+  margin-inline-start: 0 !important; [cite: 17]
 }
