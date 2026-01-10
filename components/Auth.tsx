@@ -4,13 +4,18 @@ import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../services/supabase';
 import { useStore } from '../store/useStore';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 export const Auth: React.FC = () => {
   const { isDarkMode, session } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Determina la vista iniziale (sign_in o sign_up) in base al parametro URL
+  const requestedView = searchParams.get('view') as any;
+  const initialView = (requestedView === 'sign_up' || requestedView === 'sign_in') ? requestedView : 'sign_in';
 
   // Se l'utente è già loggato o si logga con successo, lo riportiamo in home.
   // TUTTAVIA: non reindirizziamo se stiamo gestendo un link di recupero password
@@ -62,6 +67,7 @@ export const Auth: React.FC = () => {
 
         <SupabaseAuth
           supabaseClient={supabase}
+          view={initialView}
           // Usiamo l'origine del sito senza cancelletti. Supabase appenderà i parametri all'origine.
           // HashRouter gestirà il caricamento di index.html dalla radice.
           redirectTo={window.location.origin}

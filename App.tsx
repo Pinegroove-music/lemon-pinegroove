@@ -292,7 +292,7 @@ const Layout: React.FC = () => {
                                 ref={searchContainerRef}
                                 onSubmit={handleGlobalSearch} 
                                 className={`
-                                    flex-1 max-w-2xl transition-all duration-500
+                                    flex-1 transition-all duration-500 relative
                                     ${isHeroPage && !isScrolled ? 'opacity-0 translate-y-[-20px] pointer-events-none' : 'opacity-100 translate-y-0'}
                                 `}
                             >
@@ -356,10 +356,10 @@ const Layout: React.FC = () => {
                         `}>
                             {!session ? (
                                 <div className="flex items-center gap-4">
-                                    <Link to="/auth" className={`text-sm font-bold opacity-70 hover:opacity-100 transition-opacity ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>
+                                    <Link to="/auth?view=sign_in" className={`text-sm font-bold opacity-70 hover:opacity-100 transition-opacity ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>
                                         Sign In
                                     </Link>
-                                    <Link to="/auth" className="px-5 py-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow-md transition-all active:scale-95">
+                                    <Link to="/auth?view=sign_up" className="px-5 py-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow-md transition-all active:scale-95">
                                         Sign Up
                                     </Link>
                                 </div>
