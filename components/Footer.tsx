@@ -73,9 +73,9 @@ export const Footer: React.FC = () => {
                       className="w-9 h-9 object-contain transition-transform duration-500 group-hover:scale-110 flex-shrink-0"
                   />
                   <span className="font-archivo uppercase text-xl tracking-tight">
-                      <span className="text-black dark:text-white">PINE</span>
-                      <span className="text-[#0288c4]">GROOVE</span>
-                  </span>
+                    <span className={isDarkMode ? "text-white" : "text-black"}>PINE</span>
+                    <span className="text-[#0288c4]">GROOVE</span>
+                </span>
               </Link>
               <div className="space-y-4 max-w-sm">
                   <p className="text-sm opacity-80 leading-snug font-medium">
