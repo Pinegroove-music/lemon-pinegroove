@@ -6,61 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://assets.lemonsqueezy.com/lemon.js" async crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@3.0.1/dist/cookieconsent.css">
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Archivo+Black&display=swap');
-      body { font-family: 'Inter', sans-serif; }
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      
-      /* Custom CookieConsent V3 Theming - Solid Square Pop-up */
-      #cc-main {
-        --cc-font-family: 'Inter', sans-serif;
-        --cc-modal-border-radius: 12px;
-        --cc-btn-border-radius: 8px;
-        
-        /* Light Mode */
-        --cc-bg: #ffffff;
-        --cc-text: #18181b;
-        --cc-btn-primary-bg: #0ea5e9;
-        --cc-btn-primary-text: #ffffff;
-        --cc-btn-primary-hover-bg: #0284c7;
-        --cc-btn-secondary-bg: #f4f4f5;
-        --cc-btn-secondary-text: #18181b;
-        --cc-btn-secondary-hover-bg: #e4e4e7;
-      }
-
-      .cc--darkmode #cc-main {
-        --cc-bg: #18181b;
-        --cc-text: #f4f4f5;
-        --cc-btn-secondary-bg: #27272a;
-        --cc-btn-secondary-text: #f4f4f5;
-        --cc-btn-secondary-hover-bg: #3f3f46;
-      }
-
-      /* Force solid background and specific square-ish shadow */
-      #cc-main .cm {
-        background: #ffffff !important;
-        border: 1px solid #e4e4e7;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        max-width: 320px !important; /* Keep it compact and square */
-      }
-
-      .cc--darkmode #cc-main .cm {
-        background: #18181b !important;
-        border: 1px solid #27272a;
-      }
-
-      /* Buttons styling to be more uniform */
-      #cc-main .cm__btns {
-        flex-direction: column;
-        gap: 8px;
-      }
-      
-      #cc-main .cm__btn {
-        width: 100%;
-        margin-inline-start: 0 !important;
-      }
-    </style>
   <script type="importmap">
 {
   "imports": {
