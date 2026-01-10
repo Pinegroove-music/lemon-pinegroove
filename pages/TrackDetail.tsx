@@ -261,7 +261,11 @@ export const TrackDetail: React.FC = () => {
                     </Link>
                 </h2>
 
-                <div className="h-32 w-full bg-zinc-50 dark:bg-zinc-900 rounded-xl mb-6 px-6 flex items-center gap-6 shadow-inner border border-zinc-200 dark:border-zinc-800">
+                <div className={`h-32 w-full rounded-xl mb-6 px-6 flex items-center gap-6 shadow-inner border transition-colors duration-300 ${
+    isDarkMode 
+    ? 'bg-zinc-900 border-zinc-800' 
+    : 'bg-zinc-50 border-zinc-200'
+}`}>
                     <button onClick={() => playTrack(track, [track, ...recommendations])} className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition hover:scale-105 shadow-md ${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'}`}>
                         {active ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1"/>}
                     </button>
