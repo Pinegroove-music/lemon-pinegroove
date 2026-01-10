@@ -1,1 +1,25 @@
 @import "tailwindcss";
+
+@theme {
+  /* Registriamo il font Archivo Black */
+  --font-archivo: "Archivo Black", sans-serif;
+  
+  /* Ripristiniamo i tuoi colori personalizzati sky (opzionale, se li usi) */
+  --color-sky-50: #f0f9ff;
+  --color-sky-100: #e0f2fe;
+  --color-sky-200: #bae6fd;
+  --color-sky-300: #7dd3fc;
+  --color-sky-400: #38bdf8;
+  --color-sky-500: #0ea5e9;
+  --color-sky-600: #0284c7;
+  --color-sky-700: #0369a1;
+  --color-sky-800: #075985;
+  --color-sky-900: #0c4a6e;
+  --color-sky-950: #082f49;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Archivo+Black&display=swap');
+
+body { 
+  font-family: 'Inter', sans-serif; 
+}
