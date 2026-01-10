@@ -82,3 +82,6 @@
 }
 
 #cc-main .cm__btn {
+  width: 100%;
+  margin-inline-start: 0 !important;
+}
