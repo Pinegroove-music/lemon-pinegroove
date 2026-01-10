@@ -1,10 +1,11 @@
+/* 1. TUTTI GLI IMPORT IN CIMA */
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Archivo+Black&display=swap');
 
+/* 2. DEFINIZIONE DEL TEMA */
 @theme {
-  /* Registrazione font personalizzato Archivo Black */
   --font-archivo: "Archivo Black", sans-serif;
   
-  /* Ripristino colori personalizzati sky */
   --color-sky-50: #f0f9ff;
   --color-sky-100: #e0f2fe;
   --color-sky-200: #bae6fd;
@@ -18,69 +19,63 @@
   --color-sky-950: #082f49;
 }
 
-/* Importazione Font da Google */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&family=Archivo+Black&display=swap');
-
-/* Reset e Stili Base */
+/* 3. STILI BASE E UTILITY */
 body { 
-  font-family: 'Inter', sans-serif; [cite: 6]
+  font-family: 'Inter', sans-serif; /* Basato sui tuoi stili originali [cite: 6] */
 }
 
-/* Utility per nascondere la scrollbar */
 .no-scrollbar::-webkit-scrollbar { 
-  display: none; [cite: 6]
+  display: none; /* [cite: 6] */
 }
+
 .no-scrollbar { 
   -ms-overflow-style: none; 
-  scrollbar-width: none; [cite: 7]
+  scrollbar-width: none; /* [cite: 7] */
 }
 
-/* --- CONFIGURAZIONE COOKIE CONSENT V3 --- */
+/* 4. CONFIGURAZIONE COOKIE CONSENT V3 */
 #cc-main {
-  --cc-font-family: 'Inter', sans-serif; [cite: 8]
-  --cc-modal-border-radius: 12px; [cite: 9]
-  --cc-btn-border-radius: 8px; [cite: 9]
+  --cc-font-family: 'Inter', sans-serif; /* [cite: 8] */
+  --cc-modal-border-radius: 12px; /* [cite: 9] */
+  --cc-btn-border-radius: 8px; /* [cite: 9] */
   
-  /* Light Mode */
-  --cc-bg: #ffffff; [cite: 9]
-  --cc-text: #18181b; [cite: 9]
-  --cc-btn-primary-bg: #0ea5e9; [cite: 10]
-  --cc-btn-primary-text: #ffffff; [cite: 10]
-  --cc-btn-primary-hover-bg: #0284c7; [cite: 10]
-  --cc-btn-secondary-bg: #f4f4f5; [cite: 10]
-  --cc-btn-secondary-text: #18181b; [cite: 10]
-  --cc-btn-secondary-hover-bg: #e4e4e7; [cite: 10]
+  --cc-bg: #ffffff; /* [cite: 9] */
+  --cc-text: #18181b; /* [cite: 9] */
+  --cc-btn-primary-bg: #0ea5e9; /* [cite: 10] */
+  --cc-btn-primary-text: #ffffff; /* [cite: 10] */
+  --cc-btn-primary-hover-bg: #0284c7; /* [cite: 10] */
+  --cc-btn-secondary-bg: #f4f4f5; /* [cite: 10] */
+  --cc-btn-secondary-text: #18181b; /* [cite: 10] */
+  --cc-btn-secondary-hover-bg: #e4e4e7; /* [cite: 10] */
 }
 
-/* Dark Mode per Cookie Consent */
+/* Dark Mode per Cookie Consent [cite: 11] */
 .dark #cc-main, .cc--darkmode #cc-main {
-  --cc-bg: #18181b; [cite: 11]
-  --cc-text: #f4f4f5; [cite: 11]
-  --cc-btn-secondary-bg: #27272a; [cite: 12]
-  --cc-btn-secondary-text: #f4f4f5; [cite: 12]
-  --cc-btn-secondary-hover-bg: #3f3f46; [cite: 12]
+  --cc-bg: #18181b; /* [cite: 12] */
+  --cc-text: #f4f4f5; /* [cite: 12] */
+  --cc-btn-secondary-bg: #27272a; /* [cite: 12] */
+  --cc-btn-secondary-text: #f4f4f5; /* [cite: 12] */
+  --cc-btn-secondary-hover-bg: #3f3f46; /* [cite: 12] */
 }
 
-/* Stile Modale Cookie Consent */
 #cc-main .cm {
-  background: #ffffff !important; [cite: 13]
-  border: 1px solid #e4e4e7; [cite: 13]
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); [cite: 13]
-  max-width: 320px !important; [cite: 14]
+  background: #ffffff !important; /* [cite: 12] */
+  border: 1px solid #e4e4e7; /* [cite: 13] */
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* [cite: 13] */
+  max-width: 320px !important; /* [cite: 14] */
 }
 
 .dark #cc-main .cm, .cc--darkmode #cc-main .cm {
-  background: #18181b !important; [cite: 15]
-  border: 1px solid #27272a; [cite: 15]
+  background: #18181b !important; /* [cite: 14] */
+  border: 1px solid #27272a; /* [cite: 15] */
 }
 
-/* Pulsanti Cookie Consent */
 #cc-main .cm__btns {
-  flex-direction: column; [cite: 15]
-  gap: 8px; [cite: 16]
+  flex-direction: column; /* [cite: 15] */
+  gap: 8px; /* [cite: 16] */
 }
 
 #cc-main .cm__btn {
-  width: 100%; [cite: 16]
-  margin-inline-start: 0 !important; [cite: 17]
+  width: 100%; /* [cite: 16] */
+  margin-inline-start: 0 !important; /* [cite: 17] */
 }
