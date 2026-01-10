@@ -667,7 +667,7 @@ export const Home: React.FC = () => {
             <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl group">
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src="featuredPack.cover_url" 
+                        src={featuredPack.cover_url} 
                         alt="" 
                         className="w-full h-full object-cover blur-[80px] scale-125 opacity-70 dark:opacity-50 brightness-75 transition-transform duration-[20s] ease-in-out group-hover:scale-150"
                         aria-hidden="true"
@@ -676,6 +676,7 @@ export const Home: React.FC = () => {
                 </div>
 
                 <div className="relative z-10 p-8 md:p-14 flex flex-col md:flex-row items-center gap-10 md:gap-16">
+                    {/* Featured Pack Cover with Play Button */}
                     <div 
                         className="relative w-64 h-64 md:w-80 md:h-80 rounded-xl shadow-2xl rotate-3 group-hover:rotate-0 transition-all duration-500 border border-white/10 overflow-hidden group/cover cursor-pointer"
                         onClick={() => featuredTrack && playTrack(featuredTrack)}
@@ -685,13 +686,14 @@ export const Home: React.FC = () => {
                             alt={featuredPack.title} 
                             className="w-full h-full object-cover"
                         />
+                         {/* Play Button Overlay */}
                          {featuredTrack && (
                             <div className={`absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity duration-300 ${currentTrack?.id === featuredTrack.id && isPlaying ? 'opacity-100' : 'opacity-0 group-hover/cover:opacity-100'}`}>
                                 <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/50 shadow-lg transition-transform transform hover:scale-110">
                                     {currentTrack?.id === featuredTrack.id && isPlaying ? (
-                                        <Pause size={40} className="text-white fill-white" />
+                                        <Pause size={32} className="text-white fill-white" />
                                     ) : (
-                                        <Play size={40} className="text-white fill-white ml-2" />
+                                        <Play size={32} className="text-white fill-white ml-1" />
                                     )}
                                 </div>
                             </div>
@@ -699,7 +701,7 @@ export const Home: React.FC = () => {
                     </div>
 
                     <div className="text-center md:text-left text-white flex-1">
-                        <div className="inline-block px-3 py-1 rounded-full border border-white/30 bg-white/10 backdrop-blur-md text-xs font-bold uppercase tracking-widest mb-4 text-sky-400">
+                        <div className="inline-block px-3 py-1 rounded-full border border-white/30 bg-white/10 backdrop-blur-md text-xs font-bold uppercase tracking-widest mb-4">
                             Premium Collection
                         </div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-black mb-4 tracking-tight drop-shadow-lg leading-tight">
