@@ -311,7 +311,7 @@ export const TrackDetail: React.FC = () => {
                                     <Package size={18} />
                                     <span className="text-xs font-bold uppercase tracking-wider">Music Pack</span>
                                 </div>
-                                <h4 className="font-bold text-xl mb-2">Included in: {relatedAlbum.title}</h4>
+                                <h4 className="font-bold text-xl mb-2 text-white">Included in: {relatedAlbum.title}</h4>
                                 <p className="opacity-90 text-sm mb-4">Get this track plus many others and save by purchasing the complete bundle.</p>
                                 <Link to={`/music-packs/${createSlug(relatedAlbum.id, relatedAlbum.title)}`} className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold px-6 py-2 rounded-full hover:bg-indigo-50 transition-colors shadow-sm text-sm">
                                     View Pack <ArrowRight size={16} />
@@ -472,12 +472,12 @@ export const TrackDetail: React.FC = () => {
                 </button>
                 
                 <div className="space-y-4 mt-8">
-                  <p className="text-center text-xs opacity-50 font-medium">
+                  <p className="text-center text-xs opacity-50 font-medium text-zinc-500 dark:text-zinc-400">
                       Secure transaction via Lemon Squeezy Merchant of Record.
                   </p>
                   
                   <div className={`p-4 rounded-xl border text-center ${isDarkMode ? 'bg-sky-500/5 border-sky-500/20' : 'bg-sky-50 border-sky-100'}`}>
-                    <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium">
+                    <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium text-zinc-600 dark:text-zinc-300">
                         By purchasing a license, you will receive a 44.1 kHz watermark-free .wav version of the track, downloadable at any time from your personal account area or from this page.
                     </p>
                   </div>
@@ -569,8 +569,8 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
             )}
             
             <div className="flex items-center justify-between">
-                <h4 className={`font-black text-lg leading-tight transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{title}</h4>
-                <div className={`text-xl font-black transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{price}</div>
+                <h4 className={`font-black text-lg leading-tight transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-white'}`}>{title}</h4>
+                <div className={`text-xl font-black transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-white'}`}>{price}</div>
             </div>
 
             {selected && (
@@ -600,7 +600,7 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
                         <div className={`p-2 rounded-xl backdrop-blur-md ${id === 'pro' ? 'bg-black/10' : 'bg-white/10'}`}>
                           {id === 'pro' ? <Zap className="text-amber-900" size={18} /> : <Ticket className="text-purple-200" size={18} />}
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 text-white">
                           <p className="text-[10px] md:text-xs font-bold leading-snug">
                             Save {coupon.discount_percent}% with code: <span className={`font-black tracking-widest ${id === 'pro' ? 'text-amber-900' : 'text-purple-200'}`}>{coupon.discount_code}</span>
                           </p>

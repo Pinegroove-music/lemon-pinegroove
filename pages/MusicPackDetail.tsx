@@ -415,12 +415,12 @@ export const MusicPackDetail: React.FC = () => {
             </button>
             
             <div className="space-y-4 mt-8">
-              <p className="text-center text-xs opacity-50 font-medium">
+              <p className="text-center text-xs opacity-50 font-medium text-zinc-500 dark:text-zinc-400">
                   Secure transaction via Lemon Squeezy Merchant of Record.
               </p>
               
               <div className={`p-4 rounded-xl border text-center ${isDarkMode ? 'bg-sky-500/5 border-sky-500/20' : 'bg-sky-50 border-sky-100'}`}>
-                <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium">
+                <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium text-zinc-600 dark:text-zinc-300">
                     By purchasing a license, you will receive watermark-free .wav versions of all tracks in this pack, available in your personal account area.
                 </p>
               </div>
@@ -510,8 +510,8 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
             )}
             
             <div className="flex items-center justify-between">
-                <h4 className={`font-black text-lg leading-tight transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{title}</h4>
-                <div className={`text-xl font-black transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{price}</div>
+                <h4 className={`font-black text-lg leading-tight transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-white'}`}>{title}</h4>
+                <div className={`text-xl font-black transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-white'}`}>{price}</div>
             </div>
 
             {selected && (
@@ -541,7 +541,7 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
                         <div className={`p-2 rounded-xl backdrop-blur-md ${id === 'pro' ? 'bg-black/10' : 'bg-white/10'}`}>
                           {id === 'pro' ? <Zap className="text-amber-900" size={18} /> : <Ticket className="text-emerald-100" size={18} />}
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 text-white">
                           <p className="text-[10px] md:text-xs font-bold leading-snug">
                             Save {coupon.discount_percent}% with code: <span className={`font-black tracking-widest ${id === 'pro' ? 'text-amber-900' : 'text-emerald-100'}`}>{coupon.discount_code}</span>
                           </p>

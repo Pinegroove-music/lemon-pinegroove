@@ -21,11 +21,11 @@
 /* 1. CONFIGURAZIONE ROOT & THEMING */
 :root {
   font-family: 'Inter', sans-serif;
-  color-scheme: light; /* Forza il browser a trattare la pagina come Light di default */
+  color-scheme: light; /* Impedisce al browser di invertire i colori in auto */
 }
 
 html.dark {
-  color-scheme: dark; /* Comunica ufficialmente al browser che siamo in Dark Mode */
+  color-scheme: dark; /* Comunica al browser che siamo in modalità scura */
 }
 
 body {
@@ -36,13 +36,19 @@ html.dark body {
   @apply bg-[#09090b] text-[#f4f4f5];
 }
 
-/* 2. GESTIONE TITOLI INTELLIGENTE */
-/* Usiamo :where per abbassare la specificità a 0.
-   Questo impedisce al browser di applicare stili "smart" basati sul tema di sistema
-   e permette alle classi Tailwind di vincere sempre. */
+/* 2. GESTIONE TITOLI CON SPECIFICITÀ ZERO */
+/* Usiamo :where() per permettere a QUALSIASI classe Tailwind di vincere sul colore base.
+   Questo risolve il problema dei titoli invisibili nelle card. */
 :where(h1, h2, h3, h4, h5, h6) {
-  color: inherit; /* Segue il colore del testo definito nel body o nel contenitore */
-  transition: color 0.3s ease;
+  color: inherit;
+}
+
+:where(html:not(.dark)) :where(h1, h2, h3, h4, h5, h6) {
+  color: #18181b; /* text-zinc-900 */
+}
+
+:where(html.dark) :where(h1, h2, h3, h4, h5, h6) {
+  color: #ffffff;
 }
 
 /* 3. UTILS */
