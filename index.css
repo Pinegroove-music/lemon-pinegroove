@@ -18,14 +18,20 @@
   --color-sky-950: #082f49;
 }
 
-/* 1. CONFIGURAZIONE ROOT */
+/* 1. CONFIGURAZIONE ROOT & MOBILE PROTECTION */
 :root {
   font-family: 'Inter', sans-serif;
+  /* Rimosso color e background-color da qui per evitare il blocco dei contenuti */
   color-scheme: light; 
 }
 
+/* Applichiamo i colori base al body, non al root, per lasciare che Tailwind lavori */
 body {
   @apply bg-white text-zinc-900;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 html.dark body {
@@ -38,8 +44,7 @@ h1, h2, h3, h4, h5, h6 {
   transition: color 0.3s ease;
 }
 
-/* Usiamo :where per abbassare la specificità a 0. 
-   In questo modo text-sky-400 applicato via classe vincerà sempre sul bianco di base. */
+/* Applica il bianco in Dark Mode con bassa specificità */
 :where(html.dark) h1, 
 :where(html.dark) h2, 
 :where(html.dark) h3, 
@@ -49,12 +54,13 @@ h1, h2, h3, h4, h5, h6 {
   color: #ffffff;
 }
 
-/* 3. PROTEZIONE PER ELEMENTI AZZURRI (SKY) */
-.protect-sky {
+/* 3. PROTEZIONE PER ELEMENTI AZZURRI (SKY) - OTTIMIZZATA */
+/* Usiamo una classe specifica invece di un selettore universale che rompe i link */
+:where(.protect-sky) {
   color: #0ea5e9 !important;
 }
 
-/* 4. UTILS */
+/* 4. UTILITY UTILS */
 .no-scrollbar::-webkit-scrollbar { 
   display: none; 
 }
