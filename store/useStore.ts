@@ -185,5 +185,18 @@ export const useStore = create<AppState>((set, get) => ({
   setSeekTime: (time) => set({ seekTime: time }),
 
   isDarkMode: false,
-  toggleTheme: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
-}));
+  toggleTheme: () => set((state) => {
+  const newMode = !state.isDarkMode;
+
+  // aggiungi/rimuovi classe dark sul root
+  if (newMode) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+
+  // salva preferenza utente
+  localStorage.setItem('theme', newMode ? 'dark' : 'light');
+
+  return { isDarkMode: newMode };
+}),
