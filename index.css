@@ -18,19 +18,42 @@
   --color-sky-950: #082f49;
 }
 
+/* 1. BLOCCO FONDAMENTALE PER MOBILE */
 :root {
   font-family: 'Inter', sans-serif;
   color: #18181b;
   background-color: #ffffff;
+  /* Comunica al browser di non forzare inversioni */
+  color-scheme: light; 
 }
 
-.dark {
+/* Quando la classe .dark è attiva sulla radice */
+html.dark {
   color: #f4f4f5;
   background-color: #09090b;
+  color-scheme: dark;
 }
 
-.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+/* 2. GESTIONE TITOLI (Senza !important generici che rompono il mobile) */
+h1, h2, h3, h4, h5, h6 {
+  color: #18181b; /* Forza il nero in Light Mode */
+  transition: color 0.3s ease;
+}
+
+/* Applica il bianco SOLO se html ha la classe .dark */
+html.dark h1, 
+html.dark h2, 
+html.dark h3, 
+html.dark h4, 
+html.dark h5, 
+html.dark h6 {
   color: #ffffff !important;
+}
+
+/* 3. PROTEZIONE PER LE CARD SELEZIONATE (SKY) */
+/* Impedisce al browser di rendere bianchi i titoli delle card attive */
+[class*="text-sky"] {
+  color: #0ea5e9 !important; /* Forza il blu del brand */
 }
 
 .no-scrollbar::-webkit-scrollbar { 
