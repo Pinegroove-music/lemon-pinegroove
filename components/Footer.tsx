@@ -86,10 +86,14 @@ export const Footer: React.FC = () => {
                           Secure Payments & Instant Delivery:
                       </p>
                       <img 
-                          src="https://assets.pinegroove.net/lemon-squeezy-logo.svg" 
-                          alt="Lemon Squeezy Logo" 
-                          className="h-6 object-contain opacity-70 hover:opacity-100 transition-all filter grayscale hover:grayscale-0"
-                      />
+  src="https://assets.pinegroove.net/lemon-squeezy-logo.svg" 
+  alt="Lemon Squeezy Logo" 
+  className={`h-6 object-contain transition-all filter ${
+    isDarkMode 
+      ? "brightness-0 invert opacity-50 hover:opacity-100" 
+      : "grayscale opacity-70 hover:grayscale-0 hover:opacity-100"
+  }`}
+/>
                   </div>
               </div>
           </div>
