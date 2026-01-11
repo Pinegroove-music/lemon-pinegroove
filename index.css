@@ -21,32 +21,20 @@
 /* 1. CONFIGURAZIONE ROOT */
 :root {
   font-family: 'Inter', sans-serif;
-  color-scheme: light; 
 }
 
 body {
-  @apply bg-white text-zinc-900;
+  @apply bg-white text-zinc-900 transition-colors duration-300;
 }
 
-html.dark body {
+.dark body {
   @apply bg-[#09090b] text-[#f4f4f5];
 }
 
-/* 2. GESTIONE TITOLI INTELLIGENTE */
+/* 2. GESTIONE TITOLI */
+/* Usiamo solo transition, lasciamo che i colori siano gestiti dalle classi Tailwind o dai padroni */
 h1, h2, h3, h4, h5, h6 {
-  color: inherit;
   transition: color 0.3s ease;
-}
-
-/* Usiamo :where per abbassare la specificità a 0. 
-   In questo modo text-sky-400 applicato via classe vincerà sempre sul bianco di base. */
-:where(html.dark) h1, 
-:where(html.dark) h2, 
-:where(html.dark) h3, 
-:where(html.dark) h4, 
-:where(html.dark) h5, 
-:where(html.dark) h6 {
-  color: #ffffff;
 }
 
 /* 3. PROTEZIONE PER ELEMENTI AZZURRI (SKY) */
