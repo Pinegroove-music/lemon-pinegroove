@@ -51,11 +51,17 @@ h1, h2, h3, h4, h5, h6 {
   color: #ffffff;
 }
 
-/* 3. PROTEZIONE SPECIFICA PER ELEMENTI AZZURRI (SKY) */
-/* Impedisce al browser di forzare il bianco su testi che devono essere blu */
-[class*="text-sky"] {
-  color: #0ea5e9 !important;
+/* 3. PROTEZIONE PER ELEMENTI AZZURRI (SKY) */
+/* Usiamo :not(:hover) per permettere ai link di cambiare colore quando ci passi sopra.
+   Inoltre, abbassiamo la priorità rimuovendo !important dove possibile. */
+
+/* Questa regola protegge il colore base ma non blocca l'hover */
+:where([class*="text-sky-"]):not(:hover) {
+  color: #0ea5e9;
 }
+
+/* Se vuoi che i link siano neri di base e azzurri solo al passaggio (hover), 
+    Tailwind gestirà le classi, ma assicurati che nel CSS non ci siano blocchi */
 
 /* 4. UTILITY UTILS */
 .no-scrollbar::-webkit-scrollbar { 
