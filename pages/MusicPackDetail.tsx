@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -415,12 +416,12 @@ export const MusicPackDetail: React.FC = () => {
             </button>
             
             <div className="space-y-4 mt-8">
-              <p className="text-center text-xs opacity-50 font-medium text-zinc-500 dark:text-zinc-400">
+              <p className="text-center text-xs opacity-50 font-medium">
                   Secure transaction via Lemon Squeezy Merchant of Record.
               </p>
               
               <div className={`p-4 rounded-xl border text-center ${isDarkMode ? 'bg-sky-500/5 border-sky-500/20' : 'bg-sky-50 border-sky-100'}`}>
-                <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium text-zinc-600 dark:text-zinc-300">
+                <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium">
                     By purchasing a license, you will receive watermark-free .wav versions of all tracks in this pack, available in your personal account area.
                 </p>
               </div>
@@ -485,7 +486,7 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
         return (
             <div className={`relative p-6 rounded-2xl border-2 border-emerald-500/30 opacity-80 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-emerald-50/30'}`}>
                 <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-black text-lg text-zinc-900 dark:text-zinc-100">{title}</h4>
+                    <h4 className="font-black text-lg">{title}</h4>
                     <CheckCircle2 size={24} className="text-emerald-500" />
                 </div>
                 <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">License is active for this product</p>
@@ -518,7 +519,7 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
                 <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
                     <ul className="space-y-2 mb-4">
                         {features.map((f, i) => (
-                            <li key={i} className="text-xs opacity-70 flex items-start gap-2 text-zinc-600 dark:text-zinc-400">
+                            <li key={i} className="text-xs opacity-70 flex items-start gap-2">
                                 <div className="mt-1 w-1 h-1 bg-current rounded-full shrink-0" />
                                 {f}
                             </li>
@@ -541,7 +542,7 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
                         <div className={`p-2 rounded-xl backdrop-blur-md ${id === 'pro' ? 'bg-black/10' : 'bg-white/10'}`}>
                           {id === 'pro' ? <Zap className="text-amber-900" size={18} /> : <Ticket className="text-emerald-100" size={18} />}
                         </div>
-                        <div className="flex-1 min-w-0 text-white">
+                        <div className="flex-1 min-w-0">
                           <p className="text-[10px] md:text-xs font-bold leading-snug">
                             Save {coupon.discount_percent}% with code: <span className={`font-black tracking-widest ${id === 'pro' ? 'text-amber-900' : 'text-emerald-100'}`}>{coupon.discount_code}</span>
                           </p>

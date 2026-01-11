@@ -18,40 +18,49 @@
   --color-sky-950: #082f49;
 }
 
-/* 1. CONFIGURAZIONE ROOT & THEMING */
+/* 1. CONFIGURAZIONE ROOT & MOBILE PROTECTION */
 :root {
   font-family: 'Inter', sans-serif;
-  color-scheme: light; /* Impedisce al browser di invertire i colori in auto */
+  /* Rimosso color e background-color da qui per evitare il blocco dei contenuti */
+  color-scheme: light; 
+}
+
+/* Applichiamo i colori base al body, non al root, per lasciare che Tailwind lavori */
+body {
+  @apply bg-white text-zinc-900;
 }
 
 html.dark {
-  color-scheme: dark; /* Comunica al browser che siamo in modalità scura */
-}
-
-body {
-  @apply bg-white text-zinc-900 transition-colors duration-300;
+  color-scheme: dark;
 }
 
 html.dark body {
   @apply bg-[#09090b] text-[#f4f4f5];
 }
 
-/* 2. GESTIONE TITOLI CON SPECIFICITÀ ZERO */
-/* Usiamo :where() per permettere a QUALSIASI classe Tailwind di vincere sul colore base.
-   Questo risolve il problema dei titoli invisibili nelle card. */
-:where(h1, h2, h3, h4, h5, h6) {
+/* 2. GESTIONE TITOLI INTELLIGENTE */
+h1, h2, h3, h4, h5, h6 {
   color: inherit;
+  transition: color 0.3s ease;
 }
 
-:where(html:not(.dark)) :where(h1, h2, h3, h4, h5, h6) {
-  color: #18181b; /* text-zinc-900 */
-}
-
-:where(html.dark) :where(h1, h2, h3, h4, h5, h6) {
+/* Applica il bianco in Dark Mode con bassa specificità */
+:where(html.dark) h1, 
+:where(html.dark) h2, 
+:where(html.dark) h3, 
+:where(html.dark) h4, 
+:where(html.dark) h5, 
+:where(html.dark) h6 {
   color: #ffffff;
 }
 
-/* 3. UTILS */
+/* 3. PROTEZIONE PER ELEMENTI AZZURRI (SKY) - OTTIMIZZATA */
+/* Usiamo una classe specifica invece di un selettore universale che rompe i link */
+:where(.protect-sky) {
+  color: #0ea5e9 !important;
+}
+
+/* 4. UTILITY UTILS */
 .no-scrollbar::-webkit-scrollbar { 
   display: none; 
 }
@@ -61,7 +70,7 @@ html.dark body {
   scrollbar-width: none; 
 }
 
-/* 4. COOKIE CONSENT (CC-MAIN) */
+/* 5. COOKIE CONSENT (CC-MAIN) */
 #cc-main {
   --cc-font-family: 'Inter', sans-serif;
   --cc-modal-border-radius: 12px;

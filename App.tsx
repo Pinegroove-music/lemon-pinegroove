@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import './index.css';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
@@ -51,23 +52,13 @@ const Layout: React.FC = () => {
   const isResetPasswordPage = location.pathname === '/reset-password';
   const hideSidebar = isAuthPage || isResetPasswordPage;
 
-  // Sync isDarkMode with document root and color-scheme
-  useEffect(() => {
-    const root = window.document.documentElement;
-    if (isDarkMode) {
-      root.classList.add('dark');
-      root.style.colorScheme = 'dark';
-    } else {
-      root.classList.remove('dark');
-      root.style.colorScheme = 'light';
-    }
-  }, [isDarkMode]);
-
   // Sincronizza i preferiti salvati nel localStorage quando l'utente si logga
   const syncPendingFavorites = async (userId: string) => {
     const pending = JSON.parse(localStorage.getItem('pinegroove_pending_favorites') || '[]');
     if (pending.length === 0) return;
 
+    console.log(`Syncing ${pending.length} pending favorites for user ${userId}...`);
+    
     try {
       const inserts = pending.map((trackId: number) => ({
         user_id: userId,
@@ -79,7 +70,9 @@ const Layout: React.FC = () => {
         .upsert(inserts, { onConflict: 'user_id,track_id' });
 
       if (error) throw error;
+      
       localStorage.removeItem('pinegroove_pending_favorites');
+      console.log("Pending favorites synced successfully.");
     } catch (err) {
       console.error("Error syncing pending favorites:", err);
     }
@@ -90,10 +83,12 @@ const Layout: React.FC = () => {
       if (event === 'PASSWORD_RECOVERY') {
         navigate('/reset-password');
       }
+      
       if (event === 'SIGNED_IN' && currentSession?.user?.id) {
         syncPendingFavorites(currentSession.user.id);
       }
     });
+
     return () => subscription.unsubscribe();
   }, [navigate]);
 
@@ -114,6 +109,7 @@ const Layout: React.FC = () => {
         }
       }
     };
+
     initLemonSqueezy();
     const timer = setTimeout(initLemonSqueezy, 2000);
     return () => clearTimeout(timer);
@@ -125,14 +121,17 @@ const Layout: React.FC = () => {
         setIsScrolled(mainContentRef.current.scrollTop > 50);
       }
     };
+
     const mainContainer = mainContentRef.current;
     if (mainContainer) {
       mainContainer.addEventListener('scroll', handleScroll);
     }
+
     if (mainContainer) {
         mainContainer.scrollTo(0, 0);
         setIsScrolled(false);
     }
+
     return () => {
       if (mainContainer) {
         mainContainer.removeEventListener('scroll', handleScroll);
@@ -146,25 +145,33 @@ const Layout: React.FC = () => {
             setShowSuggestions(false);
         }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
-      if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+      if (debounceTimeoutRef.current) {
+          clearTimeout(debounceTimeoutRef.current);
+      }
+
       if (globalSearch.length < 2) {
           setSuggestions([]);
           setShowSuggestions(false);
           return;
       }
+
       debounceTimeoutRef.current = setTimeout(async () => {
           const query = globalSearch.trim();
+          
           const [titlesRes, artistsRes] = await Promise.all([
              supabase.from('squeeze_tracks').select('id, title').ilike('title', `%${query}%`).limit(4),
              supabase.from('squeeze_tracks').select('artist_name').ilike('artist_name', `%${query}%`).limit(2)
           ]);
+
           const newSuggestions: {type: 'track' | 'artist', text: string, id?: number}[] = [];
           const uniqueKeys = new Set<string>();
+
           if (titlesRes.data) {
               titlesRes.data.forEach(t => {
                   if (!uniqueKeys.has(t.title)) {
@@ -173,6 +180,7 @@ const Layout: React.FC = () => {
                   }
               });
           }
+
           if (artistsRes.data) {
               artistsRes.data.forEach(a => {
                   if (!uniqueKeys.has(a.artist_name)) {
@@ -181,9 +189,12 @@ const Layout: React.FC = () => {
                   }
               });
           }
+
           setSuggestions(newSuggestions);
           setShowSuggestions(newSuggestions.length > 0);
+
       }, 300);
+
       return () => {
           if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
       };
@@ -192,6 +203,7 @@ const Layout: React.FC = () => {
   const handleGlobalSearch = (e: React.FormEvent, overrideQuery?: string) => {
     e.preventDefault();
     const queryToUse = overrideQuery || globalSearch;
+    
     if (queryToUse.trim()) {
       setShowSuggestions(false);
       navigate(`/library?search=${encodeURIComponent(queryToUse)}`);
@@ -206,7 +218,6 @@ const Layout: React.FC = () => {
           setShowSuggestions(false);
       } else {
           setGlobalSearch(item.text);
-          // Corrected from handleSearch to handleGlobalSearch as defined above
           handleGlobalSearch({ preventDefault: () => {} } as React.FormEvent, item.text);
       }
   };
@@ -224,19 +235,26 @@ const Layout: React.FC = () => {
   const isLicenseAgreementPage = location.pathname === '/user-license-agreement';
   
   const hideSearchBarContent = isCategoryPage || isContentIdPage || isAboutPage || isFaqPage || isLicenseAgreementPage;
+  // ContentId e Faq rimosse da shouldHideHeaderFrame per abilitare l'header desktop
   const shouldHideHeaderFrame = isCategoryPage || isLicenseAgreementPage;
+  // Aggiunte ContentId e Faq a isHeroPage per l'effetto trasparenza/hero
   const isHeroPage = isHomePage || isAboutPage || isContentIdPage || isFaqPage;
 
+  // Header WRAPPER Logic: Handles positioning and grouping with AnnouncementBar
   let headerWrapperClasses = `z-50 w-full transition-all duration-500 `;
   if (shouldHideHeaderFrame) {
       headerWrapperClasses += 'md:hidden absolute pointer-events-none ';
   } else if (isHeroPage) {
-      if (isScrolled) headerWrapperClasses += 'sticky top-0 ';
-      else headerWrapperClasses += 'absolute top-0 ';
+      if (isScrolled) {
+          headerWrapperClasses += 'sticky top-0 ';
+      } else {
+          headerWrapperClasses += 'absolute top-0 ';
+      }
   } else {
       headerWrapperClasses += 'sticky top-0 ';
   }
 
+  // INTERNAL Header Logic: Handles layout, background, and transparency
   let internalHeaderClasses = `transition-all duration-500 `;
   if (isHeroPage) {
       if (isScrolled) {
@@ -251,7 +269,7 @@ const Layout: React.FC = () => {
   const showFooter = location.pathname !== '/library' && !isAuthPage && !isResetPasswordPage;
 
   return (
-    <div className={`min-h-[100dvh] flex transition-colors duration-300 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-white text-zinc-900'}`}>
+    <div className={`min-h-[100dvh] flex transition-colors duration-300 ${isDarkMode ? 'dark bg-zinc-950 text-zinc-100' : 'bg-white text-zinc-900'}`}>
       
       {!hideSidebar && <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />}
 
@@ -293,6 +311,7 @@ const Layout: React.FC = () => {
                                         : 'bg-zinc-100/80 border-zinc-200 focus:border-sky-400 placeholder-zinc-400 text-black'}
                                     `}
                                 />
+                                
                                 {globalSearch && (
                                     <button 
                                         type="button"
@@ -302,12 +321,23 @@ const Layout: React.FC = () => {
                                         <X size={16} />
                                     </button>
                                 )}
+
                                 {showSuggestions && suggestions.length > 0 && (
-                                    <div className={`absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl overflow-hidden z-50 ${isDarkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}`}>
+                                    <div className={`
+                                        absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl overflow-hidden z-50
+                                        ${isDarkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}
+                                    `}>
                                         <ul>
                                             {suggestions.map((item, index) => (
                                                 <li key={index}>
-                                                    <button type="button" onClick={() => handleSuggestionClick(item)} className={`w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-colors ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-300 hover:text-white' : 'hover:bg-sky-50 text-zinc-700 hover:text-sky-700'}`}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSuggestionClick(item)}
+                                                        className={`
+                                                            w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-colors
+                                                            ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-300 hover:text-white' : 'hover:bg-sky-50 text-zinc-700 hover:text-sky-700'}
+                                                        `}
+                                                    >
                                                         <span className={`opacity-50 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
                                                             {item.type === 'track' ? <Music size={14} /> : <User size={14} />}
                                                         </span>
@@ -321,11 +351,18 @@ const Layout: React.FC = () => {
                             </form>
                         )}
 
-                        <div className={`flex items-center gap-3 ml-auto transition-all duration-500 pointer-events-auto ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>
+                        <div className={`
+                            flex items-center gap-3 ml-auto transition-all duration-500 pointer-events-auto
+                            ${isHeroPage && !isScrolled ? 'text-white' : ''}
+                        `}>
                             {!session ? (
                                 <div className="flex items-center gap-4">
-                                    <Link to="/auth?view=sign_in" className={`text-sm font-bold opacity-70 hover:opacity-100 transition-opacity ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Sign In</Link>
-                                    <Link to="/auth?view=sign_up" className="px-5 py-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow-md transition-all active:scale-95">Sign Up</Link>
+                                    <Link to="/auth?view=sign_in" className={`text-sm font-bold opacity-70 hover:opacity-100 transition-opacity ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>
+                                        Sign In
+                                    </Link>
+                                    <Link to="/auth?view=sign_up" className="px-5 py-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow-md transition-all active:scale-95">
+                                        Sign Up
+                                    </Link>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-1 sm:gap-2">
@@ -337,7 +374,11 @@ const Layout: React.FC = () => {
                                         <User size={20} className="text-sky-500" />
                                         <span className={`text-sm font-bold hidden sm:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Account</span>
                                     </Link>
-                                    <button onClick={handleSignOut} className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all text-red-500 ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`} title="Sign Out">
+                                    <button 
+                                        onClick={handleSignOut}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all text-red-500 ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`}
+                                        title="Sign Out"
+                                    >
                                         <LogOut size={20} />
                                         <span className={`text-sm font-bold hidden lg:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Sign Out</span>
                                     </button>
@@ -349,7 +390,11 @@ const Layout: React.FC = () => {
             </div>
         )}
 
-        <main id="main-content" ref={mainContentRef} className="flex-1 overflow-y-auto scroll-smooth relative">
+        <main 
+            id="main-content"
+            ref={mainContentRef} 
+            className="flex-1 overflow-y-auto scroll-smooth relative"
+        >
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/library" element={<Library />} />
@@ -373,11 +418,13 @@ const Layout: React.FC = () => {
             <Route path="/user-license-agreement" element={<UserLicenseAgreement />} />
             <Route path="/privacy" element={<Privacy />} />
           </Routes>
+          
           {showFooter && <Footer />}
         </main>
 
         <CookieConsent />
         {!hideSidebar && <Player />}
+        
       </div>
     </div>
   );
@@ -390,9 +437,13 @@ const App: React.FC = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
+
     return () => subscription.unsubscribe();
   }, [setSession]);
 
