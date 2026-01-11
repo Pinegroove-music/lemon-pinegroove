@@ -21,27 +21,30 @@
 /* 1. CONFIGURAZIONE ROOT & MOBILE PROTECTION */
 :root {
   font-family: 'Inter', sans-serif;
-  color: #18181b;
-  background-color: #ffffff;
-  /* Fondamentale: impedisce al browser mobile di forzare colori propri */
+  /* Rimosso color e background-color da qui per evitare il blocco dei contenuti */
   color-scheme: light; 
 }
 
+/* Applichiamo i colori base al body, non al root, per lasciare che Tailwind lavori */
+body {
+  @apply bg-white text-zinc-900;
+}
+
 html.dark {
-  color: #f4f4f5;
-  background-color: #09090b;
   color-scheme: dark;
 }
 
+html.dark body {
+  @apply bg-[#09090b] text-[#f4f4f5];
+}
+
 /* 2. GESTIONE TITOLI INTELLIGENTE */
-/* Reset base: i titoli ereditano il colore del body */
 h1, h2, h3, h4, h5, h6 {
   color: inherit;
   transition: color 0.3s ease;
 }
 
-/* Applica il bianco in Dark Mode ma con BASSA SPECIFICITÀ (:where).
-   In questo modo, se nel componente scrivi 'text-zinc-900', Tailwind vince e il titolo resta nero. */
+/* Applica il bianco in Dark Mode con bassa specificità */
 :where(html.dark) h1, 
 :where(html.dark) h2, 
 :where(html.dark) h3, 
@@ -51,17 +54,11 @@ h1, h2, h3, h4, h5, h6 {
   color: #ffffff;
 }
 
-/* 3. PROTEZIONE PER ELEMENTI AZZURRI (SKY) */
-/* Usiamo :not(:hover) per permettere ai link di cambiare colore quando ci passi sopra.
-   Inoltre, abbassiamo la priorità rimuovendo !important dove possibile. */
-
-/* Questa regola protegge il colore base ma non blocca l'hover */
-:where([class*="text-sky-"]):not(:hover) {
-  color: #0ea5e9;
+/* 3. PROTEZIONE PER ELEMENTI AZZURRI (SKY) - OTTIMIZZATA */
+/* Usiamo una classe specifica invece di un selettore universale che rompe i link */
+:where(.protect-sky) {
+  color: #0ea5e9 !important;
 }
-
-/* Se vuoi che i link siano neri di base e azzurri solo al passaggio (hover), 
-    Tailwind gestirà le classi, ma assicurati che nel CSS non ci siano blocchi */
 
 /* 4. UTILITY UTILS */
 .no-scrollbar::-webkit-scrollbar { 
