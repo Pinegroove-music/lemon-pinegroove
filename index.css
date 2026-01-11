@@ -18,44 +18,46 @@
   --color-sky-950: #082f49;
 }
 
-/* 1. BLOCCO FONDAMENTALE PER MOBILE */
+/* 1. CONFIGURAZIONE ROOT & MOBILE PROTECTION */
 :root {
   font-family: 'Inter', sans-serif;
   color: #18181b;
   background-color: #ffffff;
-  /* Comunica al browser di non forzare inversioni */
+  /* Fondamentale: impedisce al browser mobile di forzare colori propri */
   color-scheme: light; 
 }
 
-/* Quando la classe .dark è attiva sulla radice */
 html.dark {
   color: #f4f4f5;
   background-color: #09090b;
   color-scheme: dark;
 }
 
-/* 2. GESTIONE TITOLI (Senza !important generici che rompono il mobile) */
+/* 2. GESTIONE TITOLI INTELLIGENTE */
+/* Reset base: i titoli ereditano il colore del body */
 h1, h2, h3, h4, h5, h6 {
-  color: #18181b; /* Forza il nero in Light Mode */
+  color: inherit;
   transition: color 0.3s ease;
 }
 
-/* Applica il bianco SOLO se html ha la classe .dark */
-html.dark h1, 
-html.dark h2, 
-html.dark h3, 
-html.dark h4, 
-html.dark h5, 
-html.dark h6 {
-  color: #ffffff !important;
+/* Applica il bianco in Dark Mode ma con BASSA SPECIFICITÀ (:where).
+   In questo modo, se nel componente scrivi 'text-zinc-900', Tailwind vince e il titolo resta nero. */
+:where(html.dark) h1, 
+:where(html.dark) h2, 
+:where(html.dark) h3, 
+:where(html.dark) h4, 
+:where(html.dark) h5, 
+:where(html.dark) h6 {
+  color: #ffffff;
 }
 
-/* 3. PROTEZIONE PER LE CARD SELEZIONATE (SKY) */
-/* Impedisce al browser di rendere bianchi i titoli delle card attive */
+/* 3. PROTEZIONE SPECIFICA PER ELEMENTI AZZURRI (SKY) */
+/* Impedisce al browser di forzare il bianco su testi che devono essere blu */
 [class*="text-sky"] {
-  color: #0ea5e9 !important; /* Forza il blu del brand */
+  color: #0ea5e9 !important;
 }
 
+/* 4. UTILITY UTILS */
 .no-scrollbar::-webkit-scrollbar { 
   display: none; 
 }
@@ -65,6 +67,7 @@ html.dark h6 {
   scrollbar-width: none; 
 }
 
+/* 5. COOKIE CONSENT (CC-MAIN) */
 #cc-main {
   --cc-font-family: 'Inter', sans-serif;
   --cc-modal-border-radius: 12px;
