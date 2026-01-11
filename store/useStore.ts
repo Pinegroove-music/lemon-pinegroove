@@ -199,4 +199,4 @@ export const useStore = create<AppState>((set, get) => ({
   localStorage.setItem('theme', newMode ? 'dark' : 'light');
 
   return { isDarkMode: newMode };
-}),
+}));
