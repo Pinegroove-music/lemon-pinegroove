@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { MusicTrack } from '../types';
 import { Session } from '@supabase/supabase-js';
@@ -16,8 +17,8 @@ interface AppState {
   isSubscriber: boolean;
   renewsAt: string | null;
   setSession: (session: Session | null) => void;
-  purchasedTracks: PurchasedItem[];
-  ownedTrackIds: Set<number>;
+  purchasedTracks: PurchasedItem[]; // Rows from purchases table
+  ownedTrackIds: Set<number>; // Flat set of all owned track IDs (direct + via albums)
   fetchPurchases: () => Promise<void>;
   fetchProfile: () => Promise<void>;
 
@@ -139,6 +140,7 @@ export const useStore = create<AppState>((set, get) => ({
     if (state.currentTrack?.id === track.id) {
       return { isPlaying: !state.isPlaying };
     }
+    // Se viene passata una nuova lista di brani, la impostiamo come playlist corrente
     const newPlaylist = tracks && tracks.length > 0 ? tracks : state.playlist;
     return { 
       currentTrack: track, 
@@ -183,17 +185,5 @@ export const useStore = create<AppState>((set, get) => ({
   setSeekTime: (time) => set({ seekTime: time }),
 
   isDarkMode: false,
-  toggleTheme: () => set((state) => {
-    const newMode = !state.isDarkMode;
-
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
-    localStorage.setItem('theme', newMode ? 'dark' : 'light');
-
-    return { isDarkMode: newMode };
-  }),
-})); // <-- chiusura corretta del create
+  toggleTheme: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
+}));
