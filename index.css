@@ -29,6 +29,10 @@
   background-color: #09090b;
 }
 
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #ffffff !important;
+}
+
 .no-scrollbar::-webkit-scrollbar { 
   display: none; 
 }
