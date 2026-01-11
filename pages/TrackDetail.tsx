@@ -544,7 +544,7 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
         return (
             <div className={`relative p-6 rounded-2xl border-2 border-emerald-500/30 opacity-80 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-emerald-50/30'}`}>
                 <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-black text-lg text-zinc-900 dark:text-white">{title}</h4>
+                    <h4 className="font-black text-lg text-zinc-900 dark:text-zinc-100">{title}</h4>
                     <CheckCircle2 size={24} className="text-emerald-500" />
                 </div>
                 <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">License is active for this product</p>
@@ -569,8 +569,8 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
             )}
             
             <div className="flex items-center justify-between">
-                <h4 className={`font-black text-lg leading-tight transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-white'}`}>{title}</h4>
-                <div className={`text-xl font-black transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-white'}`}>{price}</div>
+                <h4 className={`font-black text-lg leading-tight transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{title}</h4>
+                <div className={`text-xl font-black transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{price}</div>
             </div>
 
             {selected && (

@@ -18,31 +18,34 @@
   --color-sky-950: #082f49;
 }
 
-/* 1. CONFIGURAZIONE ROOT */
+/* 1. CONFIGURAZIONE ROOT & THEMING */
 :root {
   font-family: 'Inter', sans-serif;
+  color-scheme: light; /* Forza il browser a trattare la pagina come Light di default */
+}
+
+html.dark {
+  color-scheme: dark; /* Comunica ufficialmente al browser che siamo in Dark Mode */
 }
 
 body {
   @apply bg-white text-zinc-900 transition-colors duration-300;
 }
 
-.dark body {
+html.dark body {
   @apply bg-[#09090b] text-[#f4f4f5];
 }
 
-/* 2. GESTIONE TITOLI */
-/* Usiamo solo transition, lasciamo che i colori siano gestiti dalle classi Tailwind o dai padroni */
-h1, h2, h3, h4, h5, h6 {
+/* 2. GESTIONE TITOLI INTELLIGENTE */
+/* Usiamo :where per abbassare la specificità a 0.
+   Questo impedisce al browser di applicare stili "smart" basati sul tema di sistema
+   e permette alle classi Tailwind di vincere sempre. */
+:where(h1, h2, h3, h4, h5, h6) {
+  color: inherit; /* Segue il colore del testo definito nel body o nel contenitore */
   transition: color 0.3s ease;
 }
 
-/* 3. PROTEZIONE PER ELEMENTI AZZURRI (SKY) */
-.protect-sky {
-  color: #0ea5e9 !important;
-}
-
-/* 4. UTILS */
+/* 3. UTILS */
 .no-scrollbar::-webkit-scrollbar { 
   display: none; 
 }
@@ -52,7 +55,7 @@ h1, h2, h3, h4, h5, h6 {
   scrollbar-width: none; 
 }
 
-/* 5. COOKIE CONSENT (CC-MAIN) */
+/* 4. COOKIE CONSENT (CC-MAIN) */
 #cc-main {
   --cc-font-family: 'Inter', sans-serif;
   --cc-modal-border-radius: 12px;
