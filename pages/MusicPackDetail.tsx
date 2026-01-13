@@ -24,7 +24,6 @@ export const MusicPackDetail: React.FC = () => {
   const [downloadingTrackId, setDownloadingTrackId] = useState<number | null>(null);
   const [selectedLicense, setSelectedLicense] = useState<LicenseOption>('standard');
   
-  // Coupon state
   const [packCoupon, setPackCoupon] = useState<Coupon | null>(null);
   const [proCoupon, setProCoupon] = useState<Coupon | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -42,7 +41,6 @@ export const MusicPackDetail: React.FC = () => {
       const fetchData = async () => {
         setLoading(true);
         try {
-            // Fetch Album Data
             const { data: albumData, error: albumError } = await supabase
                 .from('album')
                 .select('*')
@@ -52,7 +50,6 @@ export const MusicPackDetail: React.FC = () => {
             if (albumError) throw albumError;
             setAlbum(albumData);
 
-            // Fetch Tracks Junction
             const { data: junctionData, error: junctionError } = await supabase
                 .from('album_tracks')
                 .select('track_id, track_order')
@@ -82,7 +79,6 @@ export const MusicPackDetail: React.FC = () => {
                 setTracks([]);
             }
 
-            // Fetch Related Packs
             const { data: otherPacks } = await supabase
                 .from('album')
                 .select('*')
@@ -93,13 +89,11 @@ export const MusicPackDetail: React.FC = () => {
                 setRelatedPacks(shuffled.slice(0, 4));
             }
 
-            // Fetch dynamic prices
             const { data: pData } = await supabase
                 .from('pricing')
                 .select('*');
             if (pData) setPricingData(pData as PricingItem[]);
 
-            // Fetch specific coupons
             const { data: couponsData } = await supabase
               .from('coupons')
               .select('*')
@@ -124,7 +118,6 @@ export const MusicPackDetail: React.FC = () => {
     }
   }, [slug]);
 
-  // Pricing Helpers
   const getDynamicPrice = (type: string, defaultPrice: string) => {
     const item = pricingData.find(p => p.product_type === type);
     if (!item) return defaultPrice;
@@ -183,11 +176,8 @@ export const MusicPackDetail: React.FC = () => {
             const blobUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = blobUrl;
-            
-            // Logica dinamica per estensione
             const extension = track.wav_r2_key?.toLowerCase().endsWith('.zip') ? '.zip' : '.wav';
             link.setAttribute('download', `${track.title}${extension}`);
-            
             document.body.appendChild(link); link.click(); 
             document.body.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
@@ -213,10 +203,8 @@ export const MusicPackDetail: React.FC = () => {
   const purchase = purchasedTracks.find(p => p.album_id === album.id);
   const isPurchased = !!purchase;
   const hasAccess = isPurchased || isPro;
-
   const firstTrack = tracks.length > 0 ? tracks[0] : null;
   const isPlayingFirstTrack = firstTrack && currentTrack?.id === firstTrack.id && isPlaying;
-
   const ownsStandard = isPurchased && purchase?.license_type?.toLowerCase().includes('standard');
   const ownsExtended = isPurchased && purchase?.license_type?.toLowerCase().includes('extended');
 
@@ -265,10 +253,7 @@ export const MusicPackDetail: React.FC = () => {
          </div>
       </div>
 
-      {/* Main Grid: Left (Tracks) - Right (Licensing) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          
-          {/* Left Column: Included Tracks (7/12) */}
           <div className="lg:col-span-7 space-y-8">
             <h3 className="text-2xl font-black mb-6 flex items-center gap-3 border-b pb-2 border-sky-500/20">
                 <span>Included Tracks</span>
@@ -343,7 +328,6 @@ export const MusicPackDetail: React.FC = () => {
             )}
           </div>
 
-          {/* Right Column: Licensing Selection (5/12) */}
           <div className="lg:col-span-5 space-y-6">
             <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">Select License</h3>
             
@@ -487,11 +471,20 @@ interface LicenseCardProps {
 }
 
 const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, locked, onClick, features, infoLink, highlight, isDarkMode, coupon, onCopyCoupon, copiedCode }) => {
+    // Forziamo i colori in base allo stato esplicito isDarkMode e selected
+    const titleColor = selected 
+        ? 'text-sky-500' 
+        : (isDarkMode ? 'text-white' : 'text-zinc-900');
+    
+    const priceColor = selected 
+        ? 'text-sky-500' 
+        : (isDarkMode ? 'text-white' : 'text-zinc-900');
+
     if (locked) {
         return (
             <div className={`relative p-6 rounded-2xl border-2 border-emerald-500/30 opacity-80 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-emerald-50/30'}`}>
                 <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-black text-lg">{title}</h4>
+                    <h4 className="font-black text-lg text-zinc-900 dark:text-white">{title}</h4>
                     <CheckCircle2 size={24} className="text-emerald-500" />
                 </div>
                 <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">License is active for this product</p>
@@ -516,15 +509,15 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
             )}
             
             <div className="flex items-center justify-between">
-                <h4 className={`font-black text-lg leading-tight transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-white'}`}>{title}</h4>
-                <div className={`text-xl font-black transition-colors duration-300 ${selected ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-900 dark:text-white'}`}>{price}</div>
+                <h4 className={`font-black text-lg leading-tight transition-colors duration-300 ${titleColor}`}>{title}</h4>
+                <div className={`text-xl font-black transition-colors duration-300 ${priceColor}`}>{price}</div>
             </div>
 
             {selected && (
                 <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
                     <ul className="space-y-2 mb-4">
                         {features.map((f, i) => (
-                            <li key={i} className="text-xs opacity-70 flex items-start gap-2">
+                            <li key={i} className="text-xs opacity-70 flex items-start gap-2 text-zinc-600 dark:text-zinc-400">
                                 <div className="mt-1 w-1 h-1 bg-current rounded-full shrink-0" />
                                 {f}
                             </li>
@@ -541,7 +534,6 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
                         </Link>
                     </div>
 
-                    {/* Reveal Coupon only when selected */}
                     {coupon && (
                       <div className={`mt-4 animate-in fade-in slide-in-from-top-4 duration-500 p-4 rounded-xl border flex items-center gap-4 transition-all shadow-lg ${id === 'pro' ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-amber-950 border-amber-300/50' : 'bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white border-white/10'}`}>
                         <div className={`p-2 rounded-xl backdrop-blur-md ${id === 'pro' ? 'bg-black/10' : 'bg-white/10'}`}>

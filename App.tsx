@@ -52,13 +52,23 @@ const Layout: React.FC = () => {
   const isResetPasswordPage = location.pathname === '/reset-password';
   const hideSidebar = isAuthPage || isResetPasswordPage;
 
+  // Sincronizzazione color-scheme per bloccare interferenze browser
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDarkMode) {
+      root.classList.add('dark');
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      root.style.colorScheme = 'light';
+    }
+  }, [isDarkMode]);
+
   // Sincronizza i preferiti salvati nel localStorage quando l'utente si logga
   const syncPendingFavorites = async (userId: string) => {
     const pending = JSON.parse(localStorage.getItem('pinegroove_pending_favorites') || '[]');
     if (pending.length === 0) return;
 
-    console.log(`Syncing ${pending.length} pending favorites for user ${userId}...`);
-    
     try {
       const inserts = pending.map((trackId: number) => ({
         user_id: userId,
@@ -72,7 +82,6 @@ const Layout: React.FC = () => {
       if (error) throw error;
       
       localStorage.removeItem('pinegroove_pending_favorites');
-      console.log("Pending favorites synced successfully.");
     } catch (err) {
       console.error("Error syncing pending favorites:", err);
     }
@@ -235,12 +244,9 @@ const Layout: React.FC = () => {
   const isLicenseAgreementPage = location.pathname === '/user-license-agreement';
   
   const hideSearchBarContent = isCategoryPage || isContentIdPage || isAboutPage || isFaqPage || isLicenseAgreementPage;
-  // ContentId e Faq rimosse da shouldHideHeaderFrame per abilitare l'header desktop
   const shouldHideHeaderFrame = isCategoryPage || isLicenseAgreementPage;
-  // Aggiunte ContentId e Faq a isHeroPage per l'effetto trasparenza/hero
   const isHeroPage = isHomePage || isAboutPage || isContentIdPage || isFaqPage;
 
-  // Header WRAPPER Logic: Handles positioning and grouping with AnnouncementBar
   let headerWrapperClasses = `z-50 w-full transition-all duration-500 `;
   if (shouldHideHeaderFrame) {
       headerWrapperClasses += 'md:hidden absolute pointer-events-none ';
@@ -254,7 +260,6 @@ const Layout: React.FC = () => {
       headerWrapperClasses += 'sticky top-0 ';
   }
 
-  // INTERNAL Header Logic: Handles layout, background, and transparency
   let internalHeaderClasses = `transition-all duration-500 `;
   if (isHeroPage) {
       if (isScrolled) {

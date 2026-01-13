@@ -143,24 +143,28 @@ export const Pricing: React.FC = () => {
 
       {/* Toggle Container */}
       <div className="relative z-20 flex justify-center mb-16">
-        <div className={`p-1.5 rounded-2xl flex items-center border ${isDarkMode ? 'bg-zinc-900 border-zinc-800 shadow-2xl' : 'bg-white border-zinc-200 shadow-xl'}`}>
+        <div className={`p-1.5 rounded-2xl flex items-center border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 shadow-2xl' : 'bg-white border-zinc-200 shadow-xl'}`}>
           <button
             onClick={() => setPricingMode('pay-per-track')}
-            className={`relative px-10 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
-              pricingMode === 'pay-per-track'
-                ? 'bg-white dark:bg-zinc-800 text-sky-600 shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
-            }`}
+            className={`
+                relative px-10 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300
+                ${pricingMode === 'pay-per-track'
+                    ? (isDarkMode ? 'bg-zinc-800 text-sky-400 shadow-md' : 'bg-zinc-100 text-sky-600 shadow-sm')
+                    : (isDarkMode ? 'text-zinc-500 hover:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600')
+                }
+            `}
           >
             Pay-Per-Track
           </button>
           <button
             onClick={() => setPricingMode('subscription')}
-            className={`relative px-10 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
-              pricingMode === 'subscription'
-                ? 'bg-sky-600 text-white shadow-lg shadow-sky-500/20'
-                : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
-            }`}
+            className={`
+                relative px-10 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300
+                ${pricingMode === 'subscription'
+                    ? (isDarkMode ? 'bg-sky-600 text-white shadow-lg shadow-sky-500/20' : 'bg-sky-600 text-white shadow-lg shadow-sky-500/20')
+                    : (isDarkMode ? 'text-zinc-500 hover:text-zinc-300' : 'text-zinc-400 hover:text-zinc-600')
+                }
+            `}
           >
             Pro Subscription
           </button>
@@ -180,7 +184,9 @@ export const Pricing: React.FC = () => {
               >
                 <div className="mb-6 flex items-center justify-between">
                   {item.icon}
-                  <div className="text-[10px] font-black uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-full opacity-60">Lifetime License</div>
+                  <div className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full text-white shadow-sm ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-500'}`}>
+                      Lifetime License
+                  </div>
                 </div>
                 <h3 className="text-3xl font-black mb-8 tracking-tight">{item.title}</h3>
                 

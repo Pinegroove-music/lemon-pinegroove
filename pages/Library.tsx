@@ -8,7 +8,7 @@ import { Play, Pause, ShoppingCart, Filter, ChevronDown, ChevronRight, ArrowRigh
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
-import { createSlug } from '../utils/slugUtils';
+import { getIdFromSlug, createSlug } from '../utils/slugUtils';
 import { FavoriteButton } from '../components/FavoriteButton';
 
 export const Library: React.FC = () => {
@@ -399,8 +399,12 @@ export const Library: React.FC = () => {
       <div className="flex-1 p-4 lg:p-8">
         <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-                 <h2 className="text-3xl font-bold text-zinc-900 dark:text-white">Library</h2>
-                 {tracks.length > 0 && <span className="text-sm font-normal opacity-50 bg-gray-100 dark:bg-zinc-800 px-3 py-1 rounded-full">{tracks.length} Tracks</span>}
+                 <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Library</h2>
+                 {tracks.length > 0 && (
+                    <span className={`text-sm font-bold px-3 py-1 rounded-full ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'}`}>
+                        {tracks.length} Tracks
+                    </span>
+                 )}
             </div>
 
             <div className={`flex items-center p-1 rounded-lg border ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
@@ -646,18 +650,22 @@ const TrackItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFindSim
             <div className="flex-1 md:flex-none md:w-52 min-w-0">
                 <Link to={`/track/${createSlug(track.id, track.title)}`} className="font-bold text-sm md:text-base hover:text-sky-500 transition-colors block truncate leading-tight" title={track.title}>{displayTitle}</Link>
                 <div className="flex items-center gap-2">
-                    <Link to={`/library?search=${encodeURIComponent(track.artist_name)}`} className="text-[10px] md:text-xs opacity-70 hover:underline truncate">{track.artist_name}</Link>
+                    <Link to={`/library?search=${encodeURIComponent(track.artist_name)}`} className={`text-[10px] md:text-xs font-medium hover:underline truncate ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{track.artist_name}</Link>
                     {track.lyrics && (
                         <span title="Has Lyrics" className="shrink-0">
-                            <Mic2 size={10} className="text-sky-500 opacity-80" />
+                            <Mic2 size={10} className="text-sky-500" />
                         </span>
                     )}
                 </div>
                 <div className="mt-1">
                     {Array.isArray(track.genre) ? (
-                        <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded-sm bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300 inline-block">{track.genre[0]}</span>
+                        <span className={`text-[9px] uppercase font-black px-1.5 py-0.5 rounded-sm inline-block ${isDarkMode ? 'bg-sky-900/60 text-sky-300' : 'bg-sky-100 text-sky-800'}`}>
+                            {track.genre[0]}
+                        </span>
                     ) : track.genre ? (
-                        <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded-sm bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300 inline-block">{track.genre}</span>
+                        <span className={`text-[9px] uppercase font-black px-1.5 py-0.5 rounded-sm inline-block ${isDarkMode ? 'bg-sky-900/60 text-sky-300' : 'bg-sky-100 text-sky-800'}`}>
+                            {track.genre}
+                        </span>
                     ) : null}
                 </div>
             </div>
@@ -833,7 +841,7 @@ const TrackGridItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFin
                 </Link>
                 <Link 
                     to={`/library?search=${encodeURIComponent(track.artist_name)}`} 
-                    className="text-xs opacity-60 truncate block transition-colors hover:text-sky-500"
+                    className={`text-xs font-medium truncate block transition-colors hover:text-sky-500 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}
                 >
                     {track.artist_name}
                 </Link>
