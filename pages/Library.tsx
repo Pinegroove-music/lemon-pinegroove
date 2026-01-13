@@ -596,7 +596,6 @@ const TrackItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFindSim
             if (error) throw error;
             
             if (data?.downloadUrl) {
-                // FORCE PHYSICAL DOWNLOAD via BLOB FETCH
                 const response = await fetch(data.downloadUrl);
                 if (!response.ok) throw new Error('Download failed');
                 
@@ -605,11 +604,14 @@ const TrackItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFindSim
                 
                 const link = document.createElement('a');
                 link.href = blobUrl;
-                link.setAttribute('download', `${track.title}.wav`);
+                
+                // Logica dinamica per estensione
+                const extension = track.wav_r2_key?.toLowerCase().endsWith('.zip') ? '.zip' : '.wav';
+                link.setAttribute('download', `${track.title}${extension}`);
+                
                 document.body.appendChild(link);
                 link.click();
                 
-                // Cleanup
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(blobUrl);
             } else {
@@ -640,7 +642,7 @@ const TrackItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFindSim
                 </div>
             </div>
 
-            {/* Column 2: Info (Title, Artist, Genre) - Narrower on desktop to give room to waveform */}
+            {/* Column 2: Info (Title, Artist, Genre) */}
             <div className="flex-1 md:flex-none md:w-52 min-w-0">
                 <Link to={`/track/${createSlug(track.id, track.title)}`} className="font-bold text-sm md:text-base hover:text-sky-500 transition-colors block truncate leading-tight" title={track.title}>{displayTitle}</Link>
                 <div className="flex items-center gap-2">
@@ -660,7 +662,7 @@ const TrackItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFindSim
                 </div>
             </div>
 
-            {/* Hidden on Mobile: Waveform - Now takes ALL remaining space with minimal padding */}
+            {/* Hidden on Mobile: Waveform */}
             <div className="hidden md:flex flex-1 h-12 items-center px-2">
                 <WaveformVisualizer 
                     track={track} 
@@ -694,7 +696,7 @@ const TrackItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFindSim
                             onClick={handleDownload}
                             disabled={downloading}
                             className="p-1.5 md:p-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg transition-all"
-                            title="Download WAV"
+                            title="Download"
                         >
                             {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                         </button>
@@ -740,7 +742,6 @@ const TrackGridItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFin
             if (error) throw error;
             
             if (data?.downloadUrl) {
-                // FORCE PHYSICAL DOWNLOAD via BLOB FETCH
                 const response = await fetch(data.downloadUrl);
                 if (!response.ok) throw new Error('Download failed');
                 
@@ -749,11 +750,14 @@ const TrackGridItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFin
                 
                 const link = document.createElement('a');
                 link.href = blobUrl;
-                link.setAttribute('download', `${track.title}.wav`);
+                
+                // Logica dinamica per estensione
+                const extension = track.wav_r2_key?.toLowerCase().endsWith('.zip') ? '.zip' : '.wav';
+                link.setAttribute('download', `${track.title}${extension}`);
+                
                 document.body.appendChild(link);
                 link.click();
                 
-                // Cleanup
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(blobUrl);
             } else {
@@ -806,7 +810,7 @@ const TrackGridItem: React.FC<{ track: MusicTrack; playlist: MusicTrack[]; onFin
                                 onClick={handleDownload}
                                 disabled={downloading}
                                 className="p-2 rounded-full bg-emerald-500 text-white shadow-lg backdrop-blur-md transition-colors"
-                                title="Download WAV"
+                                title="Download"
                             >
                                 {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                             </button>

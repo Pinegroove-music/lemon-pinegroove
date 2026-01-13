@@ -222,7 +222,11 @@ export const MyPurchases: React.FC = () => {
         
         const link = document.createElement('a');
         link.href = blobUrl;
-        link.setAttribute('download', `${track.title}.wav`);
+        
+        // Logica dinamica per estensione
+        const extension = track.wav_r2_key?.toLowerCase().endsWith('.zip') ? '.zip' : '.wav';
+        link.setAttribute('download', `${track.title}${extension}`);
+        
         document.body.appendChild(link);
         link.click();
         
@@ -559,7 +563,7 @@ export const MyPurchases: React.FC = () => {
                         </div>
                         
                         <div className="absolute top-4 left-4 flex flex-col gap-2">
-                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border shadow-sm ${isExtended ? 'bg-amber-500/20 text-amber-500 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30'}`}>
+                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border shadow-sm ${isExtended ? 'bg-amber-500/20 text-amber-500 border-amber-500/30' : 'bg-emerald-50/20 text-emerald-500 border-emerald-500/30'}`}>
                                 <FileBadge size={12} />
                                 {licenseDisplay}
                             </div>
@@ -595,7 +599,7 @@ export const MyPurchases: React.FC = () => {
                                 ) : (
                                 <Download size={18} />
                                 )}
-                                {isDownloading ? 'Preparing...' : 'Download WAV'}
+                                {isDownloading ? 'Preparing...' : `Download ${track.wav_r2_key?.toLowerCase().endsWith('.zip') ? 'ZIP' : 'WAV'}`}
                             </button>
                             
                             <button 
@@ -668,7 +672,7 @@ export const MyPurchases: React.FC = () => {
                                         className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded-lg text-xs transition-all shadow-sm active:scale-95"
                                     >
                                         {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-                                        {isDownloading ? '...' : 'Download WAV'}
+                                        {isDownloading ? '...' : `Download ${track.wav_r2_key?.toLowerCase().endsWith('.zip') ? 'ZIP' : 'WAV'}`}
                                     </button>
 
                                     <button 
@@ -853,7 +857,7 @@ export const MyPurchases: React.FC = () => {
         </div>
       )}
 
-      {/* Recommendations Section (Added after Active Promos) */}
+      {/* Recommendations Section */}
       {recommendations.length > 0 && (
         <div className="mt-20 pt-12 border-t border-gray-200 dark:border-zinc-800">
             <h3 className="text-2xl font-bold mb-8 flex items-center gap-2">

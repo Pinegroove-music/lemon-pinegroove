@@ -182,7 +182,12 @@ export const MusicPackDetail: React.FC = () => {
             const blob = await response.blob();
             const blobUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.href = blobUrl; link.setAttribute('download', `${track.title}.wav`);
+            link.href = blobUrl;
+            
+            // Logica dinamica per estensione
+            const extension = track.wav_r2_key?.toLowerCase().endsWith('.zip') ? '.zip' : '.wav';
+            link.setAttribute('download', `${track.title}${extension}`);
+            
             document.body.appendChild(link); link.click(); 
             document.body.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
@@ -326,7 +331,7 @@ export const MusicPackDetail: React.FC = () => {
                                         onClick={() => handleDownloadTrack(track)}
                                         disabled={isDownloading}
                                         className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md active:scale-95 disabled:opacity-50"
-                                        title="Download WAV"
+                                        title="Download"
                                     >
                                         {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                                     </button>
@@ -396,7 +401,7 @@ export const MusicPackDetail: React.FC = () => {
                         "Full access to ALL catalog content",
                         "Includes all Extended license rights",
                         "TV, Film, Ads & Games included",
-                        "Instant high-quality WAV downloads"
+                        "Instant high-quality downloads"
                     ]}
                     infoLink="/pricing"
                     highlight={true}
@@ -422,7 +427,7 @@ export const MusicPackDetail: React.FC = () => {
               
               <div className={`p-4 rounded-xl border text-center ${isDarkMode ? 'bg-sky-500/5 border-sky-500/20' : 'bg-sky-50 border-sky-100'}`}>
                 <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium">
-                    By purchasing a license, you will receive watermark-free .wav versions of all tracks in this pack, available in your personal account area.
+                    By purchasing a license, you will receive watermark-free versions of all tracks in this pack, available in your personal account area.
                 </p>
               </div>
             </div>

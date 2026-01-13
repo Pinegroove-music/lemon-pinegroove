@@ -41,28 +41,24 @@ export const Player: React.FC = () => {
   useEffect(() => {
     if (currentTrack) {
         setIsMobileMinimized(false);
-        // Quando la traccia cambia, forziamo il caricamento del nuovo URL
-        if (audioRef.current) {
-            audioRef.current.load();
-        }
     }
   }, [currentTrack?.id]);
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (audio && currentTrack?.mp3_url) {
+    if (audio) {
       if (isPlaying) {
         const playPromise = audio.play();
         if (playPromise !== undefined) {
             playPromise.catch(e => {
-                console.warn("Playback prevented or interrupted. This is often due to missing CORS headers on the audio domain or browser autoplay policies:", e);
+                console.log("Playback prevented or interrupted:", e);
             });
         }
       } else {
         audio.pause();
       }
     }
-  }, [isPlaying, currentTrack?.id, currentTrack?.mp3_url]);
+  }, [isPlaying, currentTrack]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -153,7 +149,12 @@ export const Player: React.FC = () => {
             const blob = await response.blob();
             const blobUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.href = blobUrl; link.setAttribute('download', `${currentTrack.title}.wav`);
+            link.href = blobUrl;
+            
+            // Logica dinamica per estensione
+            const extension = currentTrack.wav_r2_key?.toLowerCase().endsWith('.zip') ? '.zip' : '.wav';
+            link.setAttribute('download', `${currentTrack.title}${extension}`);
+            
             document.body.appendChild(link); link.click(); 
             document.body.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
@@ -284,7 +285,7 @@ export const Player: React.FC = () => {
                         className="w-full bg-emerald-600 py-4 rounded-2xl text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-95"
                     >
                         {downloading ? <Loader2 size={24} className="animate-spin" /> : <Download size={24} />}
-                        {downloading ? 'Preparing...' : 'Download WAV'}
+                        {downloading ? 'Preparing...' : `Download ${currentTrack.wav_r2_key?.toLowerCase().endsWith('.zip') ? 'ZIP' : 'WAV'}`}
                     </button>
                 ) : (
                     <button 
@@ -506,7 +507,7 @@ export const Player: React.FC = () => {
                           className="hidden md:flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-full text-xs font-bold transition shadow-sm hover:scale-105"
                       >
                           {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-                          <span>{downloading ? 'Preparing...' : 'Download WAV'}</span>
+                          <span>{downloading ? 'Preparing...' : `Download ${currentTrack.wav_r2_key?.toLowerCase().endsWith('.zip') ? 'ZIP' : 'WAV'}`}</span>
                       </button>
                   ) : (
                       !session ? (
@@ -536,7 +537,7 @@ export const Player: React.FC = () => {
                               onClick={handleDownload}
                               disabled={downloading}
                               className="p-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-lg transition-colors"
-                              title="Download WAV"
+                              title="Download"
                           >
                               {downloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
                           </button>

@@ -20,6 +20,7 @@ export interface MusicTrack {
   instrument: string[] | string | null;
   tags: string[] | string | null;
   credits: Record<string, any> | null;
+  edit_cuts: string[] | string | null; // Nuova colonna per le versioni alternative
   season: string[] | string | null;
   duration: number | null;
   year: number | null;
