@@ -32,7 +32,7 @@ export const CookieConsent: React.FC = () => {
                         acceptNecessaryBtn: 'I Decline',
                         footer: `
                             <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1);">
-                                <a href="#/privacy" style="font-weight: 700; color: #0ea5e9; text-decoration: none; font-size: 12px;">Privacy Policy</a>
+                                <a href="/privacy" style="font-weight: 700; color: #0ea5e9; text-decoration: none; font-size: 12px;">Privacy Policy</a>
                             </div>
                         `
                     }

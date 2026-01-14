@@ -4,6 +4,7 @@ export interface MusicTrack {
   created_at: string;
   title: string;
   artist_name: string;
+  artist_ipi: string | null;
   mp3_url: string;
   cover_url: string;
   wav_r2_key: string | null;

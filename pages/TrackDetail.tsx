@@ -5,7 +5,7 @@ import { supabase } from '../services/supabase';
 import { MusicTrack, Album, Coupon, PricingItem } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, Download, FileBadge, Zap, CheckCircle2, Info, Loader2, ShoppingCart, Heart, Ticket, Copy, Check, Scissors, ListMusic, Megaphone, RotateCcw, Radio } from 'lucide-react';
+import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, Download, FileBadge, Zap, CheckCircle2, Info, Loader2, ShoppingCart, Heart, Ticket, Copy, Check, Scissors, ListMusic, Megaphone, RotateCcw, Radio, X } from 'lucide-react';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
 import { getIdFromSlug, createSlug } from '../utils/slugUtils';
@@ -42,6 +42,9 @@ export const TrackDetail: React.FC = () => {
   const [trackCoupon, setTrackCoupon] = useState<Coupon | null>(null);
   const [proCoupon, setProCoupon] = useState<Coupon | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  
+  // New: Lyrics Modal State
+  const [isLyricsOpen, setIsLyricsOpen] = useState(false);
   
   const navigate = useNavigate();
 
@@ -268,10 +271,15 @@ export const TrackDetail: React.FC = () => {
                 </div>
                 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-2 tracking-tight">{track.title}</h1>
-                <h2 className="text-2xl mb-6 font-medium">
+                <h2 className="text-2xl mb-6 font-medium flex items-center gap-2 flex-wrap">
                     <Link to={`/library?search=${encodeURIComponent(track.artist_name)}`} className="text-sky-600 dark:text-sky-400 hover:underline">
                         {track.artist_name}
                     </Link>
+                    {track.artist_ipi && (
+                        <span className="text-lg opacity-40 font-medium whitespace-nowrap">
+                            (IPI: {track.artist_ipi})
+                        </span>
+                    )}
                 </h2>
 
                 <div className={`h-32 w-full rounded-xl mb-6 px-6 flex items-center gap-6 shadow-inner border transition-colors duration-300 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
@@ -307,6 +315,19 @@ export const TrackDetail: React.FC = () => {
                     <div className="text-lg opacity-80 leading-relaxed">
                         {formatDescription(track.description)}
                     </div>
+                    
+                    {/* View Lyrics Button */}
+                    {track.lyrics && (
+                      <div className="mt-8">
+                        <button 
+                          onClick={() => setIsLyricsOpen(true)}
+                          className={`flex items-center gap-3 px-6 py-3 rounded-xl font-bold transition-all transform hover:-translate-y-0.5 active:scale-95 ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700' : 'bg-white hover:bg-gray-50 text-zinc-800 border border-zinc-200 shadow-sm'}`}
+                        >
+                          <Mic2 size={20} className="text-sky-500" />
+                          View Lyrics
+                        </button>
+                      </div>
+                    )}
                 </section>
 
                 {relatedAlbum && (
@@ -536,6 +557,48 @@ export const TrackDetail: React.FC = () => {
                 </div>
             </div>
         )}
+
+        {/* Lyrics Modal */}
+        {isLyricsOpen && track.lyrics && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-6">
+            <div 
+              className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
+              onClick={() => setIsLyricsOpen(false)}
+            />
+            
+            <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-[2.5rem] border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-zinc-200 text-zinc-900'}`}>
+              <div className="p-6 md:p-8 border-b border-zinc-500/10 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-sky-500/10 rounded-lg">
+                    <Mic2 className="text-sky-500" size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black tracking-tight">Lyrics</h2>
+                    <p className="text-[10px] md:text-xs opacity-50 font-black uppercase tracking-widest">{track.title}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsLyricsOpen(false)}
+                  className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-gray-100 text-zinc-500'}`}
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 md:p-12 no-scrollbar">
+                <div className="text-lg md:text-2xl leading-relaxed whitespace-pre-line font-medium opacity-90 text-center italic font-serif">
+                  {track.lyrics}
+                </div>
+              </div>
+
+              <div className={`p-4 text-center border-t border-zinc-500/10 shrink-0 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-zinc-50'}`}>
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-30">
+                  &copy; {track.year || new Date().getFullYear()} {track.artist_name} / Pinegroove
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 };
@@ -636,7 +699,7 @@ const LicenseCard: React.FC<LicenseCardProps> = ({ id, title, price, selected, l
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] md:text-xs font-bold leading-snug">
-                            Save {coupon.discount_percent}% with code: <span className={`font-black tracking-widest ${id === 'pro' ? 'text-amber-900' : 'text-purple-200'}`}>{coupon.discount_code}</span>
+                            Save {coupon.discount_percent}% with code: <span className={`font-black tracking-widest ${id === 'pro' ? 'text-amber-950' : 'text-purple-200'}`}>{coupon.discount_code}</span>
                           </p>
                         </div>
                         <button 
