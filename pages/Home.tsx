@@ -849,7 +849,7 @@ export const Home: React.FC = () => {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                         <div className="absolute bottom-0 left-0 p-6 w-full">
-                            <h3 className="text-white font-bold text-xl drop-shadow-md">{theme.title}</h3>
+                            <h3 className="!text-white font-bold text-xl drop-shadow-md">{theme.title}</h3>
                             <span className="text-white/80 text-xs font-medium uppercase tracking-wider mt-1 inline-flex items-center gap-1 group-hover:text-sky-300 transition-colors">
                                 Explore <ArrowRight size={12}/>
                             </span>
