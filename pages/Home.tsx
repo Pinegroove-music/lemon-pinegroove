@@ -399,10 +399,10 @@ export const Home: React.FC = () => {
 
          <div className="relative w-full max-w-[1920px] mx-auto px-6 text-white mb-6 md:mb-8">
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 tracking-tight drop-shadow-md leading-tight max-w-4xl mx-auto">
-                Find the perfect sound for your story.
+                A Boutique Music Library for Visual Storytelling
             </h1>
             <p className="text-sm md:text-base mb-6 opacity-90 max-w-2xl mx-auto font-medium drop-shadow-sm">
-                High-quality stock music by composer Francesco Biondi.
+                Original music by composer Francesco Biondi, licensed directly with simple, flexible sync terms and full copyright protection.
             </p>
             
             <form 
@@ -599,7 +599,7 @@ export const Home: React.FC = () => {
             {
               icon: <FileCheck size={28} />,
               title: "Simple Licensing",
-              desc: "Pay once, use forever. No recurring fees, no hidden costs. Simple royalty-free licenses."
+              desc: "One-time payment, clear and flexible sync licenses. No recurring fees, no hidden costs."
             },
             {
               icon: <ShieldCheck size={28} />,
@@ -663,7 +663,7 @@ export const Home: React.FC = () => {
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                 <Disc className="text-sky-500" size={24}/> Featured Music Pack
             </h2>
-            
+            <p className="w-full mb-12 opacity-70 text-lg font-medium leading-relaxed">Discover curated track collections — perfect for larger projects and cost-effective licensing. </p>
             <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl group">
                 <div className="absolute inset-0 z-0">
                     <img 
