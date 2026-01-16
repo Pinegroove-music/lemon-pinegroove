@@ -5,7 +5,7 @@ import { supabase } from '../services/supabase';
 import { MusicTrack, Album, Coupon, PricingItem } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, Download, FileBadge, Zap, CheckCircle2, Info, Loader2, ShoppingCart, Heart, Ticket, Copy, Check, Scissors, ListMusic, Megaphone, RotateCcw, Radio, X } from 'lucide-react';
+import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, Download, FileBadge, Zap, CheckCircle2, Info, Loader2, ShoppingCart, Heart, Ticket, Copy, Check, Scissors, ListMusic, Megaphone, RotateCcw, Radio, X, AudioWaveform } from 'lucide-react';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
 import { getIdFromSlug, createSlug } from '../utils/slugUtils';
@@ -363,6 +363,7 @@ export const TrackDetail: React.FC = () => {
                         <DetailRow label="Released" value={track.year} icon={<Calendar size={16}/>} />
                         <DetailRow label="ISRC" value={track.isrc} icon={<FileText size={16}/>} />
                         <DetailRow label="ISWC" value={track.iswc} icon={<FileText size={16}/>} />
+                        <DetailRow label="Sample Rate" value="16-Bit Stereo, 44.1 kHz" icon={<AudioWaveform size={16}/>} />
                     </div>
 
                 {hasCredits && (
