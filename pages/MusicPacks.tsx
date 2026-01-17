@@ -1,10 +1,10 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../services/supabase';
 import { Album, MusicTrack } from '../types';
 import { useStore } from '../store/useStore';
 import { Link, useNavigate } from 'react-router-dom';
-import { Disc, AlertCircle, Tag, CheckCircle2, Zap, Play, Pause, Eye } from 'lucide-react';
+import { Disc, AlertCircle, Tag, CheckCircle2, Zap, Play, Pause, Eye, Search, X } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { createSlug } from '../utils/slugUtils';
 
@@ -15,6 +15,7 @@ interface AlbumWithDetails extends Album {
 
 export const MusicPacks: React.FC = () => {
   const [albums, setAlbums] = useState<AlbumWithDetails[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const { isDarkMode, session, purchasedTracks, isSubscriber, playTrack, currentTrack, isPlaying } = useStore();
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -59,6 +60,16 @@ export const MusicPacks: React.FC = () => {
     fetchAlbums();
   }, []);
 
+  // Logica di filtraggio client-side
+  const filteredAlbums = useMemo(() => {
+    if (!searchQuery.trim()) return albums;
+    const query = searchQuery.toLowerCase();
+    return albums.filter(album => 
+      album.title.toLowerCase().includes(query) || 
+      (album.description && album.description.toLowerCase().includes(query))
+    );
+  }, [albums, searchQuery]);
+
   const handlePlayFirstTrack = (e: React.MouseEvent, track: MusicTrack | null | undefined) => {
       e.preventDefault();
       e.stopPropagation();
@@ -70,16 +81,47 @@ export const MusicPacks: React.FC = () => {
   return (
     <div className="w-full max-w-[1920px] mx-auto px-6 lg:px-10 py-12 pb-32">
       <SEO title="Music Packs & Bundles" description="Get curated collections of high-quality music tracks at a discounted price. Perfect for game developers, video editors, and content creators." />
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-sky-500/10 rounded-lg">
-            <Disc size={32} className="text-sky-500" />
-        </div>
-        <h1 className="text-4xl font-black tracking-tight uppercase">Music Packs</h1>
-      </div>
       
-      <p className="max-w-2xl mb-12 opacity-70 text-lg font-medium leading-relaxed">
-        Curated collections of our best tracks. Get fully licensed albums for a fraction of the cost.
-      </p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-sky-500/10 rounded-lg">
+                <Disc size={32} className="text-sky-500" />
+            </div>
+            <h1 className="text-4xl font-black tracking-tight uppercase">Music Packs</h1>
+          </div>
+          <p className="max-w-2xl opacity-70 text-lg font-medium leading-relaxed">
+            Curated collections of our best tracks. Get fully licensed albums for a fraction of the cost.
+          </p>
+        </div>
+
+        {/* Search Bar Dedicated */}
+        <div className="w-full md:w-80 lg:w-96 relative group">
+          <div className={`absolute inset-0 bg-sky-500/10 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 rounded-full`}></div>
+          <div className="relative">
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${searchQuery ? 'text-sky-500' : 'opacity-40'}`} size={20} />
+            <input 
+              type="text"
+              placeholder="Search music packs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`w-full pl-12 pr-12 py-4 rounded-2xl outline-none border-2 transition-all duration-300 font-medium ${
+                isDarkMode 
+                  ? 'bg-zinc-900 border-zinc-800 focus:border-sky-500 text-white' 
+                  : 'bg-white border-zinc-100 focus:border-sky-400 text-zinc-900 shadow-sm'
+              }`}
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors opacity-60 hover:opacity-100"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {loading ? (
          <div className="flex flex-col items-center justify-center py-32 opacity-50">
@@ -91,17 +133,27 @@ export const MusicPacks: React.FC = () => {
             <AlertCircle size={24} />
             <p>Error loading albums: {errorMsg}</p>
          </div>
-      ) : albums.length === 0 ? (
-         <div className="text-center py-20 opacity-50 flex flex-col items-center p-8 border border-dashed rounded-3xl border-zinc-300 dark:border-zinc-700">
-            <Disc size={48} className="mb-4 opacity-20" />
-            <h3 className="text-xl font-bold mb-2">No music packs found</h3>
-            <p className="max-w-md mx-auto text-sm">
-                We couldn't find any albums in the database.
+      ) : filteredAlbums.length === 0 ? (
+         <div className="text-center py-24 opacity-50 flex flex-col items-center p-8 border border-dashed rounded-3xl border-zinc-300 dark:border-zinc-700 animate-in fade-in duration-500">
+            <Search size={48} className="mb-4 opacity-20" />
+            <h3 className="text-xl font-bold mb-2">
+              {searchQuery ? `No results found for "${searchQuery}"` : "No music packs found"}
+            </h3>
+            <p className="max-w-md mx-auto text-sm mb-6">
+                Try adjusting your search terms or browse our full library for individual tracks.
             </p>
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="px-6 py-2 bg-sky-500 text-white font-bold rounded-full hover:bg-sky-400 transition-all active:scale-95"
+              >
+                Clear Search
+              </button>
+            )}
          </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {albums.map(album => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {filteredAlbums.map(album => {
                 const isPurchased = purchasedTracks.some(p => p.album_id === album.id);
                 const hasAccess = isPurchased || isSubscriber;
                 const isCurrentPackPlaying = album.first_track && currentTrack?.id === album.first_track.id && isPlaying;

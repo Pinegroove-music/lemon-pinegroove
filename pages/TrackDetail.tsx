@@ -5,7 +5,7 @@ import { supabase } from '../services/supabase';
 import { MusicTrack, Album, Coupon, PricingItem } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, Download, FileBadge, Zap, CheckCircle2, Info, Loader2, ShoppingCart, Heart, Ticket, Copy, Check, Scissors, ListMusic, Megaphone, RotateCcw, Radio, X, AudioWaveform } from 'lucide-react';
+import { Play, Pause, Clock, Music2, Calendar, FileText, Package, ArrowRight, Sparkles, ChevronDown, ChevronUp, Mic2, Download, FileBadge, Zap, CheckCircle2, Info, Loader2, ShoppingCart, Heart, Ticket, Copy, Check, Scissors, ListMusic, Megaphone, RotateCcw, Radio, X, AudioWaveform, Blend } from 'lucide-react';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
 import { getIdFromSlug, createSlug } from '../utils/slugUtils';
@@ -234,7 +234,7 @@ export const TrackDetail: React.FC = () => {
   };
 
   const durationISO = track.duration ? `PT${Math.floor(track.duration / 60)}M${track.duration % 60}S` : undefined;
-  const hasCredits = track.credits && Array.isArray(track.credits) && track.credits.length > 0;
+  const hasCredits = track.credits && Array.isArray(track.credits) && (track.credits as any[]).length > 0;
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
@@ -265,9 +265,16 @@ export const TrackDetail: React.FC = () => {
             </div>
 
             <div className="flex-1 flex flex-col justify-center w-full">
-                <div className="flex items-center gap-4 mb-2 opacity-70 text-sm font-bold uppercase tracking-wider">
+                <div className="flex flex-wrap items-center gap-4 mb-2 opacity-70 text-sm font-bold uppercase tracking-wider">
                     <span className="bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300 px-2 py-1 rounded">{(Array.isArray(track.genre) ? track.genre[0] : track.genre)}</span>
                     {track.bpm && <span className="flex items-center gap-1"><Music2 size={14}/> {track.bpm} BPM</span>}
+                    
+                    {/* Badge Edit Aggiuntivi */}
+                    {editCuts.length > 0 && (
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest animate-in fade-in slide-in-from-left-2 duration-500 ${isDarkMode ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-800/50' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
+                            <Scissors size={12} /> +{editCuts.length} EDITS INCLUDED
+                        </span>
+                    )}
                 </div>
                 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-2 tracking-tight">{track.title}</h1>
@@ -356,35 +363,32 @@ export const TrackDetail: React.FC = () => {
 
                 <section className="mb-8">
                     <h3 className="text-xl font-bold mb-6">Track Details</h3>
-                    <div className={`grid grid-cols-1 ${hasCredits ? 'md:grid-cols-2' : ''} gap-4 items-start`}>
-                     <div className={`p-6 rounded-2xl border space-y-4 text-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className={`p-6 rounded-2xl border space-y-4 text-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-gray-200'}`}>
                         <DetailRow label="Duration" value={track.duration ? `${Math.floor(track.duration / 60)}:${(track.duration % 60).toString().padStart(2, '0')}` : '-'} icon={<Clock size={16}/>} />
                         <DetailRow label="BPM" value={track.bpm} icon={<Music2 size={16}/>} />
                         <DetailRow label="Released" value={track.year} icon={<Calendar size={16}/>} />
                         <DetailRow label="ISRC" value={track.isrc} icon={<FileText size={16}/>} />
                         <DetailRow label="ISWC" value={track.iswc} icon={<FileText size={16}/>} />
-                        <DetailRow label="Sample Rate" value="16-Bit Stereo, 44.1 kHz" icon={<AudioWaveform size={16}/>} />
-                    </div>
+                        <DetailRow label="Sample Rate" value="16-Bit, 44.1 kHz" icon={<AudioWaveform size={16}/>} />
 
-                {hasCredits && (
-                    <div className={`p-6 rounded-2xl border text-sm ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-gray-200'}`}>
-                        <h4 className="font-bold mb-3 text-sm uppercase tracking-wider opacity-80">Additional Credits</h4>
-                        <div className="space-y-2">
-                            {(track.credits as any[]).map((credit: any, i: number) => (
-                            <div key={i} className="text-sm">
-                            <Link 
-                                to={`/library?search=${encodeURIComponent(credit.name)}`}
-                                className="font-semibold opacity-90 hover:text-sky-500 hover:underline transition-colors"
-                            >
-                                {credit.name}
-                            </Link>
-                            <span className="opacity-50 mx-1">—</span>
-                            <span className="opacity-70">{credit.role}</span>
+                        {hasCredits && (
+                            <div className="pt-4 mt-2 border-t border-dashed border-zinc-300 dark:border-zinc-700">
+                                <h4 className="font-black mb-3 text-[10px] uppercase tracking-[0.15em] opacity-40">Additional Credits</h4>
+                                <div className="space-y-2.5">
+                                    {(track.credits as any[]).map((credit: any, i: number) => (
+                                        <div key={i} className="flex items-center justify-between text-xs">
+                                            <Link 
+                                                to={`/library?search=${encodeURIComponent(credit.name)}`}
+                                                className="font-bold opacity-90 hover:text-sky-500 transition-colors"
+                                            >
+                                                {credit.name}
+                                            </Link>
+                                            <span className="opacity-40 italic">{credit.role}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                         </div>
-                    </div>
-                )}
+                            </div>
+                        )}
                     </div>
 
                     {editCuts.length > 0 && (
@@ -537,7 +541,7 @@ export const TrackDetail: React.FC = () => {
         {recommendations.length > 0 && (
             <div className="pt-12 mt-20 border-t border-gray-200 dark:border-zinc-800">
                 <h3 className="text-2xl font-bold mb-8 flex items-center gap-2">
-                    <Sparkles className="text-sky-500" size={24}/> You Might Also Like
+                    <Blend className="text-sky-500" size={24}/> You Might Also Like
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     {recommendations.map(rec => {

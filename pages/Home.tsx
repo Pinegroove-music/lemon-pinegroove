@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { MusicTrack, Client, Album, MediaTheme, Coupon, PricingItem } from '../types';
 import { supabase } from '../services/supabase';
@@ -19,6 +20,8 @@ declare global {
 export const Home: React.FC = () => {
   const [discoverTracks, setDiscoverTracks] = useState<MusicTrack[]>([]);
   const [trendingTracks, setTrendingTracks] = useState<MusicTrack[]>([]);
+  const [newestTracks, setNewestTracks] = useState<MusicTrack[]>([]);
+  const [activeTrendTab, setActiveTrendTab] = useState<'trending' | 'newest'>('trending');
   const [clients, setClients] = useState<Client[]>([]);
   const [featuredPack, setFeaturedPack] = useState<Album | null>(null);
   const [featuredTrack, setFeaturedTrack] = useState<MusicTrack | null>(null);
@@ -72,7 +75,7 @@ export const Home: React.FC = () => {
     if (window.createLemonSqueezy) {
         window.createLemonSqueezy();
     }
-  }, [trendingTracks, discoverTracks]);
+  }, [trendingTracks, discoverTracks, newestTracks]);
 
   const getCurrentSeasonalKeywords = () => {
     const month = new Date().getMonth();
@@ -134,6 +137,15 @@ export const Home: React.FC = () => {
         }
 
         setTrendingTracks(finalTrending);
+
+        // Compute Newest Tracks Logic
+        const sortedByYear = [...allTracks].sort((a, b) => {
+            const yearA = a.year || 0;
+            const yearB = b.year || 0;
+            if (yearB !== yearA) return yearB - yearA;
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        setNewestTracks(sortedByYear.slice(0, 10));
       }
 
       const { data: couponData } = await supabase
@@ -324,7 +336,8 @@ export const Home: React.FC = () => {
             const blobUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = blobUrl;
-            link.setAttribute('download', `${track.title}.wav`);
+            const extension = track.wav_r2_key?.toLowerCase().endsWith('.zip') ? '.zip' : '.wav';
+            link.setAttribute('download', `${track.title}${extension}`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -382,19 +395,21 @@ export const Home: React.FC = () => {
     return `${item.currency} ${item.price}`;
   };
 
+  const currentTrendingList = activeTrendTab === 'trending' ? trendingTracks : newestTracks;
+
   return (
     <div className="space-y-16 pb-20">
       <SEO title="Royalty Free Music for Video" />
       
-      {/* Hero Section - Compact height & Content shifted low */}
-      <div className="relative pt-40 pb-8 md:pt-48 md:pb-12 text-center flex flex-col items-center justify-end min-h-[340px] md:min-h-[380px]">
+       {/* Hero Section - Compact height & Content shifted low */}
+      <div className="relative pt-40 pb-8 md:pt-48 md:pb-12 text-center flex flex-col items-center justify-end min-h-[390px] md:min-h-[460px]">
          <div className="absolute inset-0 z-0 overflow-hidden">
             <img 
-                src="https://media.pinegroove.net/media/bg-pinegroove.avif" 
-                alt="Home Studio Background" 
+                src="https://media.pinegroove.net/media/bg_pinegroove10.avif" 
+                alt="Royalty Free Music for Video" 
                 className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-black/60 transition-colors duration-500"></div>
+            <div className="absolute inset-0 bg-black/40 transition-colors duration-500"></div>
          </div>
 
          <div className="relative w-full max-w-[1920px] mx-auto px-6 text-white mb-6 md:mb-8">
@@ -701,7 +716,7 @@ export const Home: React.FC = () => {
                     </div>
 
                     <div className="text-center md:text-left text-white flex-1">
-                        <div className="inline-block px-3 py-1 rounded-full border border-white/30 bg-white/10 backdrop-blur-md text-xs font-bold uppercase tracking-widest mb-4">
+                        <div className="inline-block px-3 py-1 rounded-full border border-white/30 bg-white/10 backdrop-blur-md text-xs font-bold uppercase tracking-widest mb-4 text-sky-400">
                             Premium Collection
                         </div>
                         <h3 className="text-3xl md:text-5xl lg:text-6xl font-black mb-4 tracking-tight drop-shadow-lg leading-tight">
@@ -861,9 +876,38 @@ export const Home: React.FC = () => {
       )}
 
       <section className="w-full max-w-[1920px] mx-auto px-6 lg:px-10">
-        <h2 className="text-2xl font-bold mb-6">Trending Now</h2>
+        <div className="flex flex-col items-center justify-center gap-6 mb-12">
+            <div className="flex items-center gap-8 md:gap-16">
+                <button 
+                    onClick={() => setActiveTrendTab('trending')}
+                    className={`group flex flex-col items-center transition-all duration-300 ${activeTrendTab === 'trending' ? 'opacity-100' : 'opacity-30 hover:opacity-60'}`}
+                >
+                    <div className="flex items-center gap-3 mb-2">
+                        <Sparkles className={`transition-colors ${activeTrendTab === 'trending' ? 'text-sky-500' : ''}`} size={ activeTrendTab === 'trending' ? 32 : 24} />
+                        <h2 className={`text-2xl md:text-4xl font-black tracking-tight uppercase transition-all ${activeTrendTab === 'trending' ? 'text-sky-500' : ''}`}>
+                            Trending Now
+                        </h2>
+                    </div>
+                    <div className={`h-1 bg-sky-500 rounded-full transition-all duration-500 ${activeTrendTab === 'trending' ? 'w-full' : 'w-0'}`} />
+                </button>
+
+                <button 
+                    onClick={() => setActiveTrendTab('newest')}
+                    className={`group flex flex-col items-center transition-all duration-300 ${activeTrendTab === 'newest' ? 'opacity-100' : 'opacity-30 hover:opacity-60'}`}
+                >
+                    <div className="flex items-center gap-3 mb-2">
+                        <Zap className={`transition-colors ${activeTrendTab === 'newest' ? 'text-sky-500' : ''}`} size={ activeTrendTab === 'newest' ? 32 : 24} />
+                        <h2 className={`text-2xl md:text-4xl font-black tracking-tight uppercase transition-all ${activeTrendTab === 'newest' ? 'text-sky-500' : ''}`}>
+                            Newest Tracks
+                        </h2>
+                    </div>
+                    <div className={`h-1 bg-sky-500 rounded-full transition-all duration-500 ${activeTrendTab === 'newest' ? 'w-full' : 'w-0'}`} />
+                </button>
+            </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {trendingTracks.map((track) => {
+          {currentTrendingList.map((track) => {
              const isCurrent = currentTrack?.id === track.id;
              const isPurchased = purchasedTracks.some(p => p.track_id === track.id);
              const isSubscribed = subscriptionStatus === 'active';
@@ -881,7 +925,7 @@ export const Home: React.FC = () => {
               >
                 <div 
                     className="relative w-12 h-12 flex-shrink-0 cursor-pointer rounded overflow-hidden"
-                    onClick={() => playTrack(track, trendingTracks)}
+                    onClick={() => playTrack(track, currentTrendingList)}
                 >
                     <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
                     <div className={`absolute inset-0 bg-black/30 flex items-center justify-center ${isCurrent && isPlaying ? 'opacity-100' : 'opacity-0 hover:opacity-100'}`}>
