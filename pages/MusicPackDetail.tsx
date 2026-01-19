@@ -5,12 +5,20 @@ import { supabase } from '../services/supabase';
 import { Album, MusicTrack, Coupon, PricingItem } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { ShoppingCart, Disc, Play, Pause, Check, ArrowLeft, AlertTriangle, Sparkles, ArrowRight, CheckCircle2, Zap, Library, Download, Loader2, Info, Ticket, Copy } from 'lucide-react';
+import { ShoppingCart, Disc, Play, Pause, Check, ArrowLeft, AlertTriangle, Sparkles, ArrowRight, CheckCircle2, Zap, Library, Download, Loader2, Info, Ticket, Copy, Scissors, Share2 } from 'lucide-react';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
 import { getIdFromSlug, createSlug } from '../utils/slugUtils';
+import { ShareButton } from '../components/ShareButton';
 
 type LicenseOption = 'standard' | 'extended' | 'pro';
+
+const getEditsCount = (cuts: any) => {
+    if (!cuts) return 0;
+    if (Array.isArray(cuts)) return cuts.length;
+    if (typeof cuts === 'string') return cuts.split(',').filter(s => s.trim().length > 0).length;
+    return 0;
+};
 
 export const MusicPackDetail: React.FC = () => {
   const { slug } = useParams();
@@ -222,9 +230,17 @@ export const MusicPackDetail: React.FC = () => {
         }}
       />
 
-      <Link to="/music-packs" className="inline-flex items-center gap-2 opacity-60 hover:opacity-100 mb-8 transition-opacity">
-        <ArrowLeft size={16} /> Back to Music Packs
-      </Link>
+      <div className="flex items-center justify-between mb-8">
+        <Link to="/music-packs" className="inline-flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
+            <ArrowLeft size={16} /> Back to Music Packs
+        </Link>
+        <ShareButton 
+            title={album.title}
+            text={`Check out this music pack "${album.title}" on Pinegroove!`}
+            url={`/music-packs/${slug}`}
+            size={20}
+        />
+      </div>
 
       <div className="flex flex-col md:flex-row gap-8 lg:gap-12 mb-16 items-start">
          <div 
@@ -269,14 +285,15 @@ export const MusicPackDetail: React.FC = () => {
                         const active = isCurrent && isPlaying;
                         const isDownloading = downloadingTrackId === track.id;
                         const hasTrackAccess = ownedTrackIds.has(track.id) || isPro;
+                        const editsCount = getEditsCount(track.edit_cuts);
                         
                         return (
                             <div 
                                 key={track.id}
                                 className={`
-                                    flex items-center gap-4 p-3 rounded-xl transition-all
+                                    flex items-center gap-4 p-3 rounded-xl transition-all duration-300
                                     ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800' : 'bg-white border border-gray-100 hover:border-sky-200 hover:shadow-md'}
-                                    ${active ? 'ring-1 ring-sky-500 bg-sky-50 dark:bg-sky-900/20' : ''}
+                                    ${active ? `ring-1 ring-sky-500 ${isDarkMode ? 'bg-sky-900/20' : 'bg-sky-50'}` : ''}
                                 `}
                             >
                                 <div className="hidden md:block w-8 text-center opacity-40 font-mono text-sm">{index + 1}</div>
@@ -293,13 +310,18 @@ export const MusicPackDetail: React.FC = () => {
 
                                 <div className="flex-1 md:flex-none md:w-64 min-w-0 px-2">
                                     <Link to={`/track/${createSlug(track.id, track.title)}`} className={`font-bold text-lg truncate block ${active ? 'text-sky-600 dark:text-sky-400' : 'hover:text-sky-500 transition-colors'}`}>{track.title}</Link>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         <Link 
                                             to={`/library?search=${encodeURIComponent(track.artist_name)}`} 
                                             className="text-sm opacity-60 truncate hover:underline hover:text-sky-500 transition-colors"
                                         >
                                             {track.artist_name}
                                         </Link>
+                                        {editsCount > 0 && (
+                                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tight ${isDarkMode ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-800/50' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
+                                                <Scissors size={8} /> +{editsCount} EDITS
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 
