@@ -1,15 +1,15 @@
 {
   "rewrites": [
     {
-      "source": "/track/:slug",
+      "source": "/(track|music-packs)/:slug",
       "has": [
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot).*"
+          "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot|googlebot|bingbot).*"
         }
       ],
-      "destination": "/api/track-seo?slug=:slug"
+      "destination": "/api/seo-handler?type=$1&slug=:slug"
     },
     {
       "source": "/(.*)",
