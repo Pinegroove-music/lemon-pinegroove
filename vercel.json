@@ -1,6 +1,17 @@
 {
   "rewrites": [
     {
+      "source": "/track/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot).*"
+        }
+      ],
+      "destination": "/api/track-seo?slug=:slug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
