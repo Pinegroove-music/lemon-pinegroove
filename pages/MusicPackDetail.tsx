@@ -423,7 +423,7 @@ export const MusicPackDetail: React.FC = () => {
                 className="w-full bg-sky-500 hover:bg-sky-400 text-white font-black py-5 rounded-2xl shadow-xl shadow-sky-500/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 text-xl mt-8"
             >
                 <ShoppingCart size={24} />
-                {selectedLicense === 'pro' ? 'Subscribe Now' : 'Add To Cart'}
+                {selectedLicense === 'pro' ? 'Subscribe Now' : 'Buy Now'}
             </button>
             
             <div className="space-y-4 mt-8">
