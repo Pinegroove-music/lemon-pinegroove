@@ -4,7 +4,7 @@ import { supabase } from '../services/supabase';
 import { Album, MusicTrack } from '../types';
 import { useStore } from '../store/useStore';
 import { Link, useNavigate } from 'react-router-dom';
-import { Disc, AlertCircle, Tag, CheckCircle2, Zap, Play, Pause, Eye, Search, X } from 'lucide-react';
+import { Disc, AlertCircle, Tag, CheckCircle2, Zap, Play, Pause, Eye, Search, X,Disc3, ArrowUpDown } from 'lucide-react';
 import { SEO } from '../components/SEO';
 import { createSlug } from '../utils/slugUtils';
 
@@ -16,49 +16,65 @@ interface AlbumWithDetails extends Album {
 export const MusicPacks: React.FC = () => {
   const [albums, setAlbums] = useState<AlbumWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'relevance' | 'newest'>('newest');
   const { isDarkMode, session, purchasedTracks, isSubscriber, playTrack, currentTrack, isPlaying } = useStore();
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchAlbums = async () => {
-      // Recuperiamo l'album, il count dei brani e i dati della prima traccia associata
-      const { data, error } = await supabase
-        .from('album')
-        .select(`
-          *,
-          album_tracks(count),
-          first_track_link:album_tracks(
-            track_order,
-            squeeze_tracks(*)
-          )
-        `)
-        .order('id', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching albums:', error);
-        setErrorMsg(error.message);
-      }
-      
-      if (data) {
-        const mappedData = data.map((item: any) => {
-            // Troviamo la traccia con track_order più basso (solitamente 1)
-            const sortedLinks = item.first_track_link?.sort((a: any, b: any) => a.track_order - b.track_order) || [];
-            const firstTrack = sortedLinks[0]?.squeeze_tracks || null;
-
-            return {
-                ...item,
-                track_count: item.album_tracks?.[0]?.count || 0,
-                first_track: firstTrack
-            };
-        });
-        setAlbums(mappedData);
-      }
-      setLoading(false);
-    };
     fetchAlbums();
-  }, []);
+  }, [sortBy]);
+
+  const fetchAlbums = async () => {
+    setLoading(true);
+    // Recuperiamo l'album, il count dei brani e i dati della prima traccia associata
+    const { data, error } = await supabase
+      .from('album')
+      .select(`
+        *,
+        album_tracks(count),
+        first_track_link:album_tracks(
+          track_order,
+          squeeze_tracks(*)
+        )
+      `)
+      .order('id', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching albums:', error);
+      setErrorMsg(error.message);
+    }
+    
+    if (data) {
+      let mappedData = data.map((item: any) => {
+          // Troviamo la traccia con track_order più basso (solitamente 1)
+          const sortedLinks = item.first_track_link?.sort((a: any, b: any) => a.track_order - b.track_order) || [];
+          const firstTrack = sortedLinks[0]?.squeeze_tracks || null;
+
+          return {
+              ...item,
+              track_count: item.album_tracks?.[0]?.count || 0,
+              first_track: firstTrack
+          };
+      });
+
+      // Handle Sorting
+      if (sortBy === 'relevance') {
+          // Random shuffle for relevance
+          for (let i = mappedData.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [mappedData[i], mappedData[j]] = [mappedData[j], mappedData[i]];
+          }
+      } else {
+          // Newest is already handled by DB order 'id' desc, but we ensure it here
+          mappedData.sort((a, b) => b.id - a.id);
+      }
+
+      setAlbums(mappedData);
+    }
+    setLoading(false);
+  };
 
   // Logica di filtraggio client-side
   const filteredAlbums = useMemo(() => {
@@ -86,7 +102,7 @@ export const MusicPacks: React.FC = () => {
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-sky-500/10 rounded-lg">
-                <Disc size={32} className="text-sky-500" />
+                <Disc3 size={32} className="text-sky-500" />
             </div>
             <h1 className="text-4xl font-black tracking-tight uppercase">Music Packs</h1>
           </div>
@@ -95,30 +111,48 @@ export const MusicPacks: React.FC = () => {
           </p>
         </div>
 
-        {/* Search Bar Dedicated */}
-        <div className="w-full md:w-80 lg:w-96 relative group">
-          <div className={`absolute inset-0 bg-sky-500/10 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 rounded-full`}></div>
-          <div className="relative">
-            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${searchQuery ? 'text-sky-500' : 'opacity-40'}`} size={20} />
-            <input 
-              type="text"
-              placeholder="Search music packs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full pl-12 pr-12 py-4 rounded-2xl outline-none border-2 transition-all duration-300 font-medium ${
-                isDarkMode 
-                  ? 'bg-zinc-900 border-zinc-800 focus:border-sky-500 text-white' 
-                  : 'bg-white border-zinc-100 focus:border-sky-400 text-zinc-900 shadow-sm'
-              }`}
-            />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors opacity-60 hover:opacity-100"
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+          {/* SORTING DROPDOWN - Mirroring Library.tsx */}
+          <div className={`flex items-center pl-3 pr-1 py-1 rounded-xl border transition-all h-14 sm:h-auto ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-sm'}`}>
+              <div className="flex items-center gap-2 mr-2 opacity-40">
+                  <ArrowUpDown size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden lg:inline">Sort:</span>
+              </div>
+              <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className={`bg-transparent text-xs font-bold outline-none cursor-pointer pr-4 py-2 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-600'}`}
               >
-                <X size={18} />
-              </button>
-            )}
+                  <option value="relevance" className={isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-black'}>Relevance</option>
+                  <option value="newest" className={isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-black'}>Newest</option>
+              </select>
+          </div>
+
+          {/* Search Bar Dedicated */}
+          <div className="w-full md:w-80 lg:w-96 relative group">
+            <div className={`absolute inset-0 bg-sky-500/10 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 rounded-full`}></div>
+            <div className="relative">
+              <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300 ${searchQuery ? 'text-sky-500' : 'opacity-40'}`} size={20} />
+              <input 
+                type="text"
+                placeholder="Search music packs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full pl-12 pr-12 py-4 rounded-2xl outline-none border-2 transition-all duration-300 font-medium ${
+                  isDarkMode 
+                    ? 'bg-zinc-900 border-zinc-800 focus:border-sky-500 text-white' 
+                    : 'bg-white border-zinc-100 focus:border-sky-400 text-zinc-900 shadow-sm'
+                }`}
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors opacity-60 hover:opacity-100"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
