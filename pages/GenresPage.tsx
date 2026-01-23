@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 // Changed react-router to react-router-dom to fix hook issues and missing export errors
 import { Link } from 'react-router-dom';
-import { Tag, ArrowLeft, Smile, Calendar, Music, Clapperboard, Briefcase, Zap, Guitar, Coffee, Mic2, Globe, Cloud, Layers, Package, ChevronDown, ChevronUp } from 'lucide-react';
+import { Tag, ArrowLeft, Smile, Calendar, Music, Clapperboard, Briefcase, Zap, Guitar, Coffee, Mic2, Globe, Cloud, Layers, Package, ChevronDown, ChevronUp, Waves } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { SEO } from '../components/SEO';
 
@@ -34,32 +34,32 @@ export const GenresPage: React.FC = () => {
     {
         title: "Cinematic & Film Score",
         icon: <Clapperboard size={24} />,
-        subgenres: ['Action', 'Adventure', 'Broadway', 'Cinematic', 'Epic', 'Drama', 'Film Noir', 'Fantasy', 'Horror', 'Hybrid', 'Industrial', 'Orchestral', 'Patriotic', 'Sci-Fi', 'Score', 'Spaghetti Western', 'Soundtrack', 'Thriller', 'Trailer']
+        subgenres: ['Action', 'Adventure', 'Broadway', 'Cinematic', 'Epic', 'Drama', 'Dramedy', 'Film Noir', 'Fantasy', 'Horror', 'Hybrid', 'Industrial', 'Military', 'Orchestral', 'Patriotic', 'Quirky', 'Romantic', 'Sci-Fi', 'Score', 'Sitcom', 'Spaghetti Western', 'Soundtrack', 'Thriller', 'Trailer', 'Comedy']
     },
     {
         title: "Corporate & Business",
         icon: <Briefcase size={24} />,
-        subgenres: ['Business', 'Corporate', 'Documentary', 'Inspiring', 'Motivational', 'Presentation', 'Tech']
+        subgenres: ['Business', 'Corporate', 'Documentary', 'Inspiring', 'Motivational', 'News', 'Presentation', 'Tech']
     },
     {
         title: "Pop & Electronic",
         icon: <Zap size={24} />,
-        subgenres: ["80's", 'Club', 'Dance', 'EDM', 'Electro', 'Electronica', 'Future Bass', 'Future Garage', 'House', 'Jungle', 'Pop', 'Synthwave', 'Techno', 'Trap', 'Retrowave']
+        subgenres: ["80's", 'Breakbeat', 'Club', 'Dance', 'EDM', 'Electro', 'Electronica', 'Electro Pop', 'Future', 'Glitch', 'House', 'Jungle', 'Pop', 'Pop Rock', 'Retrowave', 'Synthpop', 'Synthwave', 'Techno', 'Trance', 'Trap', 'Tropical House', 'Vaporwave', 'Vocals']
     },
     {
         title: "Rock",
         icon: <Guitar size={24} />,
-        subgenres: ['Alternative', 'Blues', 'Doo-wop', 'Garage', 'Indie', 'Jive', 'Metal', 'Punk', 'Rock', "Rock'n'Roll", 'Rockabilly', 'Ska']
+        subgenres: ['Alternative', 'Blues', 'Boogie Woogie', 'Doo-wop', 'Garage', 'Grunge', 'Hard Rock', 'Indie', 'Jive', 'Metal', 'Psychedelia', 'Punk', 'Rock', "Rock'n'Roll", 'Rockabilly', 'Ska']
     },
     {
         title: "Ambient & Chill",
         icon: <Cloud size={24} />,
-        subgenres: ['Ambient', 'Atmospheric', 'Chillout', 'Chillstep', 'Deep House', 'Drone', 'Easy Listening', 'Lo-Fi', 'Lounge', 'Meditation', 'Relaxing', 'Smooth Jazz']
+        subgenres: ['Ambient', 'Atmospheric', 'Chillhop', 'Chillout', 'Chillstep', 'Chillwave', 'Deep House', 'Downtempo', 'Drone', 'Easy Listening', 'Exotica', 'J-Pop', 'Lo-Fi', 'Lounge', 'Meditation', 'Minimal', 'New Age', 'Piano', 'Relaxing', 'Smooth Jazz', 'Trip Hop']
     },
     {
         title: "Country & Folk",
         icon: <Coffee size={24} />,
-        subgenres: ['Acoustic', 'Americana', 'Bluegrass', 'Country', 'Western', 'Serenade', 'Folk', 'Organic', 'Singer-Songwriter', 'Traditional']
+        subgenres: ['Acoustic', 'Americana', 'Bavarian Folk', 'Bluegrass', 'Country', 'Western', 'Serenade', 'Folk', 'Polka', 'Organic', 'Singer-Songwriter', 'Traditional']
     },
     {
         title: "Jazz",
@@ -73,12 +73,12 @@ export const GenresPage: React.FC = () => {
                 <path d="M13 11h2l5-4v10l-5-4h-2" />
             </svg>
         ), 
-        subgenres: ['Bebop', 'Big Band', 'Charleston', 'Dixieland', 'Electro Swing', 'Gospel', 'Gypsy', 'Jazz', 'Ragtime', 'Swing']
+        subgenres: ['Bebop', 'Big Band', 'Charleston', 'Dixieland', 'Electro Swing', 'Swing', 'Gospel', 'Gypsy', 'Jazz', 'Musical', 'Ragtime', 'Swing']
     },
     {
         title: "Classical",
         icon: <Music size={24} />,
-        subgenres: ['Baroque', 'Chamber Music', 'Choir', 'Classical', 'Concerto', 'Fanfare', 'Neoclassical', 'Orchestral', 'Symphonic', 'Waltz']
+        subgenres: ['Ballet', 'Baroque', 'Cancan', 'Chamber Music', 'Choir', 'Classical', 'Concerto', 'Contemporary', 'Fanfare', 'Neoclassical', 'Opera', 'Orchestral', 'Requiem', 'Romanticism', 'Symphonic', 'Waltz']
     },
     {
         title: "Funk & Groove",
@@ -89,27 +89,27 @@ export const GenresPage: React.FC = () => {
                 <path d="M2 7v10c0 2.76 4.48 5 10 5s10-2.24 10-5v-10" />
             </svg>
         ),
-        subgenres: ['Afro-Funk', 'Disco', 'Funk', 'Groove', 'Hip Hop', 'R&B', 'Soul', 'Urban']
+        subgenres: ['Afro-Funk', 'Disco', 'Funk', 'Groove', 'Hip Hop', 'Nu Disco', 'Rap', 'R&B', 'Soul', 'Urban']
     },
     {
         title: "World",
         icon: <Globe size={24} />,
-        subgenres: ['African', 'Afro-Cuban', 'Arabic', 'Asian', 'Bhangra', 'Bollywood', 'Bossa Nova', 'Calypso', 'Celtic', 'Chinese', 'Cuban Son', 'Ethnic', 'Ethno', 'Hawaiian', 'Indigenous', 'Irish', 'Italian', 'Italian Folk', 'Jig', 'Latin', 'Mariachi', 'Mexican', 'Middle Eastern', 'Musette', 'Native American', 'Polynesian', 'Reggae', 'Salsa', 'Samba', 'Swing', 'Tango', 'Tarantella', 'Tribal', 'World']
+        subgenres: ['African', 'Afrobeat', 'Arabic', 'Asian', 'Balkan', 'Bhangra', 'Bollywood', 'Calypso', 'Celtic', 'Chinese', 'Ethnic', 'Ethno', 'French', 'Hawaiian', 'Indian', 'Indigenous', 'Irish', 'Italian', 'Italian Folk', 'Jig', 'Klezmer', 'Middle Eastern', 'Musette', 'Native American', 'Polynesian', 'Tarantella', 'Tribal', 'World']
+    },
+     {
+        title: "Latin",
+        icon: <Waves size={24} />,
+        subgenres: ['Afro-Cuban', 'Bossa Nova', 'Caribbean', 'Cha-cha-cha', 'Cuban Son', 'Flamenco', 'Latin', 'Latin Jazz', 'Mambo', 'Mariachi', 'Mexican', 'Reggae', 'Reggaeton', 'Rhumba', 'Salsa', 'Samba', 'Tango', 'Tropical']
     },
     {
         title: "Children's",
         icon: <Smile size={24} />,
-        subgenres: ["Children's Music", "Lullaby"]
+        subgenres: ["Anime", "Children's Music", "Lullaby", "Cartoon", "Circus"]
     },
     {
         title: "Holiday & Seasonal",
         icon: <Calendar size={24} />,
-        subgenres: ['Christmas', 'Halloween', 'Holiday Music']
-    },
-    {
-        title: "Miscellaneous",
-        icon: <Package size={24} />,
-        subgenres: ['Ballad', 'Comedy', 'Instrumental', 'March', 'Marching band', 'Percussion', 'Vocals']
+        subgenres: ['Christmas', 'Halloween', 'Holiday Music', 'Carol', 'Christian', 'Marching band']
     }
   ];
 
