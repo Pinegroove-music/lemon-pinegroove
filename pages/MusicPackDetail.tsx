@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -245,7 +244,7 @@ export const MusicPackDetail: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-8 lg:gap-12 mb-16 items-start">
          <div 
             className="w-full max-w-md md:w-80 lg:w-96 aspect-square rounded-3xl overflow-hidden shadow-2xl flex-shrink-0 relative bg-zinc-200 dark:bg-zinc-800 group cursor-pointer"
-            onClick={() => firstTrack && playTrack(firstTrack)}
+            onClick={() => firstTrack && playTrack(firstTrack, tracks)}
          >
             <img src={album.cover_url} alt={album.title} className="w-full h-full object-cover" />
             <div className={`absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity duration-300 z-10 ${isPlayingFirstTrack ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
@@ -300,7 +299,7 @@ export const MusicPackDetail: React.FC = () => {
                                 
                                 <div 
                                     className="relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer flex-shrink-0 group"
-                                    onClick={() => playTrack(track)}
+                                    onClick={() => playTrack(track, tracks)}
                                 >
                                     <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
                                     <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
@@ -349,7 +348,8 @@ export const MusicPackDetail: React.FC = () => {
                 </div>
             )}
           </div>
-
+          
+          {/* IL RESTO DELLA PAGINA RIMANE INVARIATO... */}
           <div className="lg:col-span-5 space-y-6">
             <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">Select License</h3>
             
