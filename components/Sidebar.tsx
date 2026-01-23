@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Library, Info, HelpCircle, ShieldAlert, Music, X, Sun, Moon, ChevronLeft, ChevronRight, Tag, Disc3 } from 'lucide-react';
+import { Home, Library, Info, HelpCircle, ShieldAlert, Music, X, Sun, Moon, ChevronLeft, ChevronRight, Disc3, Tag } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: boolean) => void }> = ({ mobileOpen, setMobileOpen }) => {
@@ -75,8 +75,8 @@ export const Sidebar: React.FC<{ mobileOpen: boolean; setMobileOpen: (open: bool
             />
             {!collapsed && (
                 <span className="font-archivo uppercase text-xl tracking-tight origin-left whitespace-nowrap flex">
-                    {renderProgressiveText("PINE", "text-black dark:text-white", 0)}
-                    {renderProgressiveText("GROOVE", "text-[#0288c4]", 4)}
+                  {renderProgressiveText("PINE", isDarkMode ? "text-white" : "text-black", 0)}
+                  {renderProgressiveText("GROOVE", "text-[#0288c4]", 4)}
                 </span>
             )}
           </Link>
