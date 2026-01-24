@@ -21,6 +21,7 @@ import { GenresPage } from './pages/GenresPage';
 import { MoodsPage } from './pages/MoodsPage';
 import { SeasonalPage } from './pages/SeasonalPage';
 import { InstrumentsPage } from './pages/InstrumentsPage';
+import { MediaTheme } from './pages/MediaTheme';
 import { Pricing } from './pages/Pricing';
 import { UserLicenseAgreement } from './pages/UserLicenseAgreement';
 import { Privacy } from './pages/Privacy';
@@ -243,8 +244,8 @@ const Layout: React.FC = () => {
   const isFaqPage = location.pathname === '/faq';
   const isLicenseAgreementPage = location.pathname === '/user-license-agreement';
   
-  const hideSearchBarContent = isCategoryPage || isContentIdPage || isAboutPage || isFaqPage || isLicenseAgreementPage;
-  const shouldHideHeaderFrame = isCategoryPage || isLicenseAgreementPage;
+  const hideSearchBarContent = isLicenseAgreementPage;
+  const shouldHideHeaderFrame = isLicenseAgreementPage;
   const isHeroPage = isHomePage || isAboutPage || isContentIdPage || isFaqPage;
 
   let headerWrapperClasses = `z-50 w-full transition-all duration-500 `;
@@ -271,7 +272,7 @@ const Layout: React.FC = () => {
       internalHeaderClasses += `border-b ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-100'} `;
   }
 
-  const showFooter = location.pathname !== '/library' && !isAuthPage && !isResetPasswordPage;
+  const showFooter = !isAuthPage && !isResetPasswordPage;
 
   return (
     <div className={`min-h-[100dvh] flex transition-colors duration-300 ${isDarkMode ? 'dark bg-zinc-950 text-zinc-100' : 'bg-white text-zinc-900'}`}>
@@ -280,126 +281,126 @@ const Layout: React.FC = () => {
 
       <div className="flex-1 flex flex-col h-[100dvh] overflow-hidden relative">
         
-        {!hideSidebar && (
-            <div className={headerWrapperClasses}>
-                <AnnouncementBar />
-                
-                <header className={internalHeaderClasses}>
-                    <div className="max-w-[1920px] mx-auto px-6 lg:px-10 py-4 flex items-center gap-4">
-                        <button 
-                            onClick={() => setMobileOpen(true)} 
-                            className={`md:hidden p-2 flex-shrink-0 rounded-md pointer-events-auto ${isHeroPage && !isScrolled ? 'bg-black/20 text-white backdrop-blur-sm' : ''}`}
-                        >
-                            <Menu size={24} />
-                        </button>
-                        
-                        {!hideSearchBarContent && (
-                            <form 
-                                ref={searchContainerRef}
-                                onSubmit={handleGlobalSearch} 
-                                className={`
-                                    flex-1 transition-all duration-500 relative
-                                    ${isHeroPage && !isScrolled ? 'opacity-0 translate-y-[-20px] pointer-events-none' : 'opacity-100 translate-y-0'}
-                                `}
-                            >
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 opacity-40" size={18} />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search tracks, tags, artists, moods..." 
-                                    value={globalSearch}
-                                    onChange={(e) => setGlobalSearch(e.target.value)}
-                                    onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
-                                    className={`
-                                        w-full pl-10 pr-10 py-2.5 rounded-full text-sm outline-none border transition shadow-sm
-                                        ${isDarkMode 
-                                        ? 'bg-zinc-900/80 border-zinc-800 focus:border-sky-500 placeholder-zinc-500 text-white' 
-                                        : 'bg-zinc-100/80 border-zinc-200 focus:border-sky-400 placeholder-zinc-400 text-black'}
-                                    `}
-                                />
-                                
-                                {globalSearch && (
-                                    <button 
-                                        type="button"
-                                        onClick={() => { setGlobalSearch(''); setSuggestions([]); setShowSuggestions(false); }}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                )}
-
-                                {showSuggestions && suggestions.length > 0 && (
-                                    <div className={`
-                                        absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl overflow-hidden z-50
-                                        ${isDarkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}
-                                    `}>
-                                        <ul>
-                                            {suggestions.map((item, index) => (
-                                                <li key={index}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleSuggestionClick(item)}
-                                                        className={`
-                                                            w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-colors
-                                                            ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-300 hover:text-white' : 'hover:bg-sky-50 text-zinc-700 hover:text-sky-700'}
-                                                        `}
-                                                    >
-                                                        <span className={`opacity-50 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                                            {item.type === 'track' ? <Music size={14} /> : <User size={14} />}
-                                                        </span>
-                                                        <span className="font-medium truncate">{item.text}</span>
-                                                    </button>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </form>
-                        )}
-
-                        <div className={`
-                            flex items-center gap-3 ml-auto transition-all duration-500 pointer-events-auto
-                            ${isHeroPage && !isScrolled ? 'text-white' : ''}
-                        `}>
-                            {!session ? (
-                                <div className="flex items-center gap-4">
-                                    <Link to="/auth?view=sign_in" className={`text-sm font-bold opacity-70 hover:opacity-100 transition-opacity ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>
-                                        Sign In
-                                    </Link>
-                                    <Link to="/auth?view=sign_up" className="px-5 py-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow-md transition-all active:scale-95">
-                                        Sign Up
-                                    </Link>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-1 sm:gap-2">
-                                    <Link to="/my-playlist" className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`}>
-                                        <Heart size={20} className="text-red-500" />
-                                        <span className={`text-sm font-bold hidden sm:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Wishlist</span>
-                                    </Link>
-                                    <Link to="/my-purchases" className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`}>
-                                        <User size={20} className="text-sky-500" />
-                                        <span className={`text-sm font-bold hidden sm:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Account</span>
-                                    </Link>
-                                    <button 
-                                        onClick={handleSignOut}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all text-red-500 ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`}
-                                        title="Sign Out"
-                                    >
-                                        <LogOut size={20} />
-                                        <span className={`text-sm font-bold hidden lg:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Sign Out</span>
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </header>
-            </div>
-        )}
-
         <main 
             id="main-content"
             ref={mainContentRef} 
             className="flex-1 overflow-y-auto scroll-smooth relative"
         >
+          {!hideSidebar && (
+              <div className={headerWrapperClasses}>
+                  <AnnouncementBar />
+                  
+                  <header className={internalHeaderClasses}>
+                      <div className="max-w-[1920px] mx-auto px-6 lg:px-10 py-4 flex items-center gap-4">
+                          <button 
+                              onClick={() => setMobileOpen(true)} 
+                              className={`md:hidden p-2 flex-shrink-0 rounded-md pointer-events-auto ${isHeroPage && !isScrolled ? 'bg-black/20 text-white backdrop-blur-sm' : ''}`}
+                          >
+                              <Menu size={24} />
+                          </button>
+                          
+                          {!hideSearchBarContent && (
+                              <form 
+                                  ref={searchContainerRef}
+                                  onSubmit={handleGlobalSearch} 
+                                  className={`
+                                      flex-1 transition-all duration-500 relative
+                                      ${isHeroPage && !isScrolled ? 'opacity-0 translate-y-[-20px] pointer-events-none' : 'opacity-100 translate-y-0'}
+                                  `}
+                              >
+                                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 opacity-40" size={18} />
+                                  <input 
+                                      type="text" 
+                                      placeholder="Search tracks, artists, moods..." 
+                                      value={globalSearch}
+                                      onChange={(e) => setGlobalSearch(e.target.value)}
+                                      onFocus={() => { if(suggestions.length > 0) setShowSuggestions(true); }}
+                                      className={`
+                                          w-full pl-10 pr-10 py-2.5 rounded-full text-sm outline-none border transition shadow-sm
+                                          ${isDarkMode 
+                                          ? 'bg-zinc-900/80 border-zinc-800 focus:border-sky-500 placeholder-zinc-500 text-white' 
+                                          : 'bg-zinc-100/80 border-zinc-200 focus:border-sky-400 placeholder-zinc-400 text-black'}
+                                      `}
+                                  />
+                                  
+                                  {globalSearch && (
+                                      <button 
+                                          type="button"
+                                          onClick={() => { setGlobalSearch(''); setSuggestions([]); setShowSuggestions(false); }}
+                                          className="absolute right-3 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100"
+                                      >
+                                          <X size={16} />
+                                      </button>
+                                  )}
+
+                                  {showSuggestions && suggestions.length > 0 && (
+                                      <div className={`
+                                          absolute top-full left-0 right-0 mt-2 rounded-xl border shadow-xl overflow-hidden z-50
+                                          ${isDarkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'}
+                                      `}>
+                                          <ul>
+                                              {suggestions.map((item, index) => (
+                                                  <li key={index}>
+                                                      <button
+                                                          type="button"
+                                                          onClick={() => handleSuggestionClick(item)}
+                                                          className={`
+                                                              w-full text-left px-4 py-3 flex items-center gap-3 text-sm transition-colors
+                                                              ${isDarkMode ? 'hover:bg-zinc-800 text-zinc-300 hover:text-white' : 'hover:bg-sky-50 text-zinc-700 hover:text-sky-700'}
+                                                          `}
+                                                      >
+                                                          <span className={`opacity-50 ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                                                              {item.type === 'track' ? <Music size={14} /> : <User size={14} />}
+                                                          </span>
+                                                          <span className="font-medium truncate">{item.text}</span>
+                                                      </button>
+                                                  </li>
+                                              ))}
+                                          </ul>
+                                      </div>
+                                  )}
+                              </form>
+                          )}
+
+                          <div className={`
+                              flex items-center gap-3 ml-auto transition-all duration-500 pointer-events-auto
+                              ${isHeroPage && !isScrolled ? 'text-white' : ''}
+                          `}>
+                              {!session ? (
+                                  <div className="flex items-center gap-4">
+                                      <Link to="/auth?view=sign_in" className={`text-sm font-bold opacity-70 hover:opacity-100 transition-opacity ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>
+                                          Sign In
+                                      </Link>
+                                      <Link to="/auth?view=sign_up" className="px-5 py-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow-md transition-all active:scale-95">
+                                          Sign Up
+                                      </Link>
+                                  </div>
+                              ) : (
+                                  <div className="flex items-center gap-1 sm:gap-2">
+                                      <Link to="/my-playlist" className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`}>
+                                          <Heart size={20} className="text-red-500" />
+                                          <span className={`text-sm font-bold hidden sm:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Wishlist</span>
+                                      </Link>
+                                      <Link to="/my-purchases" className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`}>
+                                          <User size={20} className="text-sky-500" />
+                                          <span className={`text-sm font-bold hidden sm:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Account</span>
+                                      </Link>
+                                      <button 
+                                          onClick={handleSignOut}
+                                          className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all text-red-500 ${isDarkMode ? 'hover:bg-zinc-900' : 'hover:bg-gray-100'} ${isHeroPage && !isScrolled ? 'hover:bg-white/10' : ''}`}
+                                          title="Sign Out"
+                                      >
+                                          <LogOut size={20} />
+                                          <span className={`text-sm font-bold hidden lg:inline ${isHeroPage && !isScrolled ? 'text-white' : ''}`}>Sign Out</span>
+                                      </button>
+                                  </div>
+                              )}
+                          </div>
+                      </div>
+                  </header>
+              </div>
+          )}
+
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/library" element={<Library />} />
@@ -409,6 +410,7 @@ const Layout: React.FC = () => {
             <Route path="/categories/moods" element={<MoodsPage />} />
             <Route path="/categories/seasonal" element={<SeasonalPage />} />
             <Route path="/categories/instruments" element={<InstrumentsPage />} />
+            <Route path="/categories/media-themes" element={<MediaTheme />} />
             <Route path="/track/:slug" element={<TrackDetail />} />
             <Route path="/track/:id" element={<TrackDetail />} />
             <Route path="/music-packs" element={<MusicPacks />} />

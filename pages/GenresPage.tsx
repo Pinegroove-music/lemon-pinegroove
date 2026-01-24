@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
-// Changed react-router to react-router-dom to fix hook issues and missing export errors
-import { Link } from 'react-router-dom';
-import { Tag, ArrowLeft, Smile, Calendar, Music, Clapperboard, Briefcase, Zap, Guitar, Coffee, Mic2, Globe, Cloud, Layers, Package, ChevronDown, ChevronUp, Waves } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Tag, ArrowLeft, Smile, Calendar, Music, Clapperboard, Briefcase, Zap, Guitar, Coffee, Globe, Cloud, Layers, ChevronDown, Waves, Play, Pause, Download, Loader2, Music2, Disc3 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { SEO } from '../components/SEO';
+import { MusicTrack } from '../types';
+import { WaveformVisualizer } from '../components/WaveformVisualizer';
+import { createSlug } from '../utils/slugUtils';
 
-// Define the Category Structure
 type GenreCategory = {
   title: string;
   icon: React.ReactNode;
@@ -14,12 +16,13 @@ type GenreCategory = {
 };
 
 export const GenresPage: React.FC = () => {
-  const { isDarkMode } = useStore();
+  const { isDarkMode, playTrack, currentTrack, isPlaying, session, ownedTrackIds } = useStore();
+  const location = useLocation();
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [tracks, setTracks] = useState<MusicTrack[]>([]);
+  const [loadingTracks, setLoadingTracks] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
   
-  // State to track which categories are expanded
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-  
-  // Blue/Purple/Sky Gradients (Matching Home Page)
   const gradients = [
     'bg-gradient-to-br from-sky-500 to-blue-600',
     'bg-gradient-to-br from-blue-500 to-indigo-600',
@@ -29,107 +32,86 @@ export const GenresPage: React.FC = () => {
     'bg-gradient-to-br from-blue-600 to-violet-700',
   ];
 
-  // 1. Define the Macro-Categories
   const genreCategories: GenreCategory[] = [
     {
-        title: "Cinematic & Film Score",
+        title: "CINEMATIC & FILM SCORE",
         icon: <Clapperboard size={24} />,
-        subgenres: ['Action', 'Adventure', 'Broadway', 'Cinematic', 'Epic', 'Drama', 'Dramedy', 'Film Noir', 'Fantasy', 'Horror', 'Hybrid', 'Industrial', 'Military', 'Orchestral', 'Patriotic', 'Quirky', 'Romantic', 'Sci-Fi', 'Score', 'Sitcom', 'Spaghetti Western', 'Soundtrack', 'Thriller', 'Trailer', 'Comedy']
+        subgenres: ['Action', 'Adventure', 'Cinematic', 'Drama', 'Dramedy', 'Film Noir', 'Fantasy', 'Horror', 'Hybrid', 'Industrial', 'Military', 'Orchestral', 'Patriotic', 'Percussion', 'Quirky', 'Sci-Fi', 'Score', 'Sitcom', 'Spaghetti Western', 'Soundtrack', 'Thriller', 'Trailer', 'Comedy']
     },
     {
-        title: "Corporate & Business",
+        title: "CORPORATE & BUSINESS",
         icon: <Briefcase size={24} />,
-        subgenres: ['Business', 'Corporate', 'Documentary', 'Inspiring', 'Motivational', 'News', 'Presentation', 'Tech']
+        subgenres: ['Corporate', 'Documentary', 'Future Garage', 'News']
     },
     {
-        title: "Pop & Electronic",
+        title: "POP & ELECTRONIC",
         icon: <Zap size={24} />,
-        subgenres: ["80's", 'Breakbeat', 'Club', 'Dance', 'EDM', 'Electro', 'Electronica', 'Electro Pop', 'Future', 'Glitch', 'House', 'Jungle', 'Pop', 'Pop Rock', 'Retrowave', 'Synthpop', 'Synthwave', 'Techno', 'Trance', 'Trap', 'Tropical House', 'Vaporwave', 'Vocals']
+        subgenres: ['Acapella', 'Ballad', 'Breakbeat', 'Dance', 'Electro', 'Electro Pop', 'Future', 'Glitch', 'House', 'Pop', 'Retrowave', 'Synthwave', 'Tropical House', 'Vaporwave', 'Vocals']
     },
     {
-        title: "Rock",
+        title: "ROCK",
         icon: <Guitar size={24} />,
-        subgenres: ['Alternative', 'Blues', 'Boogie Woogie', 'Doo-wop', 'Garage', 'Grunge', 'Hard Rock', 'Indie', 'Jive', 'Metal', 'Psychedelia', 'Punk', 'Rock', "Rock'n'Roll", 'Rockabilly', 'Ska']
+        subgenres: ['Alternative', 'Blues', 'Boogie Woogie', 'Doo-wop', 'Garage', 'Hard Rock', 'Indie', 'Jive', 'Psychedelia', 'Punk', 'Rock', "Rock'n'Roll", 'Rockabilly', 'Ska']
     },
     {
-        title: "Ambient & Chill",
+        title: "AMBIENT & CHILL",
         icon: <Cloud size={24} />,
-        subgenres: ['Ambient', 'Atmospheric', 'Chillhop', 'Chillout', 'Chillstep', 'Chillwave', 'Deep House', 'Downtempo', 'Drone', 'Easy Listening', 'Exotica', 'J-Pop', 'Lo-Fi', 'Lounge', 'Meditation', 'Minimal', 'New Age', 'Piano', 'Relaxing', 'Smooth Jazz', 'Trip Hop']
+        subgenres: ['Ambient', 'Chillout', 'Chillstep', 'Chillwave', 'Deep House', 'Downtempo', 'Easy Listening', 'Exotica', 'Lo-Fi', 'Lounge', 'Minimal', 'New Age', 'Piano', 'Smooth Jazz']
     },
     {
-        title: "Country & Folk",
+        title: "COUNTRY & FOLK",
         icon: <Coffee size={24} />,
-        subgenres: ['Acoustic', 'Americana', 'Bavarian Folk', 'Bluegrass', 'Country', 'Western', 'Serenade', 'Folk', 'Polka', 'Organic', 'Singer-Songwriter', 'Traditional']
+        subgenres: ['Acoustic', 'Americana', 'Bavarian Folk', 'Bluegrass', 'Country', 'Western', 'Serenade', 'Folk', 'Polka', 'Traditional']
     },
     {
-        title: "Jazz",
-        icon: (
-            // Custom Trumpet Icon
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 8v8" />
-                <path d="M9 8v8" />
-                <path d="M13 8v8" />
-                <path d="M2 12h3" />
-                <path d="M13 11h2l5-4v10l-5-4h-2" />
-            </svg>
-        ), 
-        subgenres: ['Bebop', 'Big Band', 'Charleston', 'Dixieland', 'Electro Swing', 'Swing', 'Gospel', 'Gypsy', 'Jazz', 'Musical', 'Ragtime', 'Swing']
+        title: "JAZZ",
+        icon: <Music size={24} />, 
+        subgenres: ['Bebop', 'Big Band', 'Charleston', 'Dixieland', 'Electro Swing', 'Swing', 'Gospel', 'Gypsy', 'Jazz', 'Ragtime']
     },
     {
-        title: "Classical",
+        title: "CLASSICAL",
         icon: <Music size={24} />,
-        subgenres: ['Ballet', 'Baroque', 'Cancan', 'Chamber Music', 'Choir', 'Classical', 'Concerto', 'Contemporary', 'Fanfare', 'Neoclassical', 'Opera', 'Orchestral', 'Requiem', 'Romanticism', 'Symphonic', 'Waltz']
+        subgenres: ['Ballet', 'Baroque', 'Cancan', 'Chamber Music', 'Choir', 'Classical', 'Concerto', 'March', 'Neoclassical', 'Opera', 'Orchestral', 'Requiem', 'Romanticism', 'Symphonic', 'Waltz']
     },
     {
-        title: "Funk & Groove",
-        icon: (
-            // Custom Drum Icon
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <ellipse cx="12" cy="7" rx="10" ry="5" />
-                <path d="M2 7v10c0 2.76 4.48 5 10 5s10-2.24 10-5v-10" />
-            </svg>
-        ),
-        subgenres: ['Afro-Funk', 'Disco', 'Funk', 'Groove', 'Hip Hop', 'Nu Disco', 'Rap', 'R&B', 'Soul', 'Urban']
+        title: "FUNK & GROOVE",
+        icon: <Zap size={24} />,
+        subgenres: ['Disco', 'Funk', 'Hip Hop', 'Nu Disco', 'Rap', 'R&B', 'Soul']
     },
     {
-        title: "World",
+        title: "WORLD",
         icon: <Globe size={24} />,
-        subgenres: ['African', 'Afrobeat', 'Arabic', 'Asian', 'Balkan', 'Bhangra', 'Bollywood', 'Calypso', 'Celtic', 'Chinese', 'Ethnic', 'Ethno', 'French', 'Hawaiian', 'Indian', 'Indigenous', 'Irish', 'Italian', 'Italian Folk', 'Jig', 'Klezmer', 'Middle Eastern', 'Musette', 'Native American', 'Polynesian', 'Tarantella', 'Tribal', 'World']
+        subgenres: ['African', 'Arab', 'Asian', 'Balkan', 'Bhangra', 'Bollywood', 'Calypso', 'Celtic', 'Chinese', 'Ethno', 'French', 'Hawaiian', 'Jungle', 'Indian', 'Irish', 'Italian', 'Klezmer', 'Middle Eastern', 'Native American', 'Tarantella', 'Tribal', 'World']
     },
      {
-        title: "Latin",
+        title: "LATIN",
         icon: <Waves size={24} />,
-        subgenres: ['Afro-Cuban', 'Bossa Nova', 'Caribbean', 'Cha-cha-cha', 'Cuban Son', 'Flamenco', 'Latin', 'Latin Jazz', 'Mambo', 'Mariachi', 'Mexican', 'Reggae', 'Reggaeton', 'Rhumba', 'Salsa', 'Samba', 'Tango', 'Tropical']
+        subgenres: ['Bossa Nova', 'Cha-cha-cha', 'Cuban Son', 'Flamenco', 'Latin', 'Latin Jazz', 'Mambo', 'Mariachi', 'Mexican', 'Reggae', 'Reggaeton', 'Rhumba', 'Salsa', 'Samba', 'Tango', 'Tropical']
     },
     {
-        title: "Children's",
+        title: "CHILDREN'S",
         icon: <Smile size={24} />,
-        subgenres: ["Anime", "Children's Music", "Lullaby", "Cartoon", "Circus"]
+        subgenres: ["Children's Music", "Lullaby", "Circus"]
     },
     {
-        title: "Holiday & Seasonal",
+        title: "HOLIDAY & SEASONAL",
         icon: <Calendar size={24} />,
-        subgenres: ['Christmas', 'Halloween', 'Holiday Music', 'Carol', 'Christian', 'Marching band']
+        subgenres: ['Christmas', 'Halloween', 'Holiday Music', 'Marching band']
     }
   ];
 
-  // State to hold genres found in DB that are NOT in the categories above
   const [uncategorizedGenres, setUncategorizedGenres] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchGenres = async () => {
-      // Fetch genres from the new squeeze_tracks table
       const { data } = await supabase.from('squeeze_tracks').select('genre');
-
       if (data) {
         const allDbGenres = (data as any[])
           .flatMap((track: any) => track.genre || [])
           .filter((g: any): g is string => typeof g === 'string' && g.length > 0);
-        
         const uniqueDbGenres = Array.from(new Set(allDbGenres));
         const categorizedSet = new Set(genreCategories.flatMap(c => c.subgenres.map(s => s.toLowerCase())));
         const leftovers = uniqueDbGenres.filter(g => !categorizedSet.has(g.toLowerCase())).sort();
-        
         if (leftovers.length > 0) {
             setUncategorizedGenres(leftovers);
         }
@@ -138,104 +120,129 @@ export const GenresPage: React.FC = () => {
     fetchGenres();
   }, []);
 
-  const toggleCategory = (title: string) => {
-    if (expandedCategories.includes(title)) {
-        setExpandedCategories(expandedCategories.filter(t => t !== title));
-    } else {
-        setExpandedCategories([...expandedCategories, title]);
+  useEffect(() => {
+    if (selectedGenre) {
+        fetchTracksForGenre(selectedGenre);
+        setTimeout(() => {
+            resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     }
+  }, [selectedGenre]);
+
+  const fetchTracksForGenre = async (genre: string) => {
+    setLoadingTracks(true);
+    const { data, error } = await supabase.from('squeeze_tracks').select('*');
+    
+    if (!error && data) {
+        const filtered = (data as MusicTrack[]).filter(track => {
+            const trackGenres = Array.isArray(track.genre) 
+                ? track.genre 
+                : typeof track.genre === 'string' 
+                    ? [track.genre] 
+                    : [];
+            return trackGenres.some(g => g.toLowerCase() === genre.toLowerCase());
+        });
+        setTracks(filtered);
+    }
+    setLoadingTracks(false);
+  };
+
+  const getNavItemStyles = (path: string) => {
+    const isActive = location.pathname === path;
+    return `
+      flex items-center justify-center gap-3 py-4 px-6 rounded-2xl border transition-all duration-300 shadow-sm font-black uppercase tracking-widest text-[10px] md:text-xs active:scale-95
+      ${isActive 
+        ? 'bg-sky-500 border-sky-400 text-white shadow-sky-500/20' 
+        : (isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700' : 'bg-white border-zinc-200 text-zinc-500 hover:text-sky-600 hover:border-sky-300')}
+    `;
+  };
+
+  const handleGenreClick = (genre: string) => {
+    setSelectedGenre(genre);
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 pb-32">
+    <div className="container mx-auto px-4 pt-6 pb-32">
         <SEO title="Browse Music by Genre" description="Explore our catalog categorized by Cinematic, Corporate, Rock, Electronic, and more." />
         
-        {/* Navigation Header */}
-        <div className="flex flex-wrap items-center gap-4 mb-8 text-sm font-medium">
-            <Link to="/library" className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
-                <ArrowLeft size={16} /> Back to Library
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-12 w-full max-w-[1920px] mx-auto">
+            <Link to="/library" className={getNavItemStyles('/library')}>
+                <ArrowLeft size={16} />
+                <span>Library</span>
             </Link>
-            <div className="h-4 w-px bg-current opacity-20 hidden sm:block"></div>
-            <Link to="/categories/moods" className="flex items-center gap-2 text-sky-500 hover:text-sky-600 hover:underline">
-                <Smile size={16} /> Browse by Mood
+            <Link to="/categories/moods" className={getNavItemStyles('/categories/moods')}>
+                <Smile size={16} />
+                <span>Moods</span>
             </Link>
-            <Link to="/categories/instruments" className="flex items-center gap-2 text-sky-500 hover:text-sky-600 hover:underline">
-                <Music size={16} /> Browse by Instrument
+            <Link to="/categories/instruments" className={getNavItemStyles('/categories/instruments')}>
+                <Music size={16} />
+                <span>Instruments</span>
             </Link>
-            <Link to="/categories/seasonal" className="flex items-center gap-2 text-sky-500 hover:text-sky-600 hover:underline">
-                <Calendar size={16} /> Browse by Season
+            <Link to="/categories/seasonal" className={getNavItemStyles('/categories/seasonal')}>
+                <Calendar size={16} />
+                <span>Seasonal</span>
+            </Link>
+            <Link to="/categories/media-themes" className={getNavItemStyles('/categories/media-themes')}>
+                <Clapperboard size={16} />
+                <span>Media Themes</span>
+            </Link>
+            <Link to="/music-packs" className={getNavItemStyles('/music-packs')}>
+                <Disc3 size={16} />
+                <span>Music Packs</span>
             </Link>
         </div>
         
         <div className="mb-10 text-center">
-            <h1 className="text-4xl md:text-5xl font-black mb-4 flex items-center justify-center gap-3 tracking-tight">
-                <Tag className="text-sky-500" size={40} /> GENRES
+            <h1 className="text-3xl md:text-5xl font-black mb-4 flex items-center justify-center gap-3 tracking-tight">
+                <Tag className="text-sky-500" size={32} /> GENRES
             </h1>
-            <p className="text-xl opacity-70 max-w-2xl mx-auto">
-                Explore our music library by category. Click a card to reveal subgenres.
+            <p className="text-lg md:text-xl opacity-70 max-w-2xl mx-auto font-medium">
+                Discover the right sound. Hover over a category and select a genre to see matching tracks.
             </p>
         </div>
 
-        {/* 3-Column Grid for Desktop, 1-Column for Mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 max-w-[1920px] mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1440px] mx-auto">
             {genreCategories.map((category, index) => {
-                const isExpanded = expandedCategories.includes(category.title);
-                const gradient = Object.values(gradients)[index % gradients.length];
-                
+                const gradient = gradients[index % gradients.length];
                 return (
                     <div 
                         key={category.title} 
                         className={`
-                            rounded-2xl overflow-hidden shadow-md transition-all duration-300
+                            group rounded-2xl overflow-hidden shadow-md transition-all duration-300 relative
                             ${isDarkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-gray-100'}
-                            ${isExpanded ? 'ring-2 ring-sky-500/50 shadow-xl' : 'hover:shadow-lg'}
+                            hover:shadow-2xl hover:ring-2 hover:ring-sky-500/30 hover:-translate-y-1
                         `}
                     >
-                        {/* Header Area (Clickable) */}
-                        <button 
-                            onClick={() => toggleCategory(category.title)}
-                            className={`
-                                w-full h-20 flex items-center justify-between px-6 text-white transition-all
-                                ${gradient}
-                                ${isExpanded ? 'brightness-110' : 'hover:brightness-105'}
-                            `}
-                        >
+                        <div className={`w-full h-20 flex items-center justify-between px-6 text-white transition-all ${gradient}`}>
                             <div className="flex items-center gap-4">
                                 <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
                                     {category.icon}
                                 </div>
-                                <h2 className="text-lg md:text-xl font-bold text-left leading-tight drop-shadow-sm">
+                                <h2 className="text-sm font-black text-left leading-tight drop-shadow-sm uppercase tracking-widest">
                                     {category.title}
                                 </h2>
                             </div>
-                            
-                            <div className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
-                                <ChevronDown size={24} className="text-white/80" />
-                            </div>
-                        </button>
-
-                        {/* Content Area (Collapsible) */}
-                        <div 
-                            className={`
-                                overflow-hidden transition-all duration-300 ease-in-out
-                                ${isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}
-                            `}
-                        >
-                            <div className="p-6">
-                                <div className="flex flex-wrap gap-2">
+                            <ChevronDown size={18} className="text-white/60 transition-transform group-hover:rotate-180" />
+                        </div>
+                        
+                        <div className="max-h-0 opacity-0 group-hover:max-h-[1000px] group-hover:opacity-100 transition-all duration-500 ease-in-out overflow-hidden">
+                            <div className="p-5">
+                                <div className="flex flex-wrap gap-1.5">
                                     {category.subgenres.map((genre) => (
-                                        <Link
+                                        <button
                                             key={genre}
-                                            to={`/library?search=${encodeURIComponent(genre)}`}
+                                            onClick={() => handleGenreClick(genre)}
                                             className={`
-                                                px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-200
-                                                ${isDarkMode 
-                                                    ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white hover:bg-sky-600 hover:border-sky-500' 
-                                                    : 'bg-gray-50 border-zinc-200 text-zinc-600 hover:text-white hover:bg-sky-500 hover:border-sky-500'}
+                                                px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all duration-200 capitalize
+                                                ${selectedGenre === genre
+                                                    ? 'bg-sky-500 border-sky-400 text-white shadow-lg'
+                                                    : isDarkMode 
+                                                        ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white hover:bg-sky-600 hover:border-sky-500' 
+                                                        : 'bg-gray-50 border-zinc-200 text-zinc-600 hover:text-white hover:bg-sky-500 hover:border-sky-500'}
                                             `}
                                         >
                                             {genre}
-                                        </Link>
+                                        </button>
                                     ))}
                                 </div>
                             </div>
@@ -244,57 +251,28 @@ export const GenresPage: React.FC = () => {
                 );
             })}
 
-            {/* "More Genres" Card */}
             {uncategorizedGenres.length > 0 && (
-                <div 
-                    className={`
-                        rounded-2xl overflow-hidden shadow-md transition-all duration-300
-                        ${isDarkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-gray-100'}
-                        ${expandedCategories.includes('More Genres') ? 'ring-2 ring-sky-500/50 shadow-xl' : 'hover:shadow-lg'}
-                    `}
-                >
-                    <button 
-                        onClick={() => toggleCategory('More Genres')}
-                        className={`
-                            w-full h-20 flex items-center justify-between px-6 text-white transition-all
-                            bg-gradient-to-br from-slate-500 to-zinc-600
-                            hover:brightness-105
-                        `}
-                    >
+                <div className={`group rounded-2xl overflow-hidden shadow-md transition-all duration-300 relative ${isDarkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-gray-100'} hover:shadow-2xl hover:ring-2 hover:ring-sky-500/30 hover:-translate-y-1`}>
+                    <div className="w-full h-20 flex items-center justify-between px-6 text-white transition-all bg-gradient-to-br from-slate-500 to-zinc-600">
                         <div className="flex items-center gap-4">
                             <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
                                 <Layers size={24} />
                             </div>
-                            <h2 className="text-lg md:text-xl font-bold text-left leading-tight drop-shadow-sm">
-                                More Genres
-                            </h2>
+                            <h2 className="text-sm font-black text-left leading-tight drop-shadow-sm uppercase tracking-widest">OTHER STYLES</h2>
                         </div>
-                        <div className={`transform transition-transform duration-300 ${expandedCategories.includes('More Genres') ? 'rotate-180' : 'rotate-0'}`}>
-                            <ChevronDown size={24} className="text-white/80" />
-                        </div>
-                    </button>
-
-                    <div 
-                        className={`
-                            overflow-hidden transition-all duration-300 ease-in-out
-                            ${expandedCategories.includes('More Genres') ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}
-                        `}
-                    >
-                        <div className="p-6">
-                            <div className="flex flex-wrap gap-2">
+                        <ChevronDown size={18} className="text-white/60 transition-transform group-hover:rotate-180" />
+                    </div>
+                    <div className="max-h-0 opacity-0 group-hover:max-h-[1000px] group-hover:opacity-100 transition-all duration-500 ease-in-out overflow-hidden">
+                        <div className="p-5">
+                            <div className="flex flex-wrap gap-1.5">
                                 {uncategorizedGenres.map((genre) => (
-                                    <Link
+                                    <button
                                         key={genre}
-                                        to={`/library?search=${encodeURIComponent(genre)}`}
-                                        className={`
-                                            px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-200
-                                            ${isDarkMode 
-                                                ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white hover:bg-sky-600 hover:border-sky-500' 
-                                                : 'bg-gray-50 border-zinc-200 text-zinc-600 hover:text-white hover:bg-sky-500 hover:border-sky-500'}
-                                        `}
+                                        onClick={() => handleGenreClick(genre)}
+                                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all duration-200 capitalize ${selectedGenre === genre ? 'bg-sky-500 border-sky-400 text-white' : isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white hover:bg-sky-600 hover:border-sky-500' : 'bg-gray-50 border-zinc-200 text-zinc-600 hover:text-white hover:bg-sky-500 hover:border-sky-500'}`}
                                     >
                                         {genre}
-                                    </Link>
+                                    </button>
                                 ))}
                             </div>
                         </div>
@@ -302,6 +280,121 @@ export const GenresPage: React.FC = () => {
                 </div>
             )}
         </div>
+
+        <div ref={resultsRef} className="mt-20 scroll-mt-24">
+            {selectedGenre && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 border-b pb-6 border-zinc-100 dark:border-zinc-800">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-sky-500 rounded-2xl text-white shadow-xl shadow-sky-500/20">
+                                <Music2 size={24} />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl md:text-3xl font-black tracking-tight uppercase">
+                                    {selectedGenre} Tracks
+                                </h2>
+                                <p className="text-sm opacity-50 font-medium">Found {tracks.length} matching recordings</p>
+                            </div>
+                        </div>
+                        
+                        <button 
+                            onClick={() => setSelectedGenre(null)}
+                            className="text-xs font-bold opacity-40 hover:opacity-100 flex items-center gap-1 uppercase tracking-widest"
+                        >
+                            Clear selection <ChevronDown size={14} className="rotate-90" />
+                        </button>
+                    </div>
+
+                    {loadingTracks ? (
+                        <div className="py-20 flex flex-col items-center gap-4 opacity-50">
+                            <Loader2 className="animate-spin text-sky-500" size={40} />
+                            <p className="font-bold">Gathering the best {selectedGenre} music...</p>
+                        </div>
+                    ) : tracks.length === 0 ? (
+                        <div className="py-20 text-center opacity-40 italic">No tracks found.</div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-3">
+                            {tracks.map(track => (
+                                <TrackRow key={track.id} track={track} playlist={tracks} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
     </div>
   );
+};
+
+const TrackRow: React.FC<{ track: MusicTrack; playlist: MusicTrack[] }> = ({ track, playlist }) => {
+    const { isDarkMode, playTrack, currentTrack, isPlaying, session, ownedTrackIds } = useStore();
+    const [downloading, setDownloading] = useState(false);
+    const isCurrent = currentTrack?.id === track.id;
+    const active = isCurrent && isPlaying;
+    const hasAccess = ownedTrackIds.has(track.id);
+
+    const handlePlay = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        playTrack(track, playlist);
+    };
+
+    const handleDownload = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!session) return;
+        setDownloading(true);
+        try {
+            const { data, error } = await supabase.functions.invoke('get-download-url', {
+                body: { trackId: track.id }
+            });
+            if (!error && data?.downloadUrl) {
+                const response = await fetch(data.downloadUrl);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                const ext = track.wav_r2_key?.toLowerCase().endsWith('.zip') ? '.zip' : '.wav';
+                link.setAttribute('download', `${track.title}${ext}`);
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            }
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    return (
+        <div className={`
+            group flex items-center gap-4 p-3 rounded-xl border transition-all duration-300
+            ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-100 hover:shadow-md'}
+            ${active ? 'ring-1 ring-sky-500 shadow-lg shadow-sky-500/10' : ''}
+        `}>
+            <div className="relative w-14 h-14 shrink-0 rounded-lg overflow-hidden cursor-pointer" onClick={handlePlay}>
+                <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                    {active ? <Pause className="text-white fill-white" size={24} /> : <Play className="text-white fill-white ml-1" size={24} />}
+                </div>
+            </div>
+            <div className="flex-1 min-w-0">
+                <Link to={`/track/${createSlug(track.id, track.title)}`} className="font-bold text-base hover:text-sky-500 transition-colors truncate block">
+                    {track.title}
+                </Link>
+                <p className="text-xs opacity-50 font-medium truncate">{track.artist_name}</p>
+            </div>
+            <div className="hidden md:flex flex-[2] h-10 items-center px-4">
+                <WaveformVisualizer track={track} height="h-8" barCount={120} interactive={true} enableAnalysis={active} />
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+                <span className="hidden sm:block text-[10px] font-mono opacity-40 uppercase tracking-widest">{track.duration ? `${Math.floor(track.duration / 60)}:${(track.duration % 60).toString().padStart(2, '0')}` : ''}</span>
+                {hasAccess ? (
+                    <button onClick={handleDownload} disabled={downloading} className="p-2.5 rounded-full bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-lg active:scale-95 disabled:opacity-50">
+                        {downloading ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
+                    </button>
+                ) : (
+                    <Link to={`/track/${createSlug(track.id, track.title)}`} className={`p-2.5 rounded-full transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-400 hover:text-sky-400 hover:bg-sky-500/10' : 'bg-gray-100 text-zinc-600 hover:bg-sky-500 hover:text-white'} shadow-sm`}>
+                        <Tag size={16} />
+                    </Link>
+                )}
+            </div>
+        </div>
+    );
 };

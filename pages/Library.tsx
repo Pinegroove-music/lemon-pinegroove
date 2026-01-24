@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { MusicTrack } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { Play, Pause, ShoppingCart, Filter, ChevronDown, ChevronRight, ArrowRight, X, Mic2, ChevronLeft, Sparkles, Check, Trash2, LayoutList, LayoutGrid, Download, Zap, Loader2, RotateCcw, Blend, Megaphone, ArrowUpDown, Scissors, ListMusic } from 'lucide-react';
+import { Play, Pause, ShoppingCart, Filter, ChevronDown, ChevronRight, ArrowRight, X, Mic2, ChevronLeft, Sparkles, Check, Trash2, LayoutList, LayoutGrid, Download, Zap, Loader2, RotateCcw, Blend, Megaphone, ArrowUpDown, Scissors, ListMusic, Clapperboard } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
@@ -28,11 +29,13 @@ export const Library: React.FC = () => {
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [selectedSeasons, setSelectedSeasons] = useState<string[]>([]);
+  const [selectedMediaThemes, setSelectedMediaThemes] = useState<string[]>([]);
   const [bpmRange, setBpmRange] = useState<'slow' | 'medium' | 'fast' | null>(null);
   const [loopOnly, setLoopOnly] = useState(false);
   const [stingerOnly, setStingerOnly] = useState(false);
 
   const [availableInstruments, setAvailableInstruments] = useState<string[]>([]);
+  const [availableMediaThemes, setAvailableMediaThemes] = useState<string[]>([]);
 
   useEffect(() => {
     if (window.createLemonSqueezy) {
@@ -54,7 +57,7 @@ export const Library: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
     fetchTracks();
-  }, [selectedGenres, selectedMoods, selectedInstruments, selectedSeasons, bpmRange, searchTerm, loopOnly, stingerOnly, sortBy]);
+  }, [selectedGenres, selectedMoods, selectedInstruments, selectedSeasons, selectedMediaThemes, bpmRange, searchTerm, loopOnly, stingerOnly, sortBy]);
 
   const fetchTracks = async () => {
     setLoading(true);
@@ -85,15 +88,19 @@ export const Library: React.FC = () => {
 
         let filteredData = allTracks;
 
-        if (availableInstruments.length === 0) {
+        // Extract Instruments and Media Themes if not already done
+        if (availableInstruments.length === 0 || availableMediaThemes.length === 0) {
             const instrumentCounts: Record<string, number> = {};
+            const mediaThemeCounts: Record<string, number> = {};
 
             (data as MusicTrack[]).forEach(track => {
                 const addInst = (inst: string) => {
                     const i = inst.trim();
-                    if (i) {
-                        instrumentCounts[i] = (instrumentCounts[i] || 0) + 1;
-                    }
+                    if (i) instrumentCounts[i] = (instrumentCounts[i] || 0) + 1;
+                };
+                const addTheme = (theme: string) => {
+                    const t = theme.trim();
+                    if (t) mediaThemeCounts[t] = (mediaThemeCounts[t] || 0) + 1;
                 };
 
                 if (Array.isArray(track.instrument)) {
@@ -101,13 +108,28 @@ export const Library: React.FC = () => {
                 } else if (typeof track.instrument === 'string' && track.instrument) {
                     addInst(track.instrument);
                 }
+
+                if (Array.isArray(track.media_theme)) {
+                    track.media_theme.forEach(addTheme);
+                } else if (typeof track.media_theme === 'string' && track.media_theme) {
+                    addTheme(track.media_theme);
+                }
             });
 
-            const sortedInstruments = Object.entries(instrumentCounts)
-                .sort((a, b) => b[1] - a[1])
-                .map(entry => entry[0]);
+            if (availableInstruments.length === 0) {
+                const sortedInstruments = Object.entries(instrumentCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(entry => entry[0]);
+                setAvailableInstruments(sortedInstruments);
+            }
 
-            setAvailableInstruments(sortedInstruments);
+            if (availableMediaThemes.length === 0) {
+                const sortedThemes = Object.entries(mediaThemeCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10)
+                    .map(entry => entry[0]);
+                setAvailableMediaThemes(sortedThemes);
+            }
         }
 
         const normalize = (val: any) => String(val).toLowerCase().trim();
@@ -169,6 +191,8 @@ export const Library: React.FC = () => {
         if (selectedMoods.length > 0) filteredData = filteredData.filter(track => checkFilterMatch(track.mood, selectedMoods));
         if (selectedInstruments.length > 0) filteredData = filteredData.filter(track => checkFilterMatch(track.instrument, selectedInstruments));
         if (selectedSeasons.length > 0) filteredData = filteredData.filter(track => checkFilterMatch(track.season, selectedSeasons));
+        if (selectedMediaThemes.length > 0) filteredData = filteredData.filter(track => checkFilterMatch(track.media_theme, selectedMediaThemes));
+        
         if (bpmRange) {
             filteredData = filteredData.filter(track => {
                 if (!track.bpm) return false;
@@ -218,6 +242,7 @@ export const Library: React.FC = () => {
       setSearchTerm('');
       setSelectedSeasons([]);
       setSelectedInstruments([]);
+      setSelectedMediaThemes([]);
       setBpmRange(null);
       setLoopOnly(false);
       setStingerOnly(false);
@@ -253,6 +278,7 @@ export const Library: React.FC = () => {
       setSelectedMoods([]);
       setSelectedInstruments([]);
       setSelectedSeasons([]);
+      setSelectedMediaThemes([]);
       setBpmRange(null);
       setLoopOnly(false);
       setStingerOnly(false);
@@ -287,7 +313,7 @@ export const Library: React.FC = () => {
     }
   };
 
-  const hasActiveFilters = searchTerm || selectedGenres.length > 0 || selectedMoods.length > 0 || selectedInstruments.length > 0 || selectedSeasons.length > 0 || bpmRange || loopOnly || stingerOnly;
+  const hasActiveFilters = searchTerm || selectedGenres.length > 0 || selectedMoods.length > 0 || selectedInstruments.length > 0 || selectedSeasons.length > 0 || selectedMediaThemes.length > 0 || bpmRange || loopOnly || stingerOnly;
 
   const getPageTitle = () => {
       if (searchTerm) return `"${searchTerm}" Search Results`;
@@ -295,6 +321,7 @@ export const Library: React.FC = () => {
       if (selectedMoods.length > 0) return `${selectedMoods.join(', ')} Royalty Free Music`;
       if (selectedInstruments.length > 0) return `${selectedInstruments.join(', ')} Royalty Free Music`;
       if (selectedSeasons.length > 0) return `${selectedSeasons.join(', ')} Royalty Free Music`;
+      if (selectedMediaThemes.length > 0) return `${selectedMediaThemes.join(', ')} Royalty Free Music`;
       if (loopOnly) return "Loopable Tracks";
       if (stingerOnly) return "Tracks with Stingers";
       return "Music Library";
@@ -393,6 +420,17 @@ export const Library: React.FC = () => {
                 isDark={isDarkMode}
             />
 
+            {availableMediaThemes.length > 0 && (
+                <CollapsibleFilterSection 
+                    title="Media Themes" 
+                    items={availableMediaThemes} 
+                    selected={selectedMediaThemes} 
+                    onChange={(i) => toggleFilter(selectedMediaThemes, setSelectedMediaThemes, i)} 
+                    linkTo="/categories/media-themes"
+                    isDark={isDarkMode}
+                />
+            )}
+
             <CollapsibleFilterSection 
                 title="Additional Edits" 
                 isDark={isDarkMode}
@@ -444,6 +482,7 @@ export const Library: React.FC = () => {
                             {stingerOnly && <ActiveFilterBadge label="Includes Stinger" onRemove={() => setStingerOnly(false)} isDark={isDarkMode} />}
                             {selectedGenres.map(g => <ActiveFilterBadge key={g} label={g} onRemove={() => toggleFilter(selectedGenres, setSelectedGenres, g)} isDark={isDarkMode} />)}
                             {selectedMoods.map(m => <ActiveFilterBadge key={m} label={m} onRemove={() => toggleFilter(selectedMoods, setSelectedMoods, m)} isDark={isDarkMode} />)}
+                            {selectedMediaThemes.map(t => <ActiveFilterBadge key={t} label={t} onRemove={() => toggleFilter(selectedMediaThemes, setSelectedMediaThemes, t)} isDark={isDarkMode} />)}
                         </div>
                      )}
                 </div>
@@ -536,6 +575,9 @@ export const Library: React.FC = () => {
                 ))}
                 {selectedSeasons.map(s => (
                     <ActiveFilterBadge key={s} label={s} onRemove={() => toggleFilter(selectedSeasons, setSelectedSeasons, s)} isDark={isDarkMode} />
+                ))}
+                {selectedMediaThemes.map(t => (
+                    <ActiveFilterBadge key={t} label={t} onRemove={() => toggleFilter(selectedMediaThemes, setSelectedMediaThemes, t)} isDark={isDarkMode} />
                 ))}
 
                 <button 
@@ -659,7 +701,7 @@ const CollapsibleFilterSection: React.FC<{
                 <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
                     {children ? children : (
                         <div className="space-y-1">
-                            {items?.slice(0, 8).map(item => {
+                            {items?.slice(0, 10).map(item => {
                                 const isSelected = selected?.includes(item);
                                 return (
                                     <button 
