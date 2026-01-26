@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { Link, useLocation } from 'react-router-dom';
-import { Smile, ArrowLeft, Tag, Calendar, Briefcase, Music, Sun, Moon, Coffee, Film, Search, Heart, Globe, Sparkles, ChevronDown, CloudRain, Layers, Clapperboard, Disc3, Play, Pause, Download, Loader2, Music2, Zap } from 'lucide-react';
+import { Smile, ArrowLeft, Tag, Calendar, Music, Sun, Moon, Coffee, Heart, Sparkles, ChevronDown, Layers, Clapperboard, Disc3, Play, Pause, Download, Loader2, Music2, X } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { SEO } from '../components/SEO';
 import { MusicTrack } from '../types';
@@ -19,8 +18,10 @@ export const MoodsPage: React.FC = () => {
   const { isDarkMode, playTrack, currentTrack, isPlaying, session, ownedTrackIds } = useStore();
   const location = useLocation();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [loadingTracks, setLoadingTracks] = useState(false);
+  const [uncategorizedMoods, setUncategorizedMoods] = useState<string[]>([]);
   const resultsRef = useRef<HTMLDivElement>(null);
   
   const gradients = [
@@ -33,109 +34,58 @@ export const MoodsPage: React.FC = () => {
 
   const moodCategories: MoodCategory[] = [
     {
-        title: "POSITIVE & BRIGHT",
-        icon: <Sun size={24} />,
+        title: "POSITIVE & ENERGETIC",
+        icon: <Sun size={20} />,
         submoods: [
-            'happy', 'uplifting', 'positive', 'carefree', 'bright', 'bouncy', 
-            'feel-good', 'vibrant', 'optimistic', 'joyous', 'delightful', 
-            'exuberant', 'excited', 'exciting', 'hopeful', 'inspiring', 
-            'sweet', 'upbeat', 'warm', 'celebratory', 'festive'
+            'Happy', 'Joyful', 'Joyous', 'Cheerful', 'Upbeat', 'Uplifting', 'Positive', 
+            'Feel-good', 'Exuberant', 'Vibrant', 'Triumphant', 'Energetic', 'Dynamic', 
+            'Fast', 'Lively', 'Hectic', 'Breezy', 'Carefree', 'Playful', 'Whimsical', 
+            'Quirky', 'Sassy', 'Confident', 'Celebratory', 'Festive', 'Glamorous', 
+            'Heroic', 'Inspirational', 'Inspiring', 'Motivational', 'Optimistic', 'Powerful'
         ]
     },
     {
-        title: "ENERGETIC & POWERFUL",
-        icon: <Zap size={24} />,
+        title: "DARK, TENSE & DRAMATIC",
+        icon: <Moon size={20} />,
         submoods: [
-            'energetic', 'powerful', 'aggressive', 'epic', 'heroic', 'bold', 
-            'dynamic', 'fast', 'triumphant', 'wild', 'confident', 'action', 
-            'driving', 'enthusiastic', 'determined', 'rebellious', 'spirited',
-            'urgent', 'lively'
+            'Tense', 'Suspenseful', 'Suspense', 'Mysterious', 'Intriguing', 'Curious', 
+            'Dark', 'Sinister', 'Ominous', 'Menacing', 'Aggressive', 'Macabre', 
+            'Creepy', 'Eerie', 'Spooky', 'Frightening', 'Disturbing', 'Horror', 
+            'Dramatic', 'Intense', 'Chaotic', 'Thrilling', 'Wild', 'Epic'
         ]
     },
     {
-        title: "DARK & SUSPENSE",
-        icon: <Moon size={24} />,
+        title: "REFLECTIVE & CONTEMPLATIVE",
+        icon: <Coffee size={20} />,
         submoods: [
-            'dark', 'scary', 'spooky', 'sinister', 'ominous', 'tense', 
-            'suspenseful', 'menacing', 'creepy', 'eerie', 'horror', 'frightening',
-            'disturbing', 'anxious', 'desperate', 'macabre', 'threatening'
+            'Calm', 'Tranquil', 'Serene', 'Peaceful', 'Relaxation', 'Relaxed', 'Relaxing', 
+            'Soothing', 'Cozy', 'Comfortable', 'Meditative', 'Dreamy', 'Ethereal', 
+            'Enchanting', 'Magical', 'Mystical', 'Atmospheric', 'Contemplative', 
+            'Pensive', 'Reflective', 'Thoughtful', 'Introspective', 'Moody', 
+            'Nostalgic', 'Melancholic', 'Melancholy', 'Gloomy', 'Lonesome', 'Hurt', 
+            'Sad', 'Tragical'
         ]
     },
     {
-        title: "RELAXED & PEACEFUL",
-        icon: <Coffee size={24} />,
+        title: "EMOTION & PASSION",
+        icon: <Heart size={20} />,
         submoods: [
-            'calm', 'relaxed', 'peaceful', 'soothing', 'serene', 'cozy', 
-            'tranquil', 'comforting', 'meditative', 'breezy', 'idyllic', 
-            'laid-back', 'mellow', 'soft'
+            'Romantic', 'Emotional', 'Passionate', 'Erotic', 'Seductive', 'Sensual', 
+            'Sexy', 'Flirtatious', 'Tender', 'Intimate', 'Heartwarming', 'Sentimental', 
+            'Soulful'
         ]
     },
     {
-        title: "CINEMATIC & DRAMATIC",
-        icon: <Film size={24} />,
+        title: "THEMES & STYLES",
+        icon: <Sparkles size={20} />,
         submoods: [
-            'dramatic', 'emotional', 'majestic', 'atmospheric', 'cinematic', 
-            'intense', 'chaotic', 'thrilling', 'storytelling', 'awe-inspiring', 
-            'captivating', 'ethereal', 'magical', 'mysterious', 'spiritual',
-            'adventurous', 'beautiful'
-        ]
-    },
-    {
-        title: "QUIRKY & FUN",
-        icon: <Sparkles size={24} />,
-        submoods: [
-            'quirky', 'funny', 'whimsical', 'mischievous', 'amusing', 
-            'eccentric', 'playful', 'humorous', 'sassy', 'comedic', 
-            'ironic', 'fun', 'exotic', 'groovy', 'psychedelic', 'dancing', 'rhythmic'
-        ]
-    },
-    {
-        title: "ROMANTIC & SENSUAL",
-        icon: <Heart size={24} />,
-        submoods: [
-            'romantic', 'sensual', 'intimate', 'sexy', 'seductive', 
-            'elegant', 'flirtatious', 'tender', 'heartwarming', 'charming', 
-            'chic', 'classy', 'glamorous', 'luxurious', 'passionate', 'seduction',
-            'soulful', 'cool'
-        ]
-    },
-    {
-        title: "SAD & NOSTALGIC",
-        icon: <CloudRain size={24} />,
-        submoods: [
-            'sad', 'melancholic', 'nostalgic', 'gloomy', 'sentimental', 
-            'poignant', 'mournful', 'tragic', 'lonesome', 'hurt', 'somber', 
-            'solemn', 'moody', 'noir'
-        ]
-    },
-    {
-        title: "BUSINESS & INNOVATION",
-        icon: <Briefcase size={24} />,
-        submoods: [
-            'corporate', 'informative', 'intelligent', 'ambitious', 'focused', 
-            'futuristic', 'modern', 'professional', 'sophisticated', 'serious',
-            'thoughtful', 'creative', 'abstract', 'innovative', 'motivational'
-        ]
-    },
-    {
-        title: "CULTURE & HERITAGE",
-        icon: <Globe size={24} />,
-        submoods: [
-            'noble', 'regal', 'royal', 'patriotic', 'historic', 'prestigious', 
-            'proud', 'culture', 'heritage'
-        ]
-    },
-    {
-        title: "CONTEMPLATIVE",
-        icon: <Search size={24} />,
-        submoods: [
-            'contemplative', 'introspective', 'reflective', 'pensive', 
-            'curious', 'inquiring', 'intriguing', 'daydream', 'dreamy'
+            'Adventure', 'Adventurous', 'Majestic', 'Groovy', 'Rhythmic', 'Percussion', 
+            'Elegant', 'Chic', 'Cool', 'Charming', 'Luxurious', 'Regal', 'Beautiful', 
+            'Exotic', 'Psychedelic', 'Experimental', 'Orchestral', 'Score', 'Synth', 
+            'Corporate', 'Comedic', 'Funny', 'Humorous', 'Noire'
         ]
     }
-];
-
-  const [uncategorizedMoods, setUncategorizedMoods] = useState<string[]>([]);
+  ];
 
   useEffect(() => {
     const fetchMoods = async () => {
@@ -156,21 +106,34 @@ export const MoodsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedMood) {
-        fetchTracksForMood(selectedMood);
-        setTimeout(() => {
-            resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+    if (openCategory) {
+        fetchTracksForSelection();
+    } else {
+        setTracks([]);
     }
-  }, [selectedMood]);
+  }, [openCategory, selectedMood]);
 
-  const fetchTracksForMood = async (mood: string) => {
+  const fetchTracksForSelection = async () => {
     setLoadingTracks(true);
     const { data, error } = await supabase.from('squeeze_tracks').select('*');
     if (!error && data) {
+        let targets: string[] = [];
+        if (selectedMood) {
+            targets = [selectedMood.toLowerCase()];
+        } else if (openCategory === 'OTHER') {
+            targets = uncategorizedMoods.map(m => m.toLowerCase());
+        } else {
+            const cat = moodCategories.find(c => c.title === openCategory);
+            if (cat) targets = cat.submoods.map(m => m.toLowerCase());
+        }
+
         const filtered = (data as MusicTrack[]).filter(track => {
-            const trackMoods = Array.isArray(track.mood) ? track.mood : typeof track.mood === 'string' ? [track.mood] : [];
-            return trackMoods.some(m => m.toLowerCase() === mood.toLowerCase());
+            const trackMoods = Array.isArray(track.mood) 
+                ? track.mood.map(m => m.toLowerCase()) 
+                : typeof track.mood === 'string' 
+                    ? [track.mood.toLowerCase()] 
+                    : [];
+            return trackMoods.some(m => targets.includes(m));
         });
         setTracks(filtered);
     }
@@ -186,6 +149,25 @@ export const MoodsPage: React.FC = () => {
         : (isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700' : 'bg-white border-zinc-200 text-zinc-500 hover:text-sky-600 hover:border-sky-300')}
     `;
   };
+
+  const toggleCategory = (title: string) => {
+    if (openCategory === title) {
+        setOpenCategory(null);
+        setSelectedMood(null);
+    } else {
+        setOpenCategory(title);
+        setSelectedMood(null);
+        setTimeout(() => {
+            resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }
+  };
+
+  const handleMoodClick = (mood: string) => {
+    setSelectedMood(selectedMood === mood ? null : mood);
+  };
+
+  const activeCategoryData = moodCategories.find(c => c.title === openCategory);
 
   return (
     <div className="container mx-auto px-4 pt-6 pb-32">
@@ -219,135 +201,138 @@ export const MoodsPage: React.FC = () => {
         </div>
 
         <div className="mb-10 text-center">
-            <h1 className="text-3xl md:text-5xl font-black mb-4 flex items-center justify-center gap-3 tracking-tight uppercase">
+            <h1 className="text-3xl md:text-5xl font-black mb-4 flex items-center justify-center gap-3 tracking-tight uppercase text-center">
                 <Smile className="text-emerald-500" size={32} /> Moods
             </h1>
             <p className="text-lg md:text-xl opacity-70 max-w-2xl mx-auto font-medium">
-                Find the perfect emotional tone. Hover over a category and select a mood to see matching tracks.
+                Choose a macro-mood to explore. Refine with tags to find the perfect emotion.
             </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1440px] mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 max-w-[1440px] mx-auto mb-12">
             {moodCategories.map((category, index) => {
                 const gradient = gradients[index % gradients.length];
+                const isOpen = openCategory === category.title;
                 return (
-                    <div 
-                        key={category.title} 
+                    <button
+                        key={category.title}
+                        onClick={() => toggleCategory(category.title)}
                         className={`
-                            group rounded-2xl overflow-hidden shadow-md transition-all duration-300 relative
-                            ${isDarkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-gray-100'}
-                            hover:shadow-2xl hover:ring-2 hover:ring-emerald-500/30 hover:-translate-y-1
+                            relative h-24 px-6 rounded-3xl flex items-center justify-between text-white font-black text-xs md:text-sm tracking-widest uppercase transition-all duration-300 transform active:scale-95
+                            ${isOpen ? 'ring-4 ring-emerald-500 shadow-2xl scale-[1.05] z-10' : 'hover:scale-[1.02] shadow-md'}
+                            ${gradient}
                         `}
                     >
-                        <div className={`w-full h-20 flex items-center justify-between px-6 text-white transition-all ${gradient}`}>
-                            <div className="flex items-center gap-4">
-                                <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
-                                    {category.icon}
-                                </div>
-                                <h2 className="text-sm font-black text-left leading-tight drop-shadow-sm uppercase tracking-widest">
-                                    {category.title}
-                                </h2>
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                                {category.icon}
                             </div>
-                            <ChevronDown size={18} className="text-white/60 transition-transform group-hover:rotate-180" />
+                            <span className="text-left leading-tight drop-shadow-sm">{category.title}</span>
                         </div>
-                        
-                        <div className="max-h-0 opacity-0 group-hover:max-h-[1000px] group-hover:opacity-100 transition-all duration-500 ease-in-out overflow-hidden">
-                            <div className="p-5">
-                                <div className="flex flex-wrap gap-1.5">
-                                    {category.submoods.map((mood) => (
-                                        <button
-                                            key={mood}
-                                            onClick={() => setSelectedMood(mood)}
-                                            className={`
-                                                px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all duration-200 capitalize
-                                                ${selectedMood === mood
-                                                    ? 'bg-emerald-500 border-emerald-400 text-white shadow-lg'
-                                                    : isDarkMode 
-                                                        ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white hover:bg-emerald-600 hover:border-emerald-500' 
-                                                        : 'bg-gray-50 border-zinc-200 text-zinc-600 hover:text-white hover:bg-emerald-500 hover:border-emerald-500'}
-                                            `}
-                                        >
-                                            {mood}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                        <ChevronDown size={18} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : 'opacity-40'}`} />
+                    </button>
                 );
             })}
-
+            
             {uncategorizedMoods.length > 0 && (
-                <div className={`group rounded-2xl overflow-hidden shadow-md transition-all duration-300 relative ${isDarkMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-gray-100'} hover:shadow-2xl hover:ring-2 hover:ring-emerald-500/30 hover:-translate-y-1`}>
-                    <div className="w-full h-20 flex items-center justify-between px-6 text-white transition-all bg-gradient-to-br from-slate-500 to-zinc-600">
-                        <div className="flex items-center gap-4">
-                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
-                                <Layers size={24} />
-                            </div>
-                            <h2 className="text-sm font-black text-left leading-tight drop-shadow-sm uppercase tracking-widest">OTHER MOODS</h2>
+                <button
+                    onClick={() => toggleCategory('OTHER')}
+                    className={`
+                        relative h-24 px-6 rounded-3xl flex items-center justify-between text-white font-black text-xs md:text-sm tracking-widest uppercase transition-all duration-300 transform active:scale-95
+                        ${openCategory === 'OTHER' ? 'ring-4 ring-emerald-500 shadow-2xl scale-[1.05] z-10' : 'hover:scale-[1.02] shadow-md'}
+                        bg-gradient-to-br from-zinc-600 to-zinc-800
+                    `}
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                            <Layers size={20} />
                         </div>
-                        <ChevronDown size={18} className="text-white/60 transition-transform group-hover:rotate-180" />
+                        <span>OTHER MOODS</span>
                     </div>
-                    <div className="max-h-0 opacity-0 group-hover:max-h-[1000px] group-hover:opacity-100 transition-all duration-500 ease-in-out overflow-hidden">
-                        <div className="p-5">
-                            <div className="flex flex-wrap gap-1.5">
-                                {uncategorizedMoods.map((mood) => (
-                                    <button
-                                        key={mood}
-                                        onClick={() => setSelectedMood(mood)}
-                                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all duration-200 capitalize ${selectedMood === mood ? 'bg-emerald-500 border-emerald-400 text-white' : isDarkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white hover:bg-emerald-600 hover:border-emerald-500' : 'bg-gray-50 border-zinc-200 text-zinc-600 hover:text-white hover:bg-emerald-500 hover:border-emerald-500'}`}
-                                    >
-                                        {mood}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <ChevronDown size={18} className={`transition-transform duration-300 ${openCategory === 'OTHER' ? 'rotate-180' : 'opacity-40'}`} />
+                </button>
             )}
         </div>
 
-        <div ref={resultsRef} className="mt-20 scroll-mt-24">
-            {selectedMood && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 border-b pb-6 border-zinc-100 dark:border-zinc-800">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-xl shadow-emerald-500/20">
-                                <Music2 size={24} />
+        {openCategory && (
+            <div className="max-w-[1440px] mx-auto animate-in fade-in slide-in-from-top-4 duration-500 scroll-mt-36">
+                <div className="flex flex-col lg:flex-row gap-8 items-start">
+                    
+                    {/* LEFT COLUMN: Tags (1/3) - LG ONLY STICKY - MODIFIED FOR ANNOUNCEMENT BAR */}
+                    <div className={`w-full lg:w-1/3 p-8 md:p-10 rounded-[3rem] border lg:sticky lg:top-36 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-100 shadow-2xl shadow-sky-500/5'}`}>
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-4">
+                                <div className="p-4 bg-emerald-500 rounded-2xl text-white shadow-xl">
+                                    <Sparkles size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black tracking-tight uppercase leading-none">{openCategory}</h2>
+                                    <p className="text-[10px] opacity-50 font-black uppercase tracking-widest mt-2">Filter tags</p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 className="text-2xl md:text-3xl font-black tracking-tight uppercase">
-                                    {selectedMood} Tracks
-                                </h2>
-                                <p className="text-sm opacity-50 font-medium">Found {tracks.length} matching recordings</p>
-                            </div>
+                            <button 
+                                onClick={() => { setOpenCategory(null); setSelectedMood(null); }}
+                                className="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
                         </div>
-                        
-                        <button 
-                            onClick={() => setSelectedMood(null)}
-                            className="text-xs font-bold opacity-40 hover:opacity-100 flex items-center gap-1 uppercase tracking-widest"
-                        >
-                            Clear selection <ChevronDown size={14} className="rotate-90" />
-                        </button>
-                    </div>
 
-                    {loadingTracks ? (
-                        <div className="py-20 flex flex-col items-center gap-4 opacity-50">
-                            <Loader2 className="animate-spin text-emerald-500" size={40} />
-                            <p className="font-bold">Selecting the best {selectedMood} music...</p>
-                        </div>
-                    ) : tracks.length === 0 ? (
-                        <div className="py-20 text-center opacity-40 italic">No tracks found.</div>
-                    ) : (
-                        <div className="grid grid-cols-1 gap-3">
-                            {tracks.map(track => (
-                                <TrackRow key={track.id} track={track} playlist={tracks} />
+                        <div className="flex flex-wrap gap-2 md:gap-3">
+                            {(openCategory === 'OTHER' ? uncategorizedMoods : activeCategoryData?.submoods || []).map((mood) => (
+                                <button
+                                    key={mood}
+                                    onClick={() => handleMoodClick(mood)}
+                                    className={`
+                                        px-5 py-2.5 rounded-2xl text-xs font-black border transition-all duration-200 capitalize tracking-wide
+                                        ${selectedMood === mood
+                                            ? 'bg-emerald-500 border-emerald-400 text-white shadow-xl scale-105'
+                                            : isDarkMode 
+                                                ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white hover:bg-emerald-600 hover:border-emerald-500' 
+                                                : 'bg-white border-zinc-200 text-zinc-600 hover:text-white hover:bg-emerald-500 hover:border-emerald-500 shadow-sm'}
+                                    `}
+                                >
+                                    {mood}
+                                </button>
                             ))}
                         </div>
-                    )}
+                    </div>
+
+                    {/* RIGHT COLUMN: Tracks (2/3) - MODIFIED scroll-mt FOR ANNOUNCEMENT BAR */}
+                    <div ref={resultsRef} className="w-full lg:w-2/3 scroll-mt-36">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 border-b pb-4 border-zinc-100 dark:border-zinc-800">
+                            <div className="flex items-center gap-4">
+                                <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-500">
+                                    <Music2 size={20} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-black tracking-tight uppercase">
+                                        {selectedMood || openCategory} Tracks
+                                    </h2>
+                                    <p className="text-xs opacity-50 font-medium">Found {tracks.length} matching recordings</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {loadingTracks ? (
+                            <div className="py-20 flex flex-col items-center gap-4 opacity-50">
+                                <Loader2 className="animate-spin text-emerald-500" size={40} />
+                                <p className="font-bold">Gathering results...</p>
+                            </div>
+                        ) : tracks.length === 0 ? (
+                            <div className="py-20 text-center opacity-40 italic border border-dashed rounded-3xl">No tracks found for this mood selection.</div>
+                        ) : (
+                            <div className="flex flex-col gap-3">
+                                {tracks.map(track => (
+                                    <TrackRow key={track.id} track={track} playlist={tracks} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                 </div>
-            )}
-        </div>
+            </div>
+        )}
     </div>
   );
 };
@@ -390,7 +375,7 @@ const TrackRow: React.FC<{ track: MusicTrack; playlist: MusicTrack[] }> = ({ tra
 
     return (
         <div className={`
-            group flex items-center gap-4 p-3 rounded-xl border transition-all duration-300
+            group flex items-center gap-4 p-2.5 rounded-xl border transition-all duration-300
             ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:bg-zinc-800' : 'bg-white border-zinc-100 hover:shadow-md'}
             ${active ? 'ring-1 ring-emerald-500 shadow-lg shadow-emerald-500/10' : ''}
         `}>
@@ -401,10 +386,10 @@ const TrackRow: React.FC<{ track: MusicTrack; playlist: MusicTrack[] }> = ({ tra
                 </div>
             </div>
             <div className="flex-1 min-w-0">
-                <Link to={`/track/${createSlug(track.id, track.title)}`} className="font-bold text-base hover:text-emerald-500 transition-colors truncate block">
+                <Link to={`/track/${createSlug(track.id, track.title)}`} className="font-bold text-sm md:text-base hover:text-emerald-500 transition-colors truncate block">
                     {track.title}
                 </Link>
-                <p className="text-xs opacity-50 font-medium truncate">{track.artist_name}</p>
+                <p className="text-[10px] opacity-50 font-medium truncate">{track.artist_name}</p>
             </div>
             <div className="hidden md:flex flex-[2] h-10 items-center px-4">
                 <WaveformVisualizer track={track} height="h-8" barCount={120} interactive={true} enableAnalysis={active} />

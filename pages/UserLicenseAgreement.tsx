@@ -71,7 +71,7 @@ export const UserLicenseAgreement: React.FC = () => {
                 </ul>
                 <div className={`mt-6 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 ${isDarkMode ? 'bg-zinc-800/50' : 'bg-sky-50'}`}>
                   <p className="text-sm m-0">The License Certificate serves as formal proof of the granted synchronization license.</p>
-                  <a href="https://www.pinegroove.net/mypurchases" className="flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 px-6 rounded-full text-sm transition-all shadow-md shrink-0">
+                  <a href="https://www.pinegroove.net/my-purchases" className="flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 px-6 rounded-full text-sm transition-all shadow-md shrink-0">
                     <Download size={16} /> My Purchases
                   </a>
                 </div>
