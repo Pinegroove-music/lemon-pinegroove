@@ -17,6 +17,37 @@ declare global {
   }
 }
 
+const PersonSchema = () => {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Francesco Biondi",
+    "url": "https://www.pinegroove.net",
+    "jobTitle": "Composer",
+    "description": "Professional composer and music producer specializing in high-end synchronization licensing for film, television, and digital media through the Pinegroove boutique library.",
+    "identifier": {
+      "@type": "PropertyValue",
+      "name": "BMI IPI",
+      "value": "00542050494"
+    },
+    "sameAs": [
+      "https://www.francescobiondimusic.com/",
+      "https://pinegroove.net/about",
+      "https://www.linkedin.com/in/francesco-biondi",
+      "https://open.spotify.com/intl-it/artist/5wkrrI2WhHqfxw1tozdOYt?si=0-fx0JAyRmWFrJjwGvljAQ",
+      "https://soundcloud.com/francescobiondi",
+      "https://music.apple.com/it/artist/francesco-biondi/447030642"
+    ]
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+};
+
 export const Home: React.FC = () => {
   const [discoverTracks, setDiscoverTracks] = useState<MusicTrack[]>([]);
   const [trendingTracks, setTrendingTracks] = useState<MusicTrack[]>([]);
@@ -400,6 +431,7 @@ export const Home: React.FC = () => {
   return (
     <div className="space-y-16 pb-20">
       <SEO title="Royalty Free Music for Video" />
+      <PersonSchema />
       
        {/* Hero Section - Compact height & Content shifted low */}
       <div className="relative pt-40 pb-8 md:pt-48 md:pb-12 text-center flex flex-col items-center justify-end min-h-[390px] md:min-h-[460px]">
@@ -409,7 +441,7 @@ export const Home: React.FC = () => {
                 alt="Royalty Free Music for Video" 
                 className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-black/40 transition-colors duration-500"></div>
+            <div className="absolute inset-0 bg-black/50 transition-colors duration-500"></div>
          </div>
 
          <div className="relative w-full max-w-[1920px] mx-auto px-6 text-white mb-6 md:mb-8">

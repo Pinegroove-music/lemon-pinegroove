@@ -11,6 +11,7 @@ import { SEO } from '../components/SEO';
 import { getIdFromSlug, createSlug } from '../utils/slugUtils';
 import { FavoriteButton } from '../components/FavoriteButton';
 import { ShareButton } from '../components/ShareButton';
+import { TrackSchema } from '../components/TrackSchema';
 
 type LicenseOption = 'standard' | 'extended' | 'pro';
 
@@ -237,6 +238,8 @@ export const TrackDetail: React.FC = () => {
   const durationISO = track.duration ? `PT${Math.floor(track.duration / 60)}M${track.duration % 60}S` : undefined;
   const hasCredits = track.credits && Array.isArray(track.credits) && (track.credits as any[]).length > 0;
 
+  const currentFullUrl = `https://www.pinegroove.net/track/${slug}`;
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
         <SEO 
@@ -251,6 +254,7 @@ export const TrackDetail: React.FC = () => {
             datePublished: track.year?.toString()
           }}
         />
+        <TrackSchema track={track} currentUrl={currentFullUrl} pricing={pricingData} />
 
         <div className="flex flex-col md:flex-row gap-8 lg:gap-12 mb-12 items-start">
             <div className="w-full max-w-md md:w-80 lg:w-96 flex-shrink-0 aspect-square rounded-2xl overflow-hidden shadow-2xl relative group mx-auto md:mx-0">
@@ -391,7 +395,7 @@ export const TrackDetail: React.FC = () => {
                         <DetailRow label="Released" value={track.year} icon={<Calendar size={16}/>} />
                         <DetailRow label="ISRC" value={track.isrc} icon={<FileText size={16}/>} />
                         <DetailRow label="ISWC" value={track.iswc} icon={<FileText size={16}/>} />
-                        <DetailRow label="Sample Rate" value="16-Bit, 44.1 kHz" icon={<AudioWaveform size={16}/>} />
+                        <DetailRow label="Sample Rate" value="16-Bit Stereo, 44.1 kHz" icon={<AudioWaveform size={16}/>} />
 
                         {hasCredits && (
                             <div className="pt-4 mt-2 border-t border-dashed border-zinc-300 dark:border-zinc-700">
