@@ -395,7 +395,7 @@ export const TrackDetail: React.FC = () => {
                         <DetailRow label="Released" value={track.year} icon={<Calendar size={16}/>} />
                         <DetailRow label="ISRC" value={track.isrc} icon={<FileText size={16}/>} />
                         <DetailRow label="ISWC" value={track.iswc} icon={<FileText size={16}/>} />
-                        <DetailRow label="Sample Rate" value="16-Bit Stereo, 44.1 kHz" icon={<AudioWaveform size={16}/>} />
+                        <DetailRow label="Sample Rate" value="16-Bit, 44.1 kHz" icon={<AudioWaveform size={16}/>} />
 
                         {hasCredits && (
                             <div className="pt-4 mt-2 border-t border-dashed border-zinc-300 dark:border-zinc-700">
@@ -557,7 +557,7 @@ export const TrackDetail: React.FC = () => {
                   
                   <div className={`p-4 rounded-xl border text-center ${isDarkMode ? 'bg-sky-500/5 border-sky-500/20' : 'bg-sky-50 border-sky-100'}`}>
                     <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium">
-                        By purchasing a license, you will receive a 44.1 kHz watermark-free version of the track, downloadable at any time from your personal account area or this page. Where available, your download also includes additional edits (60s, 30s, Loops, and Stingers) to perfectly fit your project’s needs.
+                    By purchasing a license, you agree to our <a href="https://pinegroove.net/user-license-agreement" className="underline hover:opacity-100">Terms of Service</a> and our no-refund policy for digital products as detailed in the User License Agreement.
                     </p>
                   </div>
                 </div>

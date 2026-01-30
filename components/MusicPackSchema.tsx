@@ -1,14 +1,23 @@
 
 import React from 'react';
-import { MusicTrack, PricingItem } from '../types';
+import { PricingItem } from '../types';
 
-interface TrackSchemaProps {
-  track: MusicTrack;
-  currentUrl: string;
+interface MusicPackSchemaProps {
+  pack: {
+    id: number;
+    title: string;
+    description: string | null;
+    coverUrl: string;
+  };
+  tracks: {
+    title: string;
+    duration: number | null;
+  }[];
   pricing: PricingItem[];
+  currentUrl: string;
 }
 
-export const TrackSchema: React.FC<TrackSchemaProps> = ({ track, currentUrl, pricing }) => {
+export const MusicPackSchema: React.FC<MusicPackSchemaProps> = ({ pack, tracks, pricing, currentUrl }) => {
   // Conversione durata in ISO 8601 (es: PT3M45S)
   const getDurationISO = (seconds: number | null) => {
     if (!seconds) return undefined;
@@ -20,14 +29,9 @@ export const TrackSchema: React.FC<TrackSchemaProps> = ({ track, currentUrl, pri
   const personId = "https://www.pinegroove.net/about#francescobiondi";
   const validUntilDate = "2026-12-31";
 
-  // Mapping dei generi come array di stringhe
-  const genres = Array.isArray(track.genre) 
-    ? track.genre 
-    : (track.genre ? [track.genre] : []);
-
-  // Costruzione delle offerte basate sulla tabella pricing
+  // Costruzione delle offerte basate sulla tabella pricing per i pack
   const licenseOffers = pricing
-    .filter(p => p.product_type === 'single_track_standard' || p.product_type === 'single_track_extended')
+    .filter(p => p.product_type === 'music_pack_standard' || p.product_type === 'music_pack_extended')
     .map(p => ({
       "@type": "Offer",
       "name": p.product_name,
@@ -35,7 +39,7 @@ export const TrackSchema: React.FC<TrackSchemaProps> = ({ track, currentUrl, pri
       "priceCurrency": p.currency === '€' ? 'EUR' : p.currency,
       "priceValidUntil": validUntilDate,
       "availability": "https://schema.org/InStock",
-      "category": "Synchronization License",
+      "category": "Synchronization License Bundle",
       "url": currentUrl,
       "seller": {
         "@type": "Person",
@@ -45,48 +49,51 @@ export const TrackSchema: React.FC<TrackSchemaProps> = ({ track, currentUrl, pri
 
   const schema = {
     "@context": "https://schema.org",
-    "@type": ["MusicRecording", "Product"],
-    "@id": `${currentUrl}#recording`,
-    "name": track.title,
-    "url": currentUrl,
-    "image": track.cover_url,
-    "genre": genres,
-    "description": track.description || `Original music track "${track.title}" by Francesco Biondi.`,
-    "sku": `PG-TR-${track.id}`,
+    "@type": ["Product", "MusicAlbum"],
+    "@id": `${currentUrl}#album`,
+    "name": pack.title,
+    "description": pack.description || `Premium music bundle "${pack.title}" curated by Francesco Biondi.`,
+    "image": pack.coverUrl,
+    "sku": `PG-PACK-${pack.id}`,
     "brand": {
       "@type": "Brand",
       "name": "Pinegroove"
     },
-    "duration": getDurationISO(track.duration),
-    "isrcCode": track.isrc,
-    "encodingFormat": "audio/wav",
     "byArtist": {
       "@type": "Person",
       "@id": personId,
       "name": "Francesco Biondi",
       "url": "https://www.pinegroove.net/about"
     },
-    "recordingOf": {
-      "@type": "MusicComposition",
-      "name": track.title,
-      "iswcCode": track.iswc,
-      "composer": {
-        "@type": "Person",
-        "@id": personId
-      }
-    },
     "offers": licenseOffers.length > 0 ? licenseOffers : {
       "@type": "Offer",
       "url": currentUrl,
-      "price": "9.99",
+      "price": "49.99",
       "priceCurrency": "EUR",
       "priceValidUntil": validUntilDate,
       "availability": "https://schema.org/InStock",
-      "category": "Synchronization License",
+      "category": "Synchronization License Bundle",
       "seller": {
         "@type": "Person",
         "@id": personId
       }
+    },
+    "track": {
+      "@type": "ItemList",
+      "numberOfItems": tracks.length,
+      "itemListElement": tracks.map((t, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "item": {
+          "@type": "MusicRecording",
+          "name": t.title,
+          "duration": getDurationISO(t.duration),
+          "byArtist": {
+            "@type": "Person",
+            "@id": personId
+          }
+        }
+      }))
     },
     "acquireLicensePage": currentUrl
   };

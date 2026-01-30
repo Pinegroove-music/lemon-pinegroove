@@ -1,14 +1,16 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { Album, MusicTrack, Coupon, PricingItem } from '../types';
 import { useStore } from '../store/useStore';
 import { useSubscription } from '../hooks/useSubscription';
-import { ShoppingCart, Disc, Play, Pause, Check, ArrowLeft, AlertTriangle, Sparkles, ArrowRight, CheckCircle2, Zap, Library, Download, Loader2, Info, Ticket, Copy, Scissors, Share2 } from 'lucide-react';
+import { ShoppingCart, Disc, Disc3, Play, Pause, Check, ArrowLeft, AlertTriangle, Sparkles, ArrowRight, CheckCircle2, Zap, Library, Download, Loader2, Info, Ticket, Copy, Scissors, Share2 } from 'lucide-react';
 import { WaveformVisualizer } from '../components/WaveformVisualizer';
 import { SEO } from '../components/SEO';
 import { getIdFromSlug, createSlug } from '../utils/slugUtils';
 import { ShareButton } from '../components/ShareButton';
+import { MusicPackSchema } from '../components/MusicPackSchema';
 
 type LicenseOption = 'standard' | 'extended' | 'pro';
 
@@ -215,6 +217,8 @@ export const MusicPackDetail: React.FC = () => {
   const ownsStandard = isPurchased && purchase?.license_type?.toLowerCase().includes('standard');
   const ownsExtended = isPurchased && purchase?.license_type?.toLowerCase().includes('extended');
 
+  const currentFullUrl = `https://www.pinegroove.net/music-packs/${slug}`;
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 pb-32">
       <SEO 
@@ -227,6 +231,18 @@ export const MusicPackDetail: React.FC = () => {
             numTracks: tracks.length,
             genre: tracks.length > 0 ? (Array.isArray(tracks[0].genre) ? tracks[0].genre[0] : (tracks[0].genre || undefined)) : undefined
         }}
+      />
+      
+      <MusicPackSchema 
+        pack={{
+            id: album.id,
+            title: album.title,
+            description: album.description,
+            coverUrl: album.cover_url
+        }}
+        tracks={tracks.map(t => ({ title: t.title, duration: t.duration }))}
+        pricing={pricingData}
+        currentUrl={currentFullUrl}
       />
 
       <div className="flex items-center justify-between mb-8">
@@ -256,7 +272,7 @@ export const MusicPackDetail: React.FC = () => {
 
          <div className="flex-1 pt-4">
             <div className="flex items-center gap-2 text-sky-500 font-bold uppercase tracking-widest text-sm mb-4">
-                <Disc size={18} /> Premium Music Pack
+                <Disc3 size={18} /> Premium Music Pack
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight tracking-tight">{album.title}</h1>
             
@@ -349,7 +365,6 @@ export const MusicPackDetail: React.FC = () => {
             )}
           </div>
           
-          {/* IL RESTO DELLA PAGINA RIMANE INVARIATO... */}
           <div className="lg:col-span-5 space-y-6">
             <h3 className="text-2xl font-black mb-6 border-b pb-2 border-sky-500/20">Select License</h3>
             
@@ -433,7 +448,7 @@ export const MusicPackDetail: React.FC = () => {
               
               <div className={`p-4 rounded-xl border text-center ${isDarkMode ? 'bg-sky-500/5 border-sky-500/20' : 'bg-sky-50 border-sky-100'}`}>
                 <p className="text-[10px] md:text-xs opacity-70 leading-relaxed font-medium">
-                    By purchasing a license, you will receive watermark-free versions of all tracks in this pack, available in your personal account area.
+                By purchasing a license, you agree to our <a href="https://pinegroove.net/user-license-agreement" className="underline hover:opacity-100">Terms of Service</a> and our no-refund policy for digital products as detailed in the User License Agreement.
                 </p>
               </div>
             </div>
@@ -443,7 +458,7 @@ export const MusicPackDetail: React.FC = () => {
       {relatedPacks.length > 0 && (
           <div className="mt-20 pt-12 border-t border-gray-200 dark:border-zinc-800">
              <h3 className="text-2xl font-bold mb-8 flex items-center gap-2">
-                <Sparkles className="text-sky-500" size={24}/> Discover More Music Packs
+                <Disc3 className="text-sky-500" size={24}/> Discover More Music Packs
              </h3>
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {relatedPacks.map(pack => (

@@ -245,13 +245,10 @@ const Layout: React.FC = () => {
   const isLicenseAgreementPage = location.pathname === '/user-license-agreement';
   
   const hideSearchBarContent = isLicenseAgreementPage;
-  const shouldHideHeaderFrame = isLicenseAgreementPage;
-  const isHeroPage = isHomePage || isAboutPage || isContentIdPage || isFaqPage;
+  const isHeroPage = isHomePage || isAboutPage || isContentIdPage || isFaqPage || isLicenseAgreementPage;
 
   let headerWrapperClasses = `z-50 w-full transition-all duration-500 `;
-  if (shouldHideHeaderFrame) {
-      headerWrapperClasses += 'md:hidden absolute pointer-events-none ';
-  } else if (isHeroPage) {
+  if (isHeroPage) {
       if (isScrolled) {
           headerWrapperClasses += 'sticky top-0 ';
       } else {

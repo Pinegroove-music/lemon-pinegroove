@@ -240,6 +240,22 @@ export const ContentId: React.FC = () => {
                                 <Plus size={16} /> Add another video
                             </button>
                         )}
+
+                        {/* Status Confirmation Checkbox (NEW) */}
+                        <div className="mt-6">
+                            <label className="flex items-start gap-3 cursor-pointer group select-none">
+                                <input 
+                                    required 
+                                    type="checkbox" 
+                                    name="video_status_confirmed"
+                                    className="mt-1 w-4 h-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500 shrink-0"
+                                />
+                                <span className={`text-xs font-medium leading-snug ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                    I confirm that the video(s) are set to <strong>Public</strong> or <strong>Unlisted</strong>. 
+                                    Claims cannot be cleared if the video is set to <strong>Private</strong>. <span className="text-red-500">*</span>
+                                </span>
+                            </label>
+                        </div>
                     </div>
 
                     {error && (

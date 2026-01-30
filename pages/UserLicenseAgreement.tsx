@@ -2,7 +2,7 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
 import { SEO } from '../components/SEO';
-import { FileText, ShieldCheck, Download } from 'lucide-react';
+import { FileText, ShieldCheck, Download, HelpCircle, Mail } from 'lucide-react';
 
 export const UserLicenseAgreement: React.FC = () => {
   const { isDarkMode } = useStore();
@@ -11,8 +11,8 @@ export const UserLicenseAgreement: React.FC = () => {
     <div className="pb-32">
       <SEO title="User License Agreement" description="Pinegroove Synchronization License Agreement. Terms and conditions for music usage." />
       
-      {/* Hero Header - Simplified with brand gradient instead of image */}
-      <div className={`relative h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-sky-50'}`}>
+      {/* Hero Header - Adjusted padding and height to clear global header */}
+      <div className={`relative min-h-[400px] md:h-[45vh] flex items-center justify-center overflow-hidden transition-colors duration-500 pt-32 md:pt-40 pb-20 ${isDarkMode ? 'bg-zinc-950' : 'bg-sky-50'}`}>
         <div className={`absolute inset-0 z-0 opacity-20 dark:opacity-40 bg-gradient-to-br from-sky-500 via-indigo-600 to-purple-700`}></div>
 
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
@@ -26,11 +26,10 @@ export const UserLicenseAgreement: React.FC = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-6 relative z-20 -mt-16 md:-mt-20">
+      {/* Content - Reduced negative margin to prevent text clipping */}
+      <div className="container mx-auto px-6 relative z-20 -mt-10 md:-mt-20">
         <div className={`max-w-4xl mx-auto rounded-3xl shadow-2xl border overflow-hidden ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-100 text-zinc-700'}`}>
           
-          {/* Header Image inside the card - Changed to h-auto to prevent logo cropping */}
           <div className="w-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
             <img 
               src="https://pub-704d512baed74c069032320c83ebe2f7.r2.dev/youtube-template-gumroad-new.webp" 
@@ -41,7 +40,6 @@ export const UserLicenseAgreement: React.FC = () => {
 
           <div className="p-8 md:p-14 prose prose-lg dark:prose-invert max-w-none space-y-12">
             
-            {/* Section: Parties */}
             <section>
               <h2 className="text-2xl font-black mb-6 text-sky-500 border-b pb-2 border-sky-500/20">Parties</h2>
               <div className="space-y-4 leading-relaxed">
@@ -57,7 +55,6 @@ export const UserLicenseAgreement: React.FC = () => {
               </div>
             </section>
 
-            {/* Section: License Certificate */}
             <section>
               <h2 className="text-2xl font-black mb-6 text-sky-500 border-b pb-2 border-sky-500/20">License Certificate</h2>
               <div className="space-y-4">
@@ -71,14 +68,13 @@ export const UserLicenseAgreement: React.FC = () => {
                 </ul>
                 <div className={`mt-6 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 ${isDarkMode ? 'bg-zinc-800/50' : 'bg-sky-50'}`}>
                   <p className="text-sm m-0">The License Certificate serves as formal proof of the granted synchronization license.</p>
-                  <a href="https://www.pinegroove.net/my-purchases" className="flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 px-6 rounded-full text-sm transition-all shadow-md shrink-0">
+                  <a href="#/my-purchases" className="flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 px-6 rounded-full text-sm transition-all shadow-md shrink-0">
                     <Download size={16} /> My Purchases
                   </a>
                 </div>
               </div>
             </section>
 
-            {/* Section: License Grant */}
             <section>
               <h2 className="text-2xl font-black mb-6 text-sky-500 border-b pb-2 border-sky-500/20">License Grant</h2>
               <div className="space-y-4">
@@ -87,7 +83,6 @@ export const UserLicenseAgreement: React.FC = () => {
               </div>
             </section>
 
-            {/* Section: Standard License */}
             <section className={`p-8 rounded-3xl border ${isDarkMode ? 'bg-zinc-950/40 border-zinc-800' : 'bg-slate-50 border-slate-200'}`}>
               <h2 className="text-2xl font-black mb-6 flex items-center gap-3">
                 <ShieldCheck className="text-emerald-500" /> Standard License – Permitted Uses
@@ -118,7 +113,6 @@ export const UserLicenseAgreement: React.FC = () => {
               </div>
             </section>
 
-            {/* Section: Extended License */}
             <section className={`p-8 rounded-3xl border ${isDarkMode ? 'bg-sky-950/10 border-sky-900/30' : 'bg-sky-50 border-sky-100'}`}>
               <h2 className="text-2xl font-black mb-6 flex items-center gap-3">
                 <ShieldCheck className="text-sky-500" /> Extended License – Permitted Uses
@@ -151,7 +145,6 @@ export const UserLicenseAgreement: React.FC = () => {
               </div>
             </section>
 
-            {/* Section: Restrictions */}
             <section>
               <h2 className="text-2xl font-black mb-6 text-red-500 border-b pb-2 border-red-500/20">Restrictions</h2>
               <p className="mb-6 font-bold">Licensee may NOT:</p>
@@ -173,7 +166,6 @@ export const UserLicenseAgreement: React.FC = () => {
               </ul>
             </section>
 
-            {/* Section: Cue Sheet */}
             <section className={`p-8 rounded-3xl ${isDarkMode ? 'bg-zinc-800/30' : 'bg-zinc-50'}`}>
               <h2 className="text-2xl font-black mb-6 text-sky-500 border-b pb-2 border-sky-500/20">Cue Sheet & Performing Rights</h2>
               <p className="mb-6">Where required, cue sheets must credit:</p>
@@ -196,12 +188,25 @@ export const UserLicenseAgreement: React.FC = () => {
               </p>
             </section>
 
-            {/* Section: Indemnification */}
             <section>
               <h2 className="text-2xl font-black mb-6 text-sky-500 border-b pb-2 border-sky-500/20">Indemnification</h2>
               <p className="leading-relaxed">
                 Licensee agrees to indemnify, defend, and hold Licensor harmless from any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys’ fees) arising from any breach of this Agreement.
               </p>
+            </section>
+
+            {/* Section: Refund Policy */}
+            <section className={`p-8 rounded-3xl border ${isDarkMode ? 'bg-zinc-950/20 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+              <h2 className="text-2xl font-black mb-6 flex items-center gap-3 text-sky-500">
+                <HelpCircle size={24} /> Refund Policy
+              </h2>
+              <p className="leading-relaxed opacity-90">
+                Due to the digital nature of our products (audio files), <strong>all sales are final</strong>. Once you have purchased a track or a subscription and gained access to the digital files, we cannot offer refunds, returns, or exchanges. By completing your purchase, you acknowledge and agree to this policy. We encourage you to listen to the full previews available on our site before making a purchase. If you experience any technical issues with your download, please contact our support team.
+              </p>
+              <div className="mt-6 flex items-center gap-3 text-sky-500 font-bold">
+                <Mail size={18} />
+                <a href="mailto:info@pinegroove.net" className="hover:underline">info@pinegroove.net</a>
+              </div>
             </section>
 
           </div>

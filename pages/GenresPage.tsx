@@ -37,32 +37,32 @@ export const GenresPage: React.FC = () => {
     {
         title: "CINEMATIC & FILM SCORE",
         icon: <Clapperboard size={20} />,
-        subgenres: ['Action', 'Adventure', 'Cinematic', 'Drama', 'Dramedy', 'Film Noir', 'Fantasy', 'Horror', 'Hybrid', 'Industrial', 'Military', 'Orchestral', 'Patriotic', 'Percussion', 'Quirky', 'Sci-Fi', 'Score', 'Sitcom', 'Spaghetti Western', 'Soundtrack', 'Thriller', 'Trailer', 'Comedy']
+        subgenres: ['Action', 'Adventure', 'Cinematic', 'Comedy', 'Documentary', 'Drama', 'Dramedy', 'Film Noir', 'Fantasy', 'Horror', 'Hybrid', 'Industrial', 'Orchestral', 'Patriotic', 'Percussion', 'Quirky', 'Sci-Fi', 'Score', 'Spaghetti Western', 'Soundtrack', 'Thriller', 'Trailer']
     },
     {
         title: "CORPORATE & BUSINESS",
         icon: <Briefcase size={20} />,
-        subgenres: ['Corporate', 'Documentary', 'Future Garage', 'News']
+        subgenres: ['Corporate', 'Future Garage', 'News']
     },
     {
         title: "POP & ELECTRONIC",
         icon: <Zap size={20} />,
-        subgenres: ['Acapella', 'Ballad', 'Breakbeat', 'Dance', 'Electro', 'Electro Pop', 'Future', 'Glitch', 'House', 'Pop', 'Retrowave', 'Synthwave', 'Tropical House', 'Vaporwave', 'Vocals']
+        subgenres: ['Acapella', 'Ballad', 'Breakbeat', 'Dance', 'Electro', 'Future', 'Glitch', 'House', 'Pop', 'Synthwave', 'Tropical House', 'Vaporwave', 'Vocals']
     },
     {
         title: "ROCK",
         icon: <Guitar size={20} />,
-        subgenres: ['Alternative', 'Blues', 'Boogie Woogie', 'Doo-wop', 'Garage', 'Hard Rock', 'Indie', 'Jive', 'Psychedelia', 'Punk', 'Rock', "Rock'n'Roll", 'Rockabilly', 'Ska']
+        subgenres: ['Alternative', 'Blues', 'Boogie Woogie', 'Doo-wop', 'Hard Rock', 'Indie', 'Jive', 'Psychedelia', 'Punk', 'Rock', "Rock'n'Roll", 'Rockabilly', 'Ska']
     },
     {
         title: "AMBIENT & CHILL",
         icon: <Cloud size={20} />,
-        subgenres: ['Ambient', 'Chillout', 'Chillstep', 'Chillwave', 'Deep House', 'Downtempo', 'Easy Listening', 'Exotica', 'Lo-Fi', 'Lounge', 'Minimal', 'New Age', 'Piano', 'Smooth Jazz']
+        subgenres: ['Ambient', 'Chillout', 'Chillstep', 'Deep House', 'Downtempo', 'Easy Listening', 'Exotica', 'Lo-Fi', 'Lounge', 'Minimal', 'New Age', 'Piano', 'Smooth Jazz']
     },
     {
         title: "COUNTRY & FOLK",
         icon: <Coffee size={20} />,
-        subgenres: ['Acoustic', 'Americana', 'Bavarian Folk', 'Bluegrass', 'Country', 'Western', 'Serenade', 'Folk', 'Polka', 'Traditional']
+        subgenres: ['Acoustic', 'Americana', 'Bavarian Folk', 'Bluegrass', 'Country', 'Western', 'Serenade', 'Folk', 'Polka']
     },
     {
         title: "JAZZ",
