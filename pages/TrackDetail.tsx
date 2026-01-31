@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
@@ -218,6 +217,12 @@ export const TrackDetail: React.FC = () => {
     if (typeof track.edit_cuts === 'string') return track.edit_cuts.split(',').map(s => s.trim());
     return [];
   }, [track?.edit_cuts]);
+
+  const currentPriceLabel = useMemo(() => {
+    if (selectedLicense === 'standard') return getDynamicPrice('single_track_standard', '€9.99');
+    if (selectedLicense === 'extended') return getDynamicPrice('single_track_extended', '€39.99');
+    return getDynamicPrice('full_catalog', '€99/year');
+  }, [selectedLicense, pricingData]);
 
   if (!track) return <div className="p-20 text-center opacity-50">Loading track details...</div>;
 
@@ -547,7 +552,9 @@ export const TrackDetail: React.FC = () => {
                     className="w-full bg-sky-500 hover:bg-sky-400 text-white font-black py-5 rounded-2xl shadow-xl shadow-sky-500/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 text-xl mt-8"
                 >
                     <ShoppingCart size={24} />
-                    {selectedLicense === 'pro' ? 'Subscribe Now' : 'Buy Now'}
+                    <span>
+                        {selectedLicense === 'pro' ? 'Subscribe Now' : 'Buy Now'} • {currentPriceLabel}
+                    </span>
                 </button>
                 
                 <div className="space-y-4 mt-8">

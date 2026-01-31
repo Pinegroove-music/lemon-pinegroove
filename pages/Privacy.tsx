@@ -1,21 +1,31 @@
+
 import React from 'react';
 import { useStore } from '../store/useStore';
 import { SEO } from '../components/SEO';
-import { ShieldCheck, Mail, Lock, UserCheck, FileText } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, UserCheck, FileText, Send } from 'lucide-react';
 
 export const Privacy: React.FC = () => {
   const { isDarkMode } = useStore();
 
   return (
     <div className="pb-32">
-      <SEO title="Privacy Policy" description="Privacy Policy for Pinegroove and Francesco Biondi. Learn how we manage your personal data." />
+      <SEO title="Privacy Policy" description="Privacy Policy for Pinegroove and Francesco Biondi. Learn how we manage your personal data and newsletter preferences." />
       
-      <div className={`relative h-[30vh] min-h-[200px] flex items-center justify-center overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-sky-50'}`}>
-        <div className={`absolute inset-0 z-0 opacity-10 dark:opacity-20 bg-gradient-to-br from-emerald-500 via-sky-600 to-indigo-700`}></div>
+      <div className={`relative h-[35vh] min-h-[300px] flex items-center justify-center overflow-hidden transition-colors duration-500 ${isDarkMode ? 'bg-zinc-950' : 'bg-sky-50'}`}>
+        <div className="absolute inset-0 z-0">
+            <img 
+                src="https://media.pinegroove.net/media/privacy-pinegroove.avif" 
+                alt="Pinegroove Privacy" 
+                className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/60 transition-colors duration-500"></div>
+        </div>
+
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <ShieldCheck size={48} className={`mx-auto mb-4 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
-          <h1 className="text-4xl md:text-5xl font-black mb-2 tracking-tight uppercase">Privacy Policy</h1>
-          <p className="text-lg font-medium opacity-60">Minimalist Protection for Creative Professionals</p>
+          <ShieldCheck size={48} className="mx-auto mb-4 text-emerald-400" />
+          {/* Forced white color for header text on dark background image */}
+          <h1 className="text-4xl md:text-5xl font-black mb-2 tracking-tight uppercase !text-white drop-shadow-lg">Privacy Policy</h1>
+          <p className="text-lg font-medium !text-white/70 drop-shadow-md">Minimalist Protection for Creative Professionals</p>
         </div>
       </div>
 
@@ -42,7 +52,7 @@ export const Privacy: React.FC = () => {
               <ul className="list-disc pl-5 space-y-2 opacity-80">
                 <li><strong>Account Information:</strong> Your email address and basic profile details provided via Supabase Authentication.</li>
                 <li><strong>Purchase History:</strong> Records of music licenses and packs acquired, used to generate your official License Certificates.</li>
-                <li><strong>Technical Data:</strong> Cookies and IP addresses used for secure payments (Lemon Squeezy), session management, and basic site analytics.</li>
+                <li><strong>Technical Data:</strong> Our website <strong>does not use tracking or profiling cookies</strong>. We only use essential technical cookies required for secure payments (Lemon Squeezy), session management, and ensuring a smooth user experience.</li>
               </ul>
             </section>
 
@@ -58,6 +68,18 @@ export const Privacy: React.FC = () => {
                 <li>Sending occasional technical updates or support replies via email.</li>
               </ul>
               <p className="mt-4 italic">We do not sell, trade, or share your personal data with third parties for marketing purposes.</p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-black mb-4 flex items-center gap-2 text-sky-500">
+                <Send size={20} /> Newsletter & Marketing
+              </h2>
+              <p>We value your privacy and hate spam as much as you do:</p>
+              <ul className="list-disc pl-5 space-y-2 opacity-80">
+                <li><strong>Voluntary Signup:</strong> We collect your email address for marketing purposes only if you voluntarily sign up via our subscription form.</li>
+                <li><strong>Explicit Consent:</strong> Emails containing updates, new music drops, or exclusive discounts are sent strictly based on your explicit consent.</li>
+                <li><strong>Right to Opt-Out:</strong> You can unsubscribe at any time by clicking the "unsubscribe" link at the bottom of any email or by sending a request to <a href="mailto:info@pinegroove.net" className="text-sky-500 font-bold hover:underline">info@pinegroove.net</a>.</li>
+              </ul>
             </section>
 
             <section>

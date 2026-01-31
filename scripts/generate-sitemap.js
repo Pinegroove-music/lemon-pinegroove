@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
@@ -24,6 +25,7 @@ const staticRoutes = [
   '/about',
   '/faq',
   '/content-id',
+  '/royalty-free-music/popular-searches',
 ];
 
 const createSlug = (id, title) => {
@@ -88,7 +90,24 @@ async function generateSitemap() {
     });
   }
 
-  // --- QUI C'ERA L'ERRORE: MANCAVA LA DEFINIZIONE DI sitemap ---
+  // 3. Fetch SEO Playlists (NEW)
+  const { data: playlists, error: playlistsError } = await supabase
+    .from('seo_playlists')
+    .select('slug');
+
+  if (playlistsError) console.error('Errore SEO playlists:', playlistsError);
+  else {
+    console.log(`📜 Trovate ${playlists.length} SEO playlists.`);
+    playlists.forEach(playlist => {
+      urls.push({
+        loc: `${DOMAIN}/royalty-free-music/${playlist.slug}`,
+        lastmod: currentDate,
+        changefreq: 'daily',
+        priority: '0.8'
+      });
+    });
+  }
+
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map(url => `  <url>

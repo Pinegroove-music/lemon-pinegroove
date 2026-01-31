@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { Album, MusicTrack, Coupon, PricingItem } from '../types';
@@ -198,6 +197,12 @@ export const MusicPackDetail: React.FC = () => {
         setDownloadingTrackId(null);
     }
   };
+
+  const currentPriceLabel = useMemo(() => {
+    if (selectedLicense === 'standard') return getDynamicPrice('music_pack_standard', '€49.99');
+    if (selectedLicense === 'extended') return getDynamicPrice('music_pack_extended', '€69.99');
+    return getDynamicPrice('full_catalog', '€99/year');
+  }, [selectedLicense, pricingData]);
 
   if (loading) return <div className="p-20 text-center opacity-50">Loading album...</div>;
   if (errorMsg) return (
@@ -438,7 +443,9 @@ export const MusicPackDetail: React.FC = () => {
                 className="w-full bg-sky-500 hover:bg-sky-400 text-white font-black py-5 rounded-2xl shadow-xl shadow-sky-500/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 text-xl mt-8"
             >
                 <ShoppingCart size={24} />
-                {selectedLicense === 'pro' ? 'Subscribe Now' : 'Buy Now'}
+                <span>
+                    {selectedLicense === 'pro' ? 'Subscribe Now' : 'Buy Now'} • {currentPriceLabel}
+                </span>
             </button>
             
             <div className="space-y-4 mt-8">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { SEO } from '../components/SEO';
@@ -119,8 +118,8 @@ export const Pricing: React.FC = () => {
     <div className="w-full max-w-[1920px] mx-auto px-6 lg:px-10 pt-2 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <SEO title="Pricing & Licenses" description="Clear and simple music licensing for your projects. Choose between lifetime pay-per-track licenses or an unlimited yearly subscription." />
 
-      {/* Header with Overflowing Dynamic Logo */}
-      <div className={`relative rounded-3xl py-12 mb-10 group z-0 transition-all duration-500 ${isDarkMode ? 'bg-zinc-900/40' : 'bg-sky-50/50'}`}>
+      {/* Header with Overflowing Dynamic Logo - Background set to transparent */}
+      <div className="relative rounded-3xl py-12 mb-10 group z-0 transition-all duration-500 bg-transparent">
         
         {/* Overflowing Logo Layer */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[-1] pointer-events-none">
@@ -319,8 +318,8 @@ export const Pricing: React.FC = () => {
                     `}
                   >
                     <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                    <div className={`absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`} />
-                    <div className={`absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`} />
+                    <div className={`absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`} />
+                    <div className={`absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-dashed border-white/15 transition-colors ${isDarkMode ? 'bg-zinc-950' : 'bg-white'}`} />
 
                     <div className="relative z-10 flex justify-between items-start mb-3">
                       <div className="space-y-0.5">

@@ -26,6 +26,8 @@ import { Pricing } from './pages/Pricing';
 import { UserLicenseAgreement } from './pages/UserLicenseAgreement';
 import { Privacy } from './pages/Privacy';
 import { ResetPassword } from './pages/ResetPassword';
+import { PlaylistPage } from './pages/PlaylistPage';
+import { PopularSearches } from './pages/PopularSearches';
 import { useStore } from './store/useStore';
 import { Menu, Search, Music, User, X, Heart, LogOut } from 'lucide-react';
 import { supabase } from './services/supabase';
@@ -243,9 +245,10 @@ const Layout: React.FC = () => {
   const isAboutPage = location.pathname === '/about';
   const isFaqPage = location.pathname === '/faq';
   const isLicenseAgreementPage = location.pathname === '/user-license-agreement';
+  const isPlaylistPage = location.pathname.startsWith('/royalty-free-music/');
   
   const hideSearchBarContent = isLicenseAgreementPage;
-  const isHeroPage = isHomePage || isAboutPage || isContentIdPage || isFaqPage || isLicenseAgreementPage;
+  const isHeroPage = isHomePage || isAboutPage || isContentIdPage || isFaqPage || isLicenseAgreementPage || isPlaylistPage;
 
   let headerWrapperClasses = `z-50 w-full transition-all duration-500 `;
   if (isHeroPage) {
@@ -413,6 +416,8 @@ const Layout: React.FC = () => {
             <Route path="/music-packs" element={<MusicPacks />} />
             <Route path="/music-packs/:slug" element={<MusicPackDetail />} />
             <Route path="/music-packs/:id" element={<MusicPackDetail />} />
+            <Route path="/royalty-free-music/popular-searches" element={<PopularSearches />} />
+            <Route path="/royalty-free-music/:slug" element={<PlaylistPage />} />
             <Route path="/about" element={<About />} />
             <Route path="/faq" element={<Faq />} />
             <Route path="/content-id" element={<ContentId />} />

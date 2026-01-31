@@ -29,6 +29,18 @@ export interface MusicTrack {
   media_theme: string[] | string | null;
 }
 
+export interface SEOPlaylist {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  category_tag: string[];
+  meta_title: string;
+  meta_description: string;
+  hero_image_url: string;
+  is_published: boolean;
+}
+
 export interface Client {
   id: number;
   created_at: string;

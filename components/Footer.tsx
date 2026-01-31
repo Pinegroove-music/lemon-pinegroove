@@ -8,17 +8,19 @@ export const Footer: React.FC = () => {
   const { isDarkMode, session } = useStore();
 
   const browseLinks = [
+    { label: 'Popular Searches', path: '/royalty-free-music/popular-searches' },
     { label: 'Browse Genres', path: '/categories/genres' },
     { label: 'Browse Moods', path: '/categories/moods' },
     { label: 'Browse Instruments', path: '/categories/instruments' },
     { label: 'Seasonal Themes', path: '/categories/seasonal' },
-    { label: 'Music Packs', path: '/music-packs' },
+    { label: 'Media Themes', path: '/categories/media-themes' },
   ];
 
   const menuLinks = [
     { label: 'Home', path: '/' },
     { label: 'Library', path: '/library' },
     { label: 'About', path: '/about' },
+    { label: 'Music Packs', path: '/music-packs' },
   ];
 
   const legalLinks = [
@@ -73,9 +75,9 @@ export const Footer: React.FC = () => {
                       className="w-9 h-9 object-contain transition-transform duration-500 group-hover:scale-110 flex-shrink-0"
                   />
                   <span className="font-archivo uppercase text-xl tracking-tight">
-                    <span className={isDarkMode ? "text-white" : "text-black"}>PINE</span>
-                    <span className="text-[#0288c4]">GROOVE</span>
-                </span>
+                      <span className="text-black dark:text-white">PINE</span>
+                      <span className="text-[#0288c4]">GROOVE</span>
+                  </span>
               </Link>
               <div className="space-y-4 max-w-sm">
                   <p className="text-sm opacity-80 leading-snug font-medium">
@@ -86,14 +88,10 @@ export const Footer: React.FC = () => {
                           Secure Payments & Instant Delivery:
                       </p>
                       <img 
-  src="https://assets.pinegroove.net/lemon-squeezy-logo.svg" 
-  alt="Lemon Squeezy Logo" 
-  className={`h-6 object-contain transition-all filter ${
-    isDarkMode 
-      ? "brightness-0 invert opacity-50 hover:opacity-100" 
-      : "grayscale opacity-70 hover:grayscale-0 hover:opacity-100"
-  }`}
-/>
+                          src="https://pub-704d512baed74c069032320c83ebe2f7.r2.dev/lemon-squeezy-logo.svg" 
+                          alt="Lemon Squeezy Logo" 
+                          className="h-6 object-contain opacity-70 hover:opacity-100 transition-all filter grayscale hover:grayscale-0"
+                      />
                   </div>
               </div>
           </div>

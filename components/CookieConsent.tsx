@@ -18,23 +18,35 @@ export const CookieConsent: React.FC = () => {
         categories: {
             necessary: {
                 readOnly: true
-            },
-            analytics: {}
+            }
         },
         language: {
             default: 'en',
             translations: {
                 en: {
                     consentModal: {
-                        title: 'Cookies & Privacy',
-                        description: 'We use cookies to enhance your experience and secure your purchases via Lemon Squeezy.',
-                        acceptAllBtn: 'I Accept',
-                        acceptNecessaryBtn: 'I Decline',
+                        title: 'Notice',
+                        description: 'We use only essential cookies to ensure secure payments via Lemon Squeezy and a smooth experience. No tracking or profiling cookies are used.',
+                        acceptAllBtn: 'I understand',
                         footer: `
                             <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1);">
-                                <a href="/privacy" style="font-weight: 700; color: #0ea5e9; text-decoration: none; font-size: 12px;">Privacy Policy</a>
+                                <a href="#/privacy" style="font-weight: 700; color: #0ea5e9; text-decoration: none; font-size: 12px;">Privacy Policy</a>
                             </div>
                         `
+                    },
+                    // Added required preferencesModal property to fix TypeScript error
+                    preferencesModal: {
+                        title: 'Cookie Preferences',
+                        acceptAllBtn: 'Accept all',
+                        acceptNecessaryBtn: 'Reject all',
+                        savePreferencesBtn: 'Save preferences',
+                        closeIconLabel: 'Close modal',
+                        sections: [
+                            {
+                                title: 'Cookie Usage',
+                                description: 'We use only essential cookies to ensure secure payments via Lemon Squeezy and a smooth experience.'
+                            }
+                        ]
                     }
                 }
             }
